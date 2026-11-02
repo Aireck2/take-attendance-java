@@ -1,0 +1,6 @@
+id_profesor,nombre,apellido,correo,tipo_de_documento,nro_documento,telefono,departamento_academico,especialidad
+P1,Carlos,Mendoza,carlos.mendoza@usil.pe,DNI,12345678,987654321,Facultad Ingenieria,Ciberseguridad
+P2,Ana,Torres,ana.torres@usil.pe,DNI,23456789,987654322,Facultad Ingenieria,Redes
+P3,Luis,Quispe,luis.quispe@usil.pe,DNI,34567890,987654323,Facultad Ingenieria,Arquitectura Software
+P4,Maria,Huaman,maria.huaman@usil.pe,DNI,45678901,987654324,Facultad Ingenieria,Base de Datos
+P5,Jorge,Ramos,jorge.ramos@usil.pe,DNI,56789012,987654325,Facultad Ingenieria,Sistemas Operativos
