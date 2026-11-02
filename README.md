@@ -1,6 +1,6 @@
-# Sistema de Asistencia Universitaria — IESTP Chincha
+# Sistema de Control y Monitoreo de Asistencia — IESTP Chincha
 
-Aplicación de terminal para registrar y consultar la asistencia de clases en el Instituto de Educación Superior Tecnológico Público Chincha (IESTP Chincha).
+Aplicación de consola desarrollada en **Java 21 SE** orientada al registro, control y visualización de asistencias académicas en el Instituto de Educación Superior Tecnológico Público Chincha (IESTP Chincha).
 
 ## Funcionalidades
 
@@ -36,13 +36,13 @@ java -cp out sistema.SistemaApp
 
 Los archivos CSV se agrupan en la carpeta `data/`.
 
-| Archivo | Contenido |
-| --- | --- |
-| `data/profesores.csv` | Profesores: id, nombre, correo, especialidad. |
-| `data/estudiantes.csv` | Estudiantes: id, código, nombre, correo, carrera, estado. |
-| `data/cursos.csv` | Cursos: id, nombre, horas por sesión, profesor, duración. |
-| `data/inscripciones.csv` | Inscripciones: curso, estudiante. |
-| `data/asistencias.csv` | Asistencias: id, curso, estudiante, fecha, horas, estado. |
+| Archivo                  | Contenido                                                 |
+| ------------------------ | --------------------------------------------------------- |
+| `data/profesores.csv`    | Profesores: id, nombre, correo, especialidad.             |
+| `data/estudiantes.csv`   | Estudiantes: id, código, nombre, correo, carrera, estado. |
+| `data/cursos.csv`        | Cursos: id, nombre, horas por sesión, profesor, duración. |
+| `data/inscripciones.csv` | Inscripciones: curso, estudiante.                         |
+| `data/asistencias.csv`   | Asistencias: id, curso, estudiante, fecha, horas, estado. |
 
 ## Estructura
 
