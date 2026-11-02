@@ -1,0 +1,6 @@
+id_estudiante,codigo,nombres,apellidos,correo,escuela_profesional,estado
+E1,U2024101,Erick,Escriba,erick.escriba@iestp.pe,Ingenieria de Software,REGULAR
+E2,U2024102,Sofia,Gomez,sofia.gomez@iestp.pe,Computacion,REGULAR
+E3,U2024103,Mateo,Silva,mateo.silva@iestp.pe,Sistemas,REGULAR
+E4,U2024104,Lucia,Cardenas,lucia.cardenas@iestp.pe,Redes,REGULAR
+E5,U2024105,Diego,Morales,diego.morales@iestp.pe,Arquitectura,REGULAR
