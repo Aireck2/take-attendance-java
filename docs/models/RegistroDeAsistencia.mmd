@@ -1,0 +1,17 @@
+classDiagram
+        class RegistroDeAsistencia {
+            - idAsistencia: String
+            - idCurso: String
+            - idEstudiante: String
+            - fecha: String
+            - horasAsistidas: int
+            - presente: boolean
+            + String getIdAsistencia()
+            + void setIdAsistencia(String idAsistencia)
+            + String getIdCurso()
+            + String getIdEstudiante()
+            + String getFecha()
+            + int getHorasAsistidas()
+            + boolean isPresente()
+            + String toCsv()
+    }

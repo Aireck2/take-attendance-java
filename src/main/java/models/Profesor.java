@@ -1,7 +1,7 @@
 package models;
 
 /**
- * Representa a un profesor del sistema de asistencia universitaria.
+ * Representa a un profesor del sistema de control de asistencia.
  * Contiene sus datos personales, de contacto y su especialidad academica.
  */
 public class Profesor {
