@@ -1,0 +1,13 @@
+classDiagram
+    namespace sistema {
+        class SistemaApp {
+            - scanner: Scanner$
+            - servicio: ServicioAcademico$
+            + void main(String[] args)$
+            - int leerOpcion(String mensaje)$
+            - void menuProfesor()$
+            - void gestionarCursosProfesor(Profesor prof)$
+            - void menuEstudiante()$
+            - void mostrarResumenAsistenciaEstudiante(Estudiante est)$
+        }
+    }

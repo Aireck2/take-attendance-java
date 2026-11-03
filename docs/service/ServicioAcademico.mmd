@@ -1,0 +1,14 @@
+classDiagram
+    class ServicioAcademico {
+        + LIMITE_INASISTENCIA: double$
+        + List~Profesor~ listarProfesores()
+        + List~Estudiante~ listarEstudiantes()
+        + List~Curso~ listarCursos()
+        + List~Curso~ listarCursosProfesor(Profesor profesor)
+        + List~Estudiante~ listarEstudiantesCurso(Curso curso)
+        + List~Curso~ listarCursosEstudiante(Estudiante estudiante)
+        + List~RegistroDeAsistencia~ historialEstudiante(Estudiante estudiante)
+        + void guardarAsistencias(List~RegistroDeAsistencia~ registros)
+        + RegistroDeAsistencia crearRegistro(Curso curso, Estudiante estudiante, String fecha, int horasAsistidas, boolean presente)
+        + double calcularPorcentajeFaltas(int horasDictadas, int horasAsistidas, int totalHorasCurso)
+    }
