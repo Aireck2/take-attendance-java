@@ -1,0 +1,84 @@
+classDiagram
+    namespace models{
+        class EstadoEstudiante {
+            <<enumeration>>
+            REGULAR
+            RESERVA_MATRICULA
+            TRASLADO_INTERNO
+            SUSPENDIDO
+            EGRESADO
+        }
+        class Curso {
+            - idCurso: String 
+            - nombreCurso: String 
+            - totalHorasSesion: int
+            - idProfesor: String
+            - duracionCurso: int
+    
+            + String getIdCurso()
+            + String getNombreCurso()
+            + int getTotalHorasSesion()
+            + String getIdProfesor()
+            + int getDuracionCurso()
+        }
+       class Profesor {
+            - id: String
+            - nombre: String
+            - apellido: String
+            - correo: String
+            - tipoDeDocumento: String
+            - nroDocumento: String
+            - telefono: int
+            - departamentoAcademico: String
+            - especialidad: String
+            + String getId()
+            + String getNombre()
+            + String getApellido()
+            + String getNombreCompleto()
+            + String getCorreo()
+            + int getTelefono()
+            + String getTipoDeDocumento()
+            + String getNroDocumento()
+            + String getDepartamentoAcademico()
+            + String getEspecialidad()
+            + void mostrarPerfil()
+        }
+        class Estudiante {
+            - id: String
+            - codigo: String
+            - nombres: String
+            - apellidos: String
+            - correo: String
+            - escuelaProfesional: String
+            - estado: EstadoEstudiante
+            + String getId()
+            + String getCodigo()
+            + String getNombreCompleto()
+            + String getCorreo()
+            + String getEscuelaProfesional()
+            + EstadoEstudiante getEstado()
+            + void mostrarPerfil()
+        }
+
+        class RegistroDeAsistencia {
+            - idAsistencia: String
+            - idCurso: String
+            - idEstudiante: String
+            - fecha: String
+            - horasAsistidas: int
+            - presente: boolean
+            + String getIdAsistencia()
+            + void setIdAsistencia(String idAsistencia)
+            + String getIdCurso()
+            + String getIdEstudiante()
+            + String getFecha()
+            + int getHorasAsistidas()
+            + boolean isPresente()
+            + String toCsv()
+        }
+    }
+
+    Estudiante --> EstadoEstudiante : tiene
+    Curso ..> Profesor : referencia por idProfesor
+    RegistroDeAsistencia ..> Estudiante : referencia por idEstudiante
+    RegistroDeAsistencia ..> Curso : referencia por idCurso

@@ -1,7 +1,7 @@
 package models;
 
 /**
- * Representa un curso de la universidad, con sus horas por sesion academica,
+ * Representa un curso del instituto, con sus horas por sesion academica,
  * el profesor responsable y la duracion del curso en dias de clase.
  */
 public class Curso {
