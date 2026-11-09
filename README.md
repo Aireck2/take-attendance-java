@@ -8,6 +8,13 @@ El sistema implementa una arquitectura limpia por capas (Separación de Responsa
 
 ## Funcionalidades
 
+### Autenticación y Roles
+- **Inicio de sesión real:** el acceso se valida con correo y contraseña contra `data/usuarios.csv`; ya no se elige un usuario de una lista.
+- **Roles:** cada cuenta tiene el rol `PROFESOR` o `ESTUDIANTE`, y el rol determina el menú que se abre.
+- **Contraseñas protegidas:** se almacenan con PBKDF2-HMAC-SHA256, sal aleatoria de 16 bytes y 210 000 iteraciones. Nunca se guarda texto plano.
+- **Intentos limitados:** tras 3 intentos fallidos se vuelve al menú principal.
+- **Contraseña oculta:** en una terminal interactiva se usa `System.console().readPassword()` para no mostrarla.
+
 ### Gestión de Profesores
 - **Consulta de Perfil:** Visualización detallada de datos personales, departamento académico y especialidad.
 - **Cursos Asignados:** Listado de asignaturas a cargo con detalle de carga horaria y lista de alumnos matriculados.
@@ -40,9 +47,10 @@ El proyecto está organizado siguiendo el principio de separación de responsabi
 ```
 src/main/java/
 ├── models/         # Entidades del dominio y enumeraciones
+├── security/       # Derivación y verificación de contraseñas (PBKDF2)
 ├── storage/        # Capa de persistencia y serialización en archivos planos CSV
-├── service/        # Lógica de negocio, cálculos de inasistencias y validaciones
-└── sistema/        # Orquestación de menús, interfaz de consola (CLI) e interacción
+├── service/        # Lógica de negocio, autenticación, cálculos de inasistencias y validaciones
+└── sistema/        # Orquestación de menús, inicio de sesión, interfaz de consola (CLI) e interacción
 ```
 
 ---
@@ -57,12 +65,14 @@ El archivo [`docs/Index.mmd`](docs/Index.mmd) centraliza la arquitectura del sis
 
 - **Relaciones de Dominio (`models`):**
   - **Asociación directa:** `Estudiante --> EstadoEstudiante` (asociación tipada con la enumeración de estados).
+  - **Credenciales y rol:** `Usuario --> Rol` (asociación tipada) y `Usuario ..> Profesor` / `Usuario ..> Estudiante` (referencia desacoplada vía `idReferencia`).
   - **Referencias por clave lógica:** `Curso ..> Profesor` (asociación desacoplada vía `idProfesor`).
   - **Trazabilidad de asistencia:** `RegistroDeAsistencia ..> Estudiante` (vía `idEstudiante`) y `RegistroDeAsistencia ..> Curso` (vía `idCurso`).
 
 - **Relaciones entre Capas (Arquitectura):**
-  - **Presentación a Servicio:** `SistemaApp --> ServicioAcademico` (composición/delegación de responsabilidades de la UI hacia el servicio).
-  - **Servicio a Persistencia:** `ServicioAcademico ..> ArchivoManager` (dependencia para carga y guardado de datos).
+  - **Presentación a Servicio:** `SistemaApp --> ServicioAcademico` (composición/delegación de responsabilidades de la UI hacia el servicio) y `SistemaApp --> AutenticacionService` (inicio de sesión).
+  - **Servicio a Persistencia:** `ServicioAcademico ..> ArchivoManager` (dependencia para carga y guardado de datos) y `AutenticacionService ..> ArchivoManager` (lectura de usuarios).
+  - **Seguridad:** `AutenticacionService ..> PasswordHasher` (verificación de contraseñas con PBKDF2).
 
 - **Dependencias de Uso y Persistencia:**
   - `ServicioAcademico ..>` Entidades del dominio: Orquesta y realiza cálculos sobre `Profesor`, `Estudiante`, `Curso` y `RegistroDeAsistencia`.
@@ -74,9 +84,12 @@ El archivo [`docs/Index.mmd`](docs/Index.mmd) centraliza la arquitectura del sis
 | :--- | :--- | :--- |
 | `docs/` | [`Index.mmd`](docs/Index.mmd) | **Diagrama UML global** con todos los paquetes, clases y relaciones entre capas. |
 | `docs/models/` | [`Models.mmd`](docs/models/Models.mmd) | Diagrama de paquete con entidades del dominio, enumeraciones y relaciones internas. |
-| `docs/models/` | `*.mmd` | Diagramas individuales: [`CursoClass.mmd`](docs/models/CursoClass.mmd), [`Estudiante.mmd`](docs/models/Estudiante.mmd), [`Profesor.mmd`](docs/models/Profesor.mmd), [`RegistroDeAsistencia.mmd`](docs/models/RegistroDeAsistencia.mmd), [`EstadoEstudiante.mmd`](docs/models/EstadoEstudiante.mmd). |
+| `docs/models/` | `*.mmd` | Diagramas individuales: [`CursoClass.mmd`](docs/models/CursoClass.mmd), [`Estudiante.mmd`](docs/models/Estudiante.mmd), [`Profesor.mmd`](docs/models/Profesor.mmd), [`Usuario.mmd`](docs/models/Usuario.mmd), [`Rol.mmd`](docs/models/Rol.mmd), [`RegistroDeAsistencia.mmd`](docs/models/RegistroDeAsistencia.mmd), [`EstadoEstudiante.mmd`](docs/models/EstadoEstudiante.mmd). |
 | `docs/service/` | [`Service.mmd`](docs/service/Service.mmd) | Vista de namespace del paquete `service`. |
 | `docs/service/` | [`ServicioAcademico.mmd`](docs/service/ServicioAcademico.mmd) | Especificación de atributos, constantes y métodos de la lógica de negocio. |
+| `docs/service/` | [`AutenticacionService.mmd`](docs/service/AutenticacionService.mmd) | Validación de credenciales y búsqueda de usuarios por correo. |
+| `docs/security/` | [`Security.mmd`](docs/security/Security.mmd) | Vista de namespace del paquete `security`. |
+| `docs/security/` | [`PasswordHasher.mmd`](docs/security/PasswordHasher.mmd) | Derivación y verificación PBKDF2 de contraseñas. |
 | `docs/storage/` | [`Storage.mmd`](docs/storage/Storage.mmd) | Vista de namespace del paquete `storage`. |
 | `docs/storage/` | [`ArchivoManager.mmd`](docs/storage/ArchivoManager.mmd) | Métodos estáticos de persistencia CSV y colecciones genéricas (`List~T~`). |
 | `docs/sistema/` | [`Sistema.mmd`](docs/sistema/Sistema.mmd) | Vista de namespace del paquete `sistema`. |
@@ -92,6 +105,7 @@ La capa de almacenamiento gestiona archivos delimitados por comas ubicados en `d
 | :--- | :--- | :--- |
 | `data/profesores.csv` | `id, nombre, apellido, correo, tipo_de_documento, nro_documento, telefono, departamento_academico, especialidad` | Padrón de docentes |
 | `data/estudiantes.csv` | `id_estudiante, codigo, nombres, apellidos, correo, escuela_profesional, estado` | Registro de alumnos y condición académica |
+| `data/usuarios.csv` | `id, correo, hash_contrasena, rol, id_referencia, activo` | Credenciales de acceso y rol (`PROFESOR` / `ESTUDIANTE`) |
 | `data/cursos.csv` | `id_curso, nombre_curso, total_horas_sesion, id_profesor, duracion_curso` | Asignaturas y carga horaria |
 | `data/inscripciones.csv` | `id_curso, id_estudiante` | Matrícula de estudiantes por asignatura |
 | `data/asistencias.csv` | `id_asistencia, id_curso, id_estudiante, fecha, horas_asistidas, presente` | Bitácora histórica de sesiones tomadas |
@@ -114,3 +128,43 @@ La capa de almacenamiento gestiona archivos delimitados por comas ubicados en `d
    ```bash
    java -cp out sistema.SistemaApp
    ```
+
+---
+
+## Credenciales de Demostración
+
+Los usuarios sembrados en `data/usuarios.csv` usan contraseñas de demostración. Cámbialas antes de usar el sistema con datos reales.
+
+| Rol | Correo | Contraseña |
+| :--- | :--- | :--- |
+| Profesor | `carlos.mendoza@usil.pe` | `Docente2026*` |
+| Profesor | `ana.torres@usil.pe` | `Docente2026*` |
+| Profesor | `luis.quispe@usil.pe` | `Docente2026*` |
+| Profesor | `maria.huaman@usil.pe` | `Docente2026*` |
+| Profesor | `jorge.ramos@usil.pe` | `Docente2026*` |
+| Estudiante | `erick.escriba@iestp.pe` | `Alumno2026*` |
+| Estudiante | `sofia.gomez@iestp.pe` | `Alumno2026*` |
+| Estudiante | `mateo.silva@iestp.pe` | `Alumno2026*` |
+| Estudiante | `lucia.cardenas@iestp.pe` | `Alumno2026*` |
+| Estudiante | `diego.morales@iestp.pe` | `Alumno2026*` |
+
+> [!NOTE]
+> `data/usuarios.csv` guarda únicamente hashes PBKDF2 con sal; las contraseñas de la tabla existen solo como datos de demostración.
+
+---
+
+## Pruebas
+
+El proyecto no usa dependencias externas: la suite es un `main` con aserciones simples.
+
+1. **Compilar main y tests:**
+   ```bash
+   javac -d out $(find src/main/java src/test/java -name "*.java")
+   ```
+
+2. **Ejecutar la suite:**
+   ```bash
+   java -cp out test.TestRunner
+   ```
+
+La suite verifica el hash PBKDF2, la lectura de usuarios, el login por correo/contraseña, la normalización del correo y la resolución de perfiles por rol.

@@ -1,11 +1,15 @@
 classDiagram
     class SistemaApp {
+        - MAX_INTENTOS_LOGIN: int$
         - scanner: Scanner$
         - servicio: ServicioAcademico$
+        - autenticacion: AutenticacionService$
         + void main(String[] args)$
         - int leerOpcion(String mensaje)$
-        - void menuProfesor()$
+        - void iniciarSesion()$
+        - String leerContrasena(String mensaje)$
+        - void menuProfesor(Profesor profActual)$
         - void gestionarCursosProfesor(Profesor prof)$
-        - void menuEstudiante()$
+        - void menuEstudiante(Estudiante estActual)$
         - void mostrarResumenAsistenciaEstudiante(Estudiante est)$
     }
