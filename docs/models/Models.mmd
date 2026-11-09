@@ -286,6 +286,54 @@ classDiagram
             + String getIdSesion()
             + String toCsv()
         }
+        class IndicadorLogro {
+            - idIndicador: String
+            - idSeccion: String
+            - nombre: String
+            - peso: int
+            + String getIdIndicador()
+            + String getIdSeccion()
+            + String getNombre()
+            + int getPeso()
+        }
+        class RegistroNota {
+            - idRegistroNota: String
+            - idIndicador: String
+            - idEstudiante: String
+            - nota: int
+            - fecha: String
+            + String getIdRegistroNota()
+            + void setIdRegistroNota(String idRegistroNota)
+            + String getIdIndicador()
+            + String getIdEstudiante()
+            + int getNota()
+            + String getFecha()
+            + String toCsv()
+        }
+        class DerechoPago {
+            - idDerecho: String
+            - codigo: String
+            - nombre: String
+            - monto: double
+            + String getIdDerecho()
+            + String getCodigo()
+            + String getNombre()
+            + double getMonto()
+        }
+        class ComprobantePago {
+            - idComprobante: String
+            - idEstudiante: String
+            - idDerecho: String
+            - fecha: String
+            - monto: double
+            + String getIdComprobante()
+            + void setIdComprobante(String idComprobante)
+            + String getIdEstudiante()
+            + String getIdDerecho()
+            + String getFecha()
+            + double getMonto()
+            + String toCsv()
+        }
     }
 
     Estudiante --> EstadoEstudiante : tiene
@@ -320,3 +368,8 @@ classDiagram
     Matricula --> EstadoMatricula : tiene
     Matricula --> RegistroDeAsistencia : acumula
     RegistroDeAsistencia ..> SesionClase : referencia por idSesion
+    IndicadorLogro --> SeccionCurso : configura
+    RegistroNota ..> IndicadorLogro : referencia por idIndicador
+    RegistroNota ..> Estudiante : referencia por idEstudiante
+    ComprobantePago ..> DerechoPago : amortiza
+    ComprobantePago ..> Estudiante : referencia por idEstudiante

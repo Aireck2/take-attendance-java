@@ -1,0 +1,5 @@
+id_indicador,id_seccion,nombre,peso
+I1,SEC1,Evaluacion Parcial,30
+I2,SEC1,Evaluacion Final,40
+I3,SEC1,Practicas Calificadas,30
+I4,SEC2,Evaluacion Final,100

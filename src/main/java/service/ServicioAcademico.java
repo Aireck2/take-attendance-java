@@ -5,16 +5,20 @@ import java.util.List;
 
 import models.BloqueSeccion;
 import models.Carrera;
+import models.ComprobantePago;
 import models.Curso;
+import models.DerechoPago;
 import models.Estudiante;
 import models.EstadoMatricula;
 import models.HorarioSeccion;
+import models.IndicadorLogro;
 import models.Matricula;
 import models.ModuloProfesional;
 import models.PeriodoAcademico;
 import models.PlanEstudios;
 import models.Profesor;
 import models.RegistroDeAsistencia;
+import models.RegistroNota;
 import models.Salon;
 import models.SeccionCurso;
 import models.SesionClase;
@@ -396,6 +400,234 @@ public class ServicioAcademico {
   }
 
   /**
+   * Lista los indicadores de logro registrados.
+   */
+  public List<IndicadorLogro> listarIndicadores() {
+    return ArchivoManager.leerIndicadores();
+  }
+
+  /**
+   * Devuelve los indicadores de logro configurados en una seccion.
+   */
+  public List<IndicadorLogro> listarIndicadoresSeccion(String idSeccion) {
+    List<IndicadorLogro> indicadores = new ArrayList<>();
+    for (IndicadorLogro indicador : ArchivoManager.leerIndicadores()) {
+      if (indicador.getIdSeccion().equals(idSeccion)) {
+        indicadores.add(indicador);
+      }
+    }
+    return indicadores;
+  }
+
+  /**
+   * Lista los registros de notas.
+   */
+  public List<RegistroNota> listarNotas() {
+    return ArchivoManager.leerNotas();
+  }
+
+  /**
+   * Devuelve las notas de un estudiante.
+   */
+  public List<RegistroNota> listarNotasEstudiante(String idEstudiante) {
+    List<RegistroNota> notas = new ArrayList<>();
+    for (RegistroNota nota : ArchivoManager.leerNotas()) {
+      if (nota.getIdEstudiante().equals(idEstudiante)) {
+        notas.add(nota);
+      }
+    }
+    return notas;
+  }
+
+  /**
+   * Devuelve las notas registradas en un indicador de logro.
+   */
+  public List<RegistroNota> listarNotasIndicador(String idIndicador) {
+    List<RegistroNota> notas = new ArrayList<>();
+    for (RegistroNota nota : ArchivoManager.leerNotas()) {
+      if (nota.getIdIndicador().equals(idIndicador)) {
+        notas.add(nota);
+      }
+    }
+    return notas;
+  }
+
+  /**
+   * Indica si un estudiante puede registrar una nota, combinando la matricula
+   * activa con la regla normativa del 30% sobre datos ya cargados.
+   */
+  public boolean puedeRegistrarNota(Matricula matricula, Curso curso, List<SesionClase> sesiones,
+      List<RegistroDeAsistencia> registros) {
+    if (matricula == null || curso == null || matricula.getEstado() != EstadoMatricula.ACTIVA) {
+      return false;
+    }
+    int horasFaltadas = calcularHorasFaltadas(sesiones, registros);
+    return !estaInhabilitadoPorInasistencia(horasFaltadas, curso.getHorasLectivasTotales());
+  }
+
+  /**
+   * Resuelve el indicador, la seccion, la unidad didactica y la matricula del
+   * estudiante para decidir si puede registrar la nota.
+   */
+  public boolean puedeRegistrarNota(String idIndicador, String idEstudiante) {
+    IndicadorLogro indicador = buscarIndicador(idIndicador);
+    if (indicador == null) {
+      return false;
+    }
+    SeccionCurso seccion = buscarSeccion(indicador.getIdSeccion());
+    if (seccion == null) {
+      return false;
+    }
+    Curso curso = buscarCurso(seccion.getIdCurso());
+    Matricula matricula = buscarMatricula(idEstudiante, seccion.getIdBloque());
+    if (curso == null || matricula == null) {
+      return false;
+    }
+    List<SesionClase> sesiones = new ArrayList<>();
+    for (SesionClase sesion : listarSesionesBloque(seccion.getIdBloque())) {
+      SeccionCurso seccionDeSesion = seccionDeSesion(sesion);
+      if (seccionDeSesion != null && seccionDeSesion.getIdCurso().equals(curso.getIdCurso())) {
+        sesiones.add(sesion);
+      }
+    }
+    return puedeRegistrarNota(matricula, curso, sesiones,
+        ArchivoManager.leerAsistenciasEstudiante(idEstudiante));
+  }
+
+  /**
+   * Crea un registro de nota vigesimal (0 a 20). Devuelve null si el indicador o
+   * el estudiante no existen, si la nota esta fuera de rango o si el alumno
+   * supera el 30% de inasistencia.
+   */
+  public RegistroNota crearRegistroNota(String idIndicador, String idEstudiante, int nota, String fecha) {
+    if (buscarIndicador(idIndicador) == null || nota < 0 || nota > 20) {
+      return null;
+    }
+    if (!puedeRegistrarNota(idIndicador, idEstudiante)) {
+      return null;
+    }
+    return new RegistroNota(null, idIndicador, idEstudiante, nota, fecha);
+  }
+
+  /**
+   * Guarda las notas en el CSV. Una nota existente del mismo indicador y
+   * estudiante se reemplaza en lugar de duplicarse; las nuevas reciben un
+   * identificador consecutivo.
+   */
+  public void guardarNotas(List<RegistroNota> notas) {
+    List<RegistroNota> existentes = ArchivoManager.leerNotas();
+    int maxId = 0;
+    for (RegistroNota nota : existentes) {
+      try {
+        maxId = Math.max(maxId, Integer.parseInt(nota.getIdRegistroNota().replace("N", "")));
+      } catch (NumberFormatException e) {
+        // Ignorar identificadores con formato distinto
+      }
+    }
+    for (RegistroNota nota : notas) {
+      RegistroNota previa = null;
+      for (RegistroNota candidata : existentes) {
+        if (candidata.getIdIndicador().equals(nota.getIdIndicador())
+            && candidata.getIdEstudiante().equals(nota.getIdEstudiante())) {
+          previa = candidata;
+          break;
+        }
+      }
+      if (previa != null) {
+        existentes.remove(previa);
+        nota.setIdRegistroNota(previa.getIdRegistroNota());
+      } else {
+        maxId++;
+        nota.setIdRegistroNota("N" + maxId);
+      }
+      existentes.add(nota);
+    }
+    ArchivoManager.guardarNotas(existentes);
+  }
+
+  /**
+   * Lista los derechos de pago normados.
+   */
+  public List<DerechoPago> listarDerechosPago() {
+    return ArchivoManager.leerDerechosPago();
+  }
+
+  /**
+   * Lista los comprobantes de pago emitidos.
+   */
+  public List<ComprobantePago> listarComprobantes() {
+    return ArchivoManager.leerComprobantes();
+  }
+
+  /**
+   * Devuelve los comprobantes de pago de un estudiante.
+   */
+  public List<ComprobantePago> listarComprobantesEstudiante(String idEstudiante) {
+    List<ComprobantePago> comprobantes = new ArrayList<>();
+    for (ComprobantePago comprobante : ArchivoManager.leerComprobantes()) {
+      if (comprobante.getIdEstudiante().equals(idEstudiante)) {
+        comprobantes.add(comprobante);
+      }
+    }
+    return comprobantes;
+  }
+
+  /**
+   * Saldo pendiente de un derecho de pago para un estudiante: monto del derecho
+   * menos la suma de sus comprobantes.
+   */
+  public double saldoPendiente(String idEstudiante, String idDerecho) {
+    DerechoPago derecho = buscarDerechoPago(idDerecho);
+    if (derecho == null) {
+      return 0.0;
+    }
+    double pagado = 0.0;
+    for (ComprobantePago comprobante : ArchivoManager.leerComprobantes()) {
+      if (comprobante.getIdEstudiante().equals(idEstudiante) && comprobante.getIdDerecho().equals(idDerecho)) {
+        pagado += comprobante.getMonto();
+      }
+    }
+    return Math.max(0.0, derecho.getMonto() - pagado);
+  }
+
+  /**
+   * Crea un comprobante de pago que amortiza un derecho. Devuelve null si el
+   * estudiante o el derecho no existen, si el monto no es positivo o si supera
+   * el saldo pendiente.
+   */
+  public ComprobantePago crearComprobantePago(String idEstudiante, String idDerecho, String fecha, double monto) {
+    if (buscarEstudiante(idEstudiante) == null || buscarDerechoPago(idDerecho) == null) {
+      return null;
+    }
+    if (monto <= 0 || monto > saldoPendiente(idEstudiante, idDerecho)) {
+      return null;
+    }
+    return new ComprobantePago(null, idEstudiante, idDerecho, fecha, monto);
+  }
+
+  /**
+   * Guarda los comprobantes de pago en el CSV asignando un identificador
+   * consecutivo a cada uno.
+   */
+  public void guardarComprobantes(List<ComprobantePago> comprobantes) {
+    List<ComprobantePago> existentes = ArchivoManager.leerComprobantes();
+    int maxId = 0;
+    for (ComprobantePago comprobante : existentes) {
+      try {
+        maxId = Math.max(maxId, Integer.parseInt(comprobante.getIdComprobante().replace("CP", "")));
+      } catch (NumberFormatException e) {
+        // Ignorar identificadores con formato distinto
+      }
+    }
+    for (ComprobantePago comprobante : comprobantes) {
+      maxId++;
+      comprobante.setIdComprobante("CP" + maxId);
+      existentes.add(comprobante);
+    }
+    ArchivoManager.guardarComprobantes(existentes);
+  }
+
+  /**
    * Devuelve los cursos asignados a un profesor.
    */
   public List<Curso> listarCursosProfesor(Profesor profesor) {
@@ -562,5 +794,29 @@ public class ServicioAcademico {
       }
     }
     return false;
+  }
+
+  private IndicadorLogro buscarIndicador(String idIndicador) {
+    if (idIndicador == null) {
+      return null;
+    }
+    for (IndicadorLogro indicador : ArchivoManager.leerIndicadores()) {
+      if (indicador.getIdIndicador().equals(idIndicador)) {
+        return indicador;
+      }
+    }
+    return null;
+  }
+
+  private DerechoPago buscarDerechoPago(String idDerecho) {
+    if (idDerecho == null) {
+      return null;
+    }
+    for (DerechoPago derecho : ArchivoManager.leerDerechosPago()) {
+      if (derecho.getIdDerecho().equals(idDerecho)) {
+        return derecho;
+      }
+    }
+    return null;
   }
 }

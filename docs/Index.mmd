@@ -283,6 +283,54 @@ classDiagram
             + String getIdSesion()
             + String toCsv()
         }
+        class IndicadorLogro {
+            - idIndicador: String
+            - idSeccion: String
+            - nombre: String
+            - peso: int
+            + String getIdIndicador()
+            + String getIdSeccion()
+            + String getNombre()
+            + int getPeso()
+        }
+        class RegistroNota {
+            - idRegistroNota: String
+            - idIndicador: String
+            - idEstudiante: String
+            - nota: int
+            - fecha: String
+            + String getIdRegistroNota()
+            + void setIdRegistroNota(String idRegistroNota)
+            + String getIdIndicador()
+            + String getIdEstudiante()
+            + int getNota()
+            + String getFecha()
+            + String toCsv()
+        }
+        class DerechoPago {
+            - idDerecho: String
+            - codigo: String
+            - nombre: String
+            - monto: double
+            + String getIdDerecho()
+            + String getCodigo()
+            + String getNombre()
+            + double getMonto()
+        }
+        class ComprobantePago {
+            - idComprobante: String
+            - idEstudiante: String
+            - idDerecho: String
+            - fecha: String
+            - monto: double
+            + String getIdComprobante()
+            + void setIdComprobante(String idComprobante)
+            + String getIdEstudiante()
+            + String getIdDerecho()
+            + String getFecha()
+            + double getMonto()
+            + String toCsv()
+        }
     }
 
     namespace service {
@@ -319,6 +367,21 @@ classDiagram
             + double calcularPorcentajeInasistencia(int horasFaltadas, int horasLectivasTotales)
             + boolean estaInhabilitadoPorInasistencia(int horasFaltadas, int horasLectivasTotales)
             + boolean puedeRegistrarNotas(Matricula matricula, Curso curso)
+            + List~IndicadorLogro~ listarIndicadores()
+            + List~IndicadorLogro~ listarIndicadoresSeccion(String idSeccion)
+            + List~RegistroNota~ listarNotas()
+            + List~RegistroNota~ listarNotasEstudiante(String idEstudiante)
+            + List~RegistroNota~ listarNotasIndicador(String idIndicador)
+            + boolean puedeRegistrarNota(Matricula matricula, Curso curso, List~SesionClase~ sesiones, List~RegistroDeAsistencia~ registros)
+            + boolean puedeRegistrarNota(String idIndicador, String idEstudiante)
+            + RegistroNota crearRegistroNota(String idIndicador, String idEstudiante, int nota, String fecha)
+            + void guardarNotas(List~RegistroNota~ notas)
+            + List~DerechoPago~ listarDerechosPago()
+            + List~ComprobantePago~ listarComprobantes()
+            + List~ComprobantePago~ listarComprobantesEstudiante(String idEstudiante)
+            + double saldoPendiente(String idEstudiante, String idDerecho)
+            + ComprobantePago crearComprobantePago(String idEstudiante, String idDerecho, String fecha, double monto)
+            + void guardarComprobantes(List~ComprobantePago~ comprobantes)
             + List~Curso~ listarCursosProfesor(Profesor profesor)
             + List~Estudiante~ listarEstudiantesCurso(Curso curso)
             + List~Curso~ listarCursosEstudiante(Estudiante estudiante)
@@ -364,6 +427,12 @@ classDiagram
             + List~Salon~ leerSalones()$
             + List~Matricula~ leerMatriculas()$
             + void guardarMatriculas(List~Matricula~ matriculas)$
+            + List~IndicadorLogro~ leerIndicadores()$
+            + List~RegistroNota~ leerNotas()$
+            + void guardarNotas(List~RegistroNota~ notas)$
+            + List~DerechoPago~ leerDerechosPago()$
+            + List~ComprobantePago~ leerComprobantes()$
+            + void guardarComprobantes(List~ComprobantePago~ comprobantes)$
             + List~String~ leerInscripcionesCurso(String idCurso)$
             + void guardarAsistencia(List~RegistroDeAsistencia~ registros)$
             + List~RegistroDeAsistencia~ leerAsistenciasEstudiante(String idEstudiante)$
@@ -423,6 +492,12 @@ classDiagram
     Matricula --> EstadoMatricula : tiene
     Matricula --> RegistroDeAsistencia : acumula
     RegistroDeAsistencia ..> SesionClase : referencia por idSesion
+    IndicadorLogro --> SeccionCurso : configura
+    RegistroNota ..> IndicadorLogro : referencia por idIndicador
+    RegistroNota ..> Estudiante : referencia por idEstudiante
+    DerechoPago ..> Curso : referencia por creditosModulo
+    ComprobantePago ..> DerechoPago : amortiza
+    ComprobantePago ..> Estudiante : referencia por idEstudiante
 
     %% ==========================================
     %% Relaciones entre Capas (Arquitectura)
@@ -457,6 +532,10 @@ classDiagram
     ServicioAcademico ..> Salon : consulta
     ServicioAcademico ..> Matricula : consulta
     ServicioAcademico ..> RegistroDeAsistencia : registra por sesion / calcula faltas
+    ServicioAcademico ..> IndicadorLogro : consulta / gestiona logros
+    ServicioAcademico ..> RegistroNota : registra / calcula notas
+    ServicioAcademico ..> DerechoPago : consulta / gestiona cobros
+    ServicioAcademico ..> ComprobantePago : registra / consulta pagos
 
     ArchivoManager ..> Profesor : deserializa CSV
     ArchivoManager ..> Estudiante : deserializa CSV
@@ -483,3 +562,7 @@ classDiagram
     ArchivoManager ..> TipoSalon : parsea enum
     ArchivoManager ..> Matricula : serializa / deserializa CSV
     ArchivoManager ..> EstadoMatricula : parsea enum
+    ArchivoManager ..> IndicadorLogro : serializa / deserializa CSV
+    ArchivoManager ..> RegistroNota : serializa / deserializa CSV
+    ArchivoManager ..> DerechoPago : serializa / deserializa CSV
+    ArchivoManager ..> ComprobantePago : serializa / deserializa CSV

@@ -11,7 +11,9 @@ import java.util.List;
 
 import models.BloqueSeccion;
 import models.Carrera;
+import models.ComprobantePago;
 import models.Curso;
+import models.DerechoPago;
 import models.DiaSemana;
 import models.Estudiante;
 import models.EstadoEstudiante;
@@ -19,6 +21,7 @@ import models.EstadoMatricula;
 import models.EstadoPeriodo;
 import models.EstadoPlan;
 import models.HorarioSeccion;
+import models.IndicadorLogro;
 import models.Matricula;
 import models.ModalidadDictado;
 import models.ModuloProfesional;
@@ -26,6 +29,7 @@ import models.PeriodoAcademico;
 import models.PlanEstudios;
 import models.Profesor;
 import models.RegistroDeAsistencia;
+import models.RegistroNota;
 import models.Rol;
 import models.Salon;
 import models.SeccionCurso;
@@ -336,6 +340,118 @@ public class ArchivoManager {
       }
     } catch (IOException e) {
       System.out.println("Error al guardar matriculas.");
+    }
+  }
+
+  public static List<IndicadorLogro> leerIndicadores() {
+    List<IndicadorLogro> lista = new ArrayList<>();
+    try (BufferedReader br = new BufferedReader(new FileReader(CARPETA_DATOS + "/indicadores.csv"))) {
+      String linea = br.readLine(); // Saltar cabecera
+      while ((linea = br.readLine()) != null) {
+        if (linea.isBlank()) {
+          continue;
+        }
+        String[] p = linea.split(",", -1);
+        // id_indicador,id_seccion,nombre,peso
+        if (p.length >= 4) {
+          lista.add(new IndicadorLogro(p[0].trim(), p[1].trim(), p[2].trim(), Integer.parseInt(p[3].trim())));
+        }
+      }
+    } catch (FileNotFoundException e) {
+      System.out.println("No se encontro " + CARPETA_DATOS + "/indicadores.csv");
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return lista;
+  }
+
+  public static List<RegistroNota> leerNotas() {
+    List<RegistroNota> lista = new ArrayList<>();
+    try (BufferedReader br = new BufferedReader(new FileReader(CARPETA_DATOS + "/notas.csv"))) {
+      String linea = br.readLine(); // Saltar cabecera
+      while ((linea = br.readLine()) != null) {
+        if (linea.isBlank()) {
+          continue;
+        }
+        String[] p = linea.split(",", -1);
+        // id_nota,id_indicador,id_estudiante,nota,fecha
+        if (p.length >= 5) {
+          lista.add(new RegistroNota(p[0].trim(), p[1].trim(), p[2].trim(), Integer.parseInt(p[3].trim()),
+              p[4].trim()));
+        }
+      }
+    } catch (FileNotFoundException e) {
+      System.out.println("No se encontro " + CARPETA_DATOS + "/notas.csv");
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return lista;
+  }
+
+  public static void guardarNotas(List<RegistroNota> notas) {
+    try (PrintWriter pw = new PrintWriter(new FileWriter(CARPETA_DATOS + "/notas.csv"))) {
+      pw.println("id_nota,id_indicador,id_estudiante,nota,fecha");
+      for (RegistroNota nota : notas) {
+        pw.println(nota.toCsv());
+      }
+    } catch (IOException e) {
+      System.out.println("Error al guardar notas.");
+    }
+  }
+
+  public static List<DerechoPago> leerDerechosPago() {
+    List<DerechoPago> lista = new ArrayList<>();
+    try (BufferedReader br = new BufferedReader(new FileReader(CARPETA_DATOS + "/derechos_pago.csv"))) {
+      String linea = br.readLine(); // Saltar cabecera
+      while ((linea = br.readLine()) != null) {
+        if (linea.isBlank()) {
+          continue;
+        }
+        String[] p = linea.split(",", -1);
+        // id_derecho,codigo,nombre,monto
+        if (p.length >= 4) {
+          lista.add(new DerechoPago(p[0].trim(), p[1].trim(), p[2].trim(), Double.parseDouble(p[3].trim())));
+        }
+      }
+    } catch (FileNotFoundException e) {
+      System.out.println("No se encontro " + CARPETA_DATOS + "/derechos_pago.csv");
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return lista;
+  }
+
+  public static List<ComprobantePago> leerComprobantes() {
+    List<ComprobantePago> lista = new ArrayList<>();
+    try (BufferedReader br = new BufferedReader(new FileReader(CARPETA_DATOS + "/comprobantes.csv"))) {
+      String linea = br.readLine(); // Saltar cabecera
+      while ((linea = br.readLine()) != null) {
+        if (linea.isBlank()) {
+          continue;
+        }
+        String[] p = linea.split(",", -1);
+        // id_comprobante,id_estudiante,id_derecho,fecha,monto
+        if (p.length >= 5) {
+          lista.add(new ComprobantePago(p[0].trim(), p[1].trim(), p[2].trim(), p[3].trim(),
+              Double.parseDouble(p[4].trim())));
+        }
+      }
+    } catch (FileNotFoundException e) {
+      System.out.println("No se encontro " + CARPETA_DATOS + "/comprobantes.csv");
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return lista;
+  }
+
+  public static void guardarComprobantes(List<ComprobantePago> comprobantes) {
+    try (PrintWriter pw = new PrintWriter(new FileWriter(CARPETA_DATOS + "/comprobantes.csv"))) {
+      pw.println("id_comprobante,id_estudiante,id_derecho,fecha,monto");
+      for (ComprobantePago comprobante : comprobantes) {
+        pw.println(comprobante.toCsv());
+      }
+    } catch (IOException e) {
+      System.out.println("Error al guardar comprobantes.");
     }
   }
 

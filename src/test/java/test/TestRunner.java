@@ -4,7 +4,9 @@ import java.util.List;
 
 import models.BloqueSeccion;
 import models.Carrera;
+import models.ComprobantePago;
 import models.Curso;
+import models.DerechoPago;
 import models.DiaSemana;
 import models.Estudiante;
 import models.EstadoEstudiante;
@@ -12,6 +14,7 @@ import models.EstadoMatricula;
 import models.EstadoPeriodo;
 import models.EstadoPlan;
 import models.HorarioSeccion;
+import models.IndicadorLogro;
 import models.Matricula;
 import models.ModalidadDictado;
 import models.ModuloProfesional;
@@ -19,6 +22,7 @@ import models.PeriodoAcademico;
 import models.PlanEstudios;
 import models.Profesor;
 import models.RegistroDeAsistencia;
+import models.RegistroNota;
 import models.Rol;
 import models.Salon;
 import models.SeccionCurso;
@@ -50,6 +54,7 @@ public class TestRunner {
     probarUnidadDidactica();
     probarOfertaAcademica();
     probarMatriculaYReglaNormativa();
+    probarEvaluacionYFinanzas();
 
     System.out.println();
     if (fallos == 0) {
@@ -293,6 +298,76 @@ public class TestRunner {
     Matricula retirada = new Matricula("M-RET", "E-NORM", "B1", "2026-03-01", EstadoMatricula.RETIRADA);
     afirmar(servicio.puedeRegistrarNotas(activa, curso), "permite notas con matricula activa y 0% de faltas");
     afirmar(!servicio.puedeRegistrarNotas(retirada, curso), "bloquea notas con matricula retirada");
+  }
+
+  private static void probarEvaluacionYFinanzas() {
+    ServicioAcademico servicio = new ServicioAcademico();
+
+    List<IndicadorLogro> indicadores = servicio.listarIndicadores();
+    afirmar(indicadores.size() == 4, "lee los indicadores de logro sembrados (encontrados: " + indicadores.size() + ")");
+    afirmar(servicio.listarIndicadoresSeccion("SEC1").size() == 3, "filtra indicadores por seccion");
+    afirmar(servicio.listarIndicadoresSeccion("SEC9").isEmpty(),
+        "no inventa indicadores en secciones sin configurar");
+    IndicadorLogro i1 = indicadores.stream().filter(i -> i.getIdIndicador().equals("I1")).findFirst().orElse(null);
+    afirmar(i1 != null && i1.getPeso() == 30 && i1.getIdSeccion().equals("SEC1"),
+        "conserva peso y seccion del indicador");
+
+    afirmar(servicio.listarNotas().size() == 2, "lee las notas sembradas");
+    afirmar(servicio.listarNotasEstudiante("E1").size() == 1, "filtra notas por estudiante");
+    afirmar(servicio.listarNotasIndicador("I1").size() == 1, "filtra notas por indicador");
+    RegistroNota n1 = servicio.listarNotasEstudiante("E1").stream().findFirst().orElse(null);
+    afirmar(n1 != null && n1.getNota() == 16 && n1.getIdIndicador().equals("I1"),
+        "conserva la nota vigesimal sembrada");
+
+    afirmar(servicio.puedeRegistrarNota("I1", "E1"), "permite notas con matricula activa y asistencia regular");
+    afirmar(servicio.puedeRegistrarNota("I3", "E2"), "permite notas dentro del limite normativo");
+    afirmar(!servicio.puedeRegistrarNota("I1", "E99"), "rechaza un estudiante sin matricula");
+    afirmar(!servicio.puedeRegistrarNota("I99", "E1"), "rechaza un indicador inexistente");
+
+    Curso curso = new Curso("C-NOTA", "Curso notas", 2, "P1", 5, "M1", 1, 6, 4);
+    Matricula activa = new Matricula("M-NOTA", "E1", "B1", "2026-03-01", EstadoMatricula.ACTIVA);
+    Estudiante est = new Estudiante("E1", "U2024101", "Erick", "Escriba", "erick.escriba@iestp.pe",
+        "Ingenieria de Software", EstadoEstudiante.REGULAR);
+    SesionClase s1 = new SesionClase("S-N1", "H-N1", "2026-03-02", 2, "P1", "S1");
+    SesionClase s2 = new SesionClase("S-N2", "H-N2", "2026-03-03", 2, "P1", "S1");
+    RegistroDeAsistencia r1 = servicio.crearRegistroSesion(s1, curso, est, 2);
+    RegistroDeAsistencia r2 = servicio.crearRegistroSesion(s2, curso, est, 0);
+    afirmar(servicio.puedeRegistrarNota(activa, curso, List.of(s1, s2), List.of(r1, r2)),
+        "consume la regla del 30% al habilitar notas");
+    RegistroDeAsistencia r3 = servicio.crearRegistroSesion(s1, curso, est, 0);
+    afirmar(!servicio.puedeRegistrarNota(activa, curso, List.of(s1, s2), List.of(r3, r2)),
+        "bloquea notas al superar el 30% de inasistencia");
+
+    RegistroNota nueva = servicio.crearRegistroNota("I1", "E1", 18, "2026-04-25");
+    afirmar(nueva != null && nueva.getNota() == 18 && nueva.getIdIndicador().equals("I1"),
+        "crea una nota valida sin persistir");
+    afirmar(nueva != null && nueva.getIdRegistroNota() == null, "la nota nueva aun no tiene identificador");
+    afirmar(servicio.crearRegistroNota("I1", "E1", 21, "2026-04-25") == null, "rechaza notas mayores a 20");
+    afirmar(servicio.crearRegistroNota("I1", "E1", -1, "2026-04-25") == null, "rechaza notas negativas");
+    afirmar(servicio.crearRegistroNota("I99", "E1", 15, "2026-04-25") == null,
+        "rechaza un indicador inexistente");
+    afirmar(servicio.crearRegistroNota("I1", "E99", 15, "2026-04-25") == null,
+        "rechaza un estudiante sin matricula");
+
+    afirmar(servicio.listarDerechosPago().size() == 2, "lee los derechos de pago sembrados");
+    afirmar(servicio.listarComprobantes().size() == 2, "lee los comprobantes sembrados");
+    afirmar(servicio.listarComprobantesEstudiante("E1").size() == 2, "filtra comprobantes por estudiante");
+    afirmar(servicio.saldoPendiente("E1", "D1") == 0.0, "el derecho pagado no deja saldo");
+    afirmar(servicio.saldoPendiente("E2", "D1") == 350.0, "el derecho impago mantiene el saldo");
+    afirmar(servicio.saldoPendiente("E1", "D99") == 0.0, "sin derecho no hay saldo");
+
+    ComprobantePago nuevoPago = servicio.crearComprobantePago("E2", "D1", "2026-04-25", 100.0);
+    afirmar(nuevoPago != null && nuevoPago.getMonto() == 100.0, "crea un comprobante dentro del saldo");
+    afirmar(nuevoPago != null && nuevoPago.getIdComprobante() == null,
+        "el comprobante nuevo aun no tiene identificador");
+    afirmar(servicio.crearComprobantePago("E2", "D1", "2026-04-25", 400.0) == null,
+        "rechaza un pago mayor al saldo pendiente");
+    afirmar(servicio.crearComprobantePago("E2", "D1", "2026-04-25", 0.0) == null,
+        "rechaza un pago no positivo");
+    afirmar(servicio.crearComprobantePago("E99", "D1", "2026-04-25", 10.0) == null,
+        "rechaza un estudiante inexistente");
+    afirmar(servicio.crearComprobantePago("E1", "D99", "2026-04-25", 10.0) == null,
+        "rechaza un derecho inexistente");
   }
 
   private static void afirmar(boolean condicion, String descripcion) {

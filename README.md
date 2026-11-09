@@ -56,6 +56,10 @@ La base institucional del dominio se persiste en CSV y se expone a través de `S
 - **Salón / Laboratorio / Taller** → `Salon` (tipo `AULA` / `LABORATORIO` / `TALLER`; capacidad).
 - **Matrícula** → `Matricula` (N↔1 `Estudiante`; N↔1 `BloqueSeccion`; estado `ACTIVA` / `RETIRADA` / `COMPLETADA`; 1↔N `RegistroDeAsistencia`).
 - **Registro de Asistencia** → `RegistroDeAsistencia` (N↔1 `SesionClase` vía `idSesion`; N↔1 `Matricula` / `Estudiante`; horas asistidas de 0 a N).
+- **Indicador de Logro** → `IndicadorLogro` (N↔1 `SeccionCurso`; peso ponderante dentro de la unidad didáctica).
+- **Registro de Nota** → `RegistroNota` (N↔1 `IndicadorLogro`; N↔1 `Estudiante`; nota vigesimal de 0 a 20).
+- **Derecho de Pago** → `DerechoPago` (concepto normado de cobro, por ejemplo matrícula o carné).
+- **Comprobante de Pago** → `ComprobantePago` (N↔1 `DerechoPago` vía amortización; N↔1 `Estudiante`).
 
 > [!NOTE]
 > `Curso` conserva sus columnas originales y agrega cuatro columnas al final. El lector tolera filas legadas de 5 columnas y, en ese caso, deriva las horas lectivas como `duracionCurso × totalHorasSesion`.
@@ -68,6 +72,10 @@ La base institucional del dominio se persiste en CSV y se expone a través de `S
 
 > [!NOTE]
 > `asistencias.csv` agrega `id_sesion` como última columna. El lector tolera filas legadas de 6 columnas; en ese caso el registro queda sin sesión asociada y no acumula faltas normativas.
+
+> [!IMPORTANT]
+> **Regla de registro de notas (evaluación):**  
+> `ServicioAcademico.puedeRegistrarNota` consume `puedeRegistrarNotas`: la nota solo puede registrarse cuando existe matrícula activa y el porcentaje de inasistencia no supera el 30%. El rango de la nota vigesimal es 0 a 20.
 
 ---
 
@@ -115,7 +123,7 @@ El archivo [`docs/Index.mmd`](docs/Index.mmd) centraliza la arquitectura del sis
 | :--- | :--- | :--- |
 | `docs/` | [`Index.mmd`](docs/Index.mmd) | **Diagrama UML global** con todos los paquetes, clases y relaciones entre capas. |
 | `docs/models/` | [`Models.mmd`](docs/models/Models.mmd) | Diagrama de paquete con entidades del dominio, enumeraciones y relaciones internas. |
-| `docs/models/` | `*.mmd` | Diagramas individuales: [`CursoClass.mmd`](docs/models/CursoClass.mmd), [`Estudiante.mmd`](docs/models/Estudiante.mmd), [`Profesor.mmd`](docs/models/Profesor.mmd), [`Usuario.mmd`](docs/models/Usuario.mmd), [`Rol.mmd`](docs/models/Rol.mmd), [`RegistroDeAsistencia.mmd`](docs/models/RegistroDeAsistencia.mmd), [`EstadoEstudiante.mmd`](docs/models/EstadoEstudiante.mmd), [`Carrera.mmd`](docs/models/Carrera.mmd), [`PlanEstudios.mmd`](docs/models/PlanEstudios.mmd), [`ModuloProfesional.mmd`](docs/models/ModuloProfesional.mmd), [`PeriodoAcademico.mmd`](docs/models/PeriodoAcademico.mmd), [`BloqueSeccion.mmd`](docs/models/BloqueSeccion.mmd), [`SeccionCurso.mmd`](docs/models/SeccionCurso.mmd), [`HorarioSeccion.mmd`](docs/models/HorarioSeccion.mmd), [`SesionClase.mmd`](docs/models/SesionClase.mmd), [`Salon.mmd`](docs/models/Salon.mmd), [`Matricula.mmd`](docs/models/Matricula.mmd). |
+| `docs/models/` | `*.mmd` | Diagramas individuales: [`CursoClass.mmd`](docs/models/CursoClass.mmd), [`Estudiante.mmd`](docs/models/Estudiante.mmd), [`Profesor.mmd`](docs/models/Profesor.mmd), [`Usuario.mmd`](docs/models/Usuario.mmd), [`Rol.mmd`](docs/models/Rol.mmd), [`RegistroDeAsistencia.mmd`](docs/models/RegistroDeAsistencia.mmd), [`EstadoEstudiante.mmd`](docs/models/EstadoEstudiante.mmd), [`Carrera.mmd`](docs/models/Carrera.mmd), [`PlanEstudios.mmd`](docs/models/PlanEstudios.mmd), [`ModuloProfesional.mmd`](docs/models/ModuloProfesional.mmd), [`PeriodoAcademico.mmd`](docs/models/PeriodoAcademico.mmd), [`BloqueSeccion.mmd`](docs/models/BloqueSeccion.mmd), [`SeccionCurso.mmd`](docs/models/SeccionCurso.mmd), [`HorarioSeccion.mmd`](docs/models/HorarioSeccion.mmd), [`SesionClase.mmd`](docs/models/SesionClase.mmd), [`Salon.mmd`](docs/models/Salon.mmd), [`Matricula.mmd`](docs/models/Matricula.mmd), [`IndicadorLogro.mmd`](docs/models/IndicadorLogro.mmd), [`RegistroNota.mmd`](docs/models/RegistroNota.mmd), [`DerechoPago.mmd`](docs/models/DerechoPago.mmd), [`ComprobantePago.mmd`](docs/models/ComprobantePago.mmd). |
 | `docs/service/` | [`Service.mmd`](docs/service/Service.mmd) | Vista de namespace del paquete `service`. |
 | `docs/service/` | [`ServicioAcademico.mmd`](docs/service/ServicioAcademico.mmd) | Especificación de atributos, constantes y métodos de la lógica de negocio. |
 | `docs/service/` | [`AutenticacionService.mmd`](docs/service/AutenticacionService.mmd) | Validación de credenciales y búsqueda de usuarios por correo. |
@@ -150,6 +158,10 @@ La capa de almacenamiento gestiona archivos delimitados por comas ubicados en `d
 | `data/cursos.csv` | `id_curso, nombre_curso, total_horas_sesion, id_profesor, duracion_curso, id_modulo, creditos, horas_teoricas, horas_practicas` | Unidades didácticas y carga horaria |
 | `data/inscripciones.csv` | `id_curso, id_estudiante` | Matrícula de estudiantes por asignatura |
 | `data/asistencias.csv` | `id_asistencia, id_curso, id_estudiante, fecha, horas_asistidas, presente, id_sesion` | Bitácora histórica de sesiones tomadas |
+| `data/indicadores.csv` | `id_indicador, id_seccion, nombre, peso` | Indicadores de logro y su peso por sección |
+| `data/notas.csv` | `id_nota, id_indicador, id_estudiante, nota, fecha` | Notas vigesimales por indicador y estudiante |
+| `data/derechos_pago.csv` | `id_derecho, codigo, nombre, monto` | Derechos de pago normados (matrícula, carné) |
+| `data/comprobantes.csv` | `id_comprobante, id_estudiante, id_derecho, fecha, monto` | Comprobantes de pago emitidos |
 
 ---
 
