@@ -9,12 +9,34 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import models.BloqueSeccion;
+import models.Carrera;
+import models.ComprobantePago;
 import models.Curso;
+import models.DerechoPago;
+import models.DiaSemana;
 import models.Estudiante;
 import models.EstadoEstudiante;
+import models.EstadoMatricula;
+import models.EstadoPeriodo;
+import models.EstadoPlan;
+import models.HorarioSeccion;
+import models.IndicadorLogro;
+import models.Matricula;
+import models.ModalidadDictado;
+import models.ModuloProfesional;
+import models.PeriodoAcademico;
+import models.PlanEstudios;
 import models.Profesor;
 import models.RegistroDeAsistencia;
+import models.RegistroNota;
 import models.Rol;
+import models.Salon;
+import models.SeccionCurso;
+import models.SesionClase;
+import models.TipoClase;
+import models.TipoSalon;
+import models.Turno;
 import models.Usuario;
 
 /**
@@ -82,15 +104,381 @@ public class ArchivoManager {
     return lista;
   }
 
+  public static List<Carrera> leerCarreras() {
+    List<Carrera> lista = new ArrayList<>();
+    try (BufferedReader br = new BufferedReader(new FileReader(CARPETA_DATOS + "/carreras.csv"))) {
+      String linea = br.readLine(); // Saltar cabecera
+      while ((linea = br.readLine()) != null) {
+        if (linea.isBlank()) {
+          continue;
+        }
+        String[] p = linea.split(",", -1);
+        // id_carrera,nombre
+        if (p.length >= 2) {
+          lista.add(new Carrera(p[0].trim(), p[1].trim()));
+        }
+      }
+    } catch (FileNotFoundException e) {
+      System.out.println("No se encontro " + CARPETA_DATOS + "/carreras.csv");
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return lista;
+  }
+
+  public static List<PlanEstudios> leerPlanesEstudios() {
+    List<PlanEstudios> lista = new ArrayList<>();
+    try (BufferedReader br = new BufferedReader(new FileReader(CARPETA_DATOS + "/planes_estudios.csv"))) {
+      String linea = br.readLine(); // Saltar cabecera
+      while ((linea = br.readLine()) != null) {
+        if (linea.isBlank()) {
+          continue;
+        }
+        String[] p = linea.split(",", -1);
+        // id_plan,id_carrera,codigo,nombre,creditos_totales,horas_totales,estado
+        if (p.length >= 7) {
+          lista.add(new PlanEstudios(p[0].trim(), p[1].trim(), p[2].trim(), p[3].trim(),
+              Integer.parseInt(p[4].trim()), Integer.parseInt(p[5].trim()), EstadoPlan.valueOf(p[6].trim())));
+        }
+      }
+    } catch (FileNotFoundException e) {
+      System.out.println("No se encontro " + CARPETA_DATOS + "/planes_estudios.csv");
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return lista;
+  }
+
+  public static List<ModuloProfesional> leerModulosProfesionales() {
+    List<ModuloProfesional> lista = new ArrayList<>();
+    try (BufferedReader br = new BufferedReader(new FileReader(CARPETA_DATOS + "/modulos.csv"))) {
+      String linea = br.readLine(); // Saltar cabecera
+      while ((linea = br.readLine()) != null) {
+        if (linea.isBlank()) {
+          continue;
+        }
+        String[] p = linea.split(",", -1);
+        // id_modulo,id_plan,nombre,competencia,creditos_modulo
+        if (p.length >= 5) {
+          lista.add(new ModuloProfesional(p[0].trim(), p[1].trim(), p[2].trim(), p[3].trim(),
+              Integer.parseInt(p[4].trim())));
+        }
+      }
+    } catch (FileNotFoundException e) {
+      System.out.println("No se encontro " + CARPETA_DATOS + "/modulos.csv");
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return lista;
+  }
+
+  public static List<PeriodoAcademico> leerPeriodosAcademicos() {
+    List<PeriodoAcademico> lista = new ArrayList<>();
+    try (BufferedReader br = new BufferedReader(new FileReader(CARPETA_DATOS + "/periodos.csv"))) {
+      String linea = br.readLine(); // Saltar cabecera
+      while ((linea = br.readLine()) != null) {
+        if (linea.isBlank()) {
+          continue;
+        }
+        String[] p = linea.split(",", -1);
+        // id_periodo,id_plan,codigo,fecha_inicio,fecha_fin,estado
+        if (p.length >= 6) {
+          lista.add(new PeriodoAcademico(p[0].trim(), p[1].trim(), p[2].trim(), p[3].trim(), p[4].trim(),
+              EstadoPeriodo.valueOf(p[5].trim())));
+        }
+      }
+    } catch (FileNotFoundException e) {
+      System.out.println("No se encontro " + CARPETA_DATOS + "/periodos.csv");
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return lista;
+  }
+
+  public static List<BloqueSeccion> leerBloques() {
+    List<BloqueSeccion> lista = new ArrayList<>();
+    try (BufferedReader br = new BufferedReader(new FileReader(CARPETA_DATOS + "/bloques.csv"))) {
+      String linea = br.readLine(); // Saltar cabecera
+      while ((linea = br.readLine()) != null) {
+        if (linea.isBlank()) {
+          continue;
+        }
+        String[] p = linea.split(",", -1);
+        // id_bloque,id_periodo,nombre,turno
+        if (p.length >= 4) {
+          lista.add(new BloqueSeccion(p[0].trim(), p[1].trim(), p[2].trim(), Turno.valueOf(p[3].trim())));
+        }
+      }
+    } catch (FileNotFoundException e) {
+      System.out.println("No se encontro " + CARPETA_DATOS + "/bloques.csv");
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return lista;
+  }
+
+  public static List<SeccionCurso> leerSecciones() {
+    List<SeccionCurso> lista = new ArrayList<>();
+    try (BufferedReader br = new BufferedReader(new FileReader(CARPETA_DATOS + "/secciones.csv"))) {
+      String linea = br.readLine(); // Saltar cabecera
+      while ((linea = br.readLine()) != null) {
+        if (linea.isBlank()) {
+          continue;
+        }
+        String[] p = linea.split(",", -1);
+        // id_seccion,id_bloque,id_curso,modalidad,id_profesor,cupo_maximo
+        if (p.length >= 6) {
+          lista.add(new SeccionCurso(p[0].trim(), p[1].trim(), p[2].trim(), ModalidadDictado.valueOf(p[3].trim()),
+              p[4].trim(), Integer.parseInt(p[5].trim())));
+        }
+      }
+    } catch (FileNotFoundException e) {
+      System.out.println("No se encontro " + CARPETA_DATOS + "/secciones.csv");
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return lista;
+  }
+
+  public static List<HorarioSeccion> leerHorarios() {
+    List<HorarioSeccion> lista = new ArrayList<>();
+    try (BufferedReader br = new BufferedReader(new FileReader(CARPETA_DATOS + "/horarios.csv"))) {
+      String linea = br.readLine(); // Saltar cabecera
+      while ((linea = br.readLine()) != null) {
+        if (linea.isBlank()) {
+          continue;
+        }
+        String[] p = linea.split(",", -1);
+        // id_horario,id_seccion,dia_semana,hora_inicio,hora_fin,tipo_clase,id_profesor,id_salon
+        if (p.length >= 8) {
+          lista.add(new HorarioSeccion(p[0].trim(), p[1].trim(), DiaSemana.valueOf(p[2].trim()), p[3].trim(),
+              p[4].trim(), TipoClase.valueOf(p[5].trim()), p[6].trim(), p[7].trim()));
+        }
+      }
+    } catch (FileNotFoundException e) {
+      System.out.println("No se encontro " + CARPETA_DATOS + "/horarios.csv");
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return lista;
+  }
+
+  public static List<SesionClase> leerSesiones() {
+    List<SesionClase> lista = new ArrayList<>();
+    try (BufferedReader br = new BufferedReader(new FileReader(CARPETA_DATOS + "/sesiones.csv"))) {
+      String linea = br.readLine(); // Saltar cabecera
+      while ((linea = br.readLine()) != null) {
+        if (linea.isBlank()) {
+          continue;
+        }
+        String[] p = linea.split(",", -1);
+        // id_sesion,id_horario,fecha,horas_programadas,id_profesor,id_salon
+        if (p.length >= 6) {
+          lista.add(new SesionClase(p[0].trim(), p[1].trim(), p[2].trim(), Integer.parseInt(p[3].trim()), p[4].trim(),
+              p[5].trim()));
+        }
+      }
+    } catch (FileNotFoundException e) {
+      System.out.println("No se encontro " + CARPETA_DATOS + "/sesiones.csv");
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return lista;
+  }
+
+  public static List<Salon> leerSalones() {
+    List<Salon> lista = new ArrayList<>();
+    try (BufferedReader br = new BufferedReader(new FileReader(CARPETA_DATOS + "/salones.csv"))) {
+      String linea = br.readLine(); // Saltar cabecera
+      while ((linea = br.readLine()) != null) {
+        if (linea.isBlank()) {
+          continue;
+        }
+        String[] p = linea.split(",", -1);
+        // id_salon,nombre,tipo,capacidad
+        if (p.length >= 4) {
+          lista.add(new Salon(p[0].trim(), p[1].trim(), TipoSalon.valueOf(p[2].trim()),
+              Integer.parseInt(p[3].trim())));
+        }
+      }
+    } catch (FileNotFoundException e) {
+      System.out.println("No se encontro " + CARPETA_DATOS + "/salones.csv");
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return lista;
+  }
+
+  public static List<Matricula> leerMatriculas() {
+    List<Matricula> lista = new ArrayList<>();
+    try (BufferedReader br = new BufferedReader(new FileReader(CARPETA_DATOS + "/matriculas.csv"))) {
+      String linea = br.readLine(); // Saltar cabecera
+      while ((linea = br.readLine()) != null) {
+        if (linea.isBlank()) {
+          continue;
+        }
+        String[] p = linea.split(",", -1);
+        // id_matricula,id_estudiante,id_bloque,fecha_matricula,estado
+        if (p.length >= 5) {
+          lista.add(new Matricula(p[0].trim(), p[1].trim(), p[2].trim(), p[3].trim(),
+              EstadoMatricula.valueOf(p[4].trim())));
+        }
+      }
+    } catch (FileNotFoundException e) {
+      System.out.println("No se encontro " + CARPETA_DATOS + "/matriculas.csv");
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return lista;
+  }
+
+  public static void guardarMatriculas(List<Matricula> matriculas) {
+    try (PrintWriter pw = new PrintWriter(new FileWriter(CARPETA_DATOS + "/matriculas.csv"))) {
+      pw.println("id_matricula,id_estudiante,id_bloque,fecha_matricula,estado");
+      for (Matricula matricula : matriculas) {
+        pw.println(matricula.toCsv());
+      }
+    } catch (IOException e) {
+      System.out.println("Error al guardar matriculas.");
+    }
+  }
+
+  public static List<IndicadorLogro> leerIndicadores() {
+    List<IndicadorLogro> lista = new ArrayList<>();
+    try (BufferedReader br = new BufferedReader(new FileReader(CARPETA_DATOS + "/indicadores.csv"))) {
+      String linea = br.readLine(); // Saltar cabecera
+      while ((linea = br.readLine()) != null) {
+        if (linea.isBlank()) {
+          continue;
+        }
+        String[] p = linea.split(",", -1);
+        // id_indicador,id_seccion,nombre,peso
+        if (p.length >= 4) {
+          lista.add(new IndicadorLogro(p[0].trim(), p[1].trim(), p[2].trim(), Integer.parseInt(p[3].trim())));
+        }
+      }
+    } catch (FileNotFoundException e) {
+      System.out.println("No se encontro " + CARPETA_DATOS + "/indicadores.csv");
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return lista;
+  }
+
+  public static List<RegistroNota> leerNotas() {
+    List<RegistroNota> lista = new ArrayList<>();
+    try (BufferedReader br = new BufferedReader(new FileReader(CARPETA_DATOS + "/notas.csv"))) {
+      String linea = br.readLine(); // Saltar cabecera
+      while ((linea = br.readLine()) != null) {
+        if (linea.isBlank()) {
+          continue;
+        }
+        String[] p = linea.split(",", -1);
+        // id_nota,id_indicador,id_estudiante,nota,fecha
+        if (p.length >= 5) {
+          lista.add(new RegistroNota(p[0].trim(), p[1].trim(), p[2].trim(), Integer.parseInt(p[3].trim()),
+              p[4].trim()));
+        }
+      }
+    } catch (FileNotFoundException e) {
+      System.out.println("No se encontro " + CARPETA_DATOS + "/notas.csv");
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return lista;
+  }
+
+  public static void guardarNotas(List<RegistroNota> notas) {
+    try (PrintWriter pw = new PrintWriter(new FileWriter(CARPETA_DATOS + "/notas.csv"))) {
+      pw.println("id_nota,id_indicador,id_estudiante,nota,fecha");
+      for (RegistroNota nota : notas) {
+        pw.println(nota.toCsv());
+      }
+    } catch (IOException e) {
+      System.out.println("Error al guardar notas.");
+    }
+  }
+
+  public static List<DerechoPago> leerDerechosPago() {
+    List<DerechoPago> lista = new ArrayList<>();
+    try (BufferedReader br = new BufferedReader(new FileReader(CARPETA_DATOS + "/derechos_pago.csv"))) {
+      String linea = br.readLine(); // Saltar cabecera
+      while ((linea = br.readLine()) != null) {
+        if (linea.isBlank()) {
+          continue;
+        }
+        String[] p = linea.split(",", -1);
+        // id_derecho,codigo,nombre,monto
+        if (p.length >= 4) {
+          lista.add(new DerechoPago(p[0].trim(), p[1].trim(), p[2].trim(), Double.parseDouble(p[3].trim())));
+        }
+      }
+    } catch (FileNotFoundException e) {
+      System.out.println("No se encontro " + CARPETA_DATOS + "/derechos_pago.csv");
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return lista;
+  }
+
+  public static List<ComprobantePago> leerComprobantes() {
+    List<ComprobantePago> lista = new ArrayList<>();
+    try (BufferedReader br = new BufferedReader(new FileReader(CARPETA_DATOS + "/comprobantes.csv"))) {
+      String linea = br.readLine(); // Saltar cabecera
+      while ((linea = br.readLine()) != null) {
+        if (linea.isBlank()) {
+          continue;
+        }
+        String[] p = linea.split(",", -1);
+        // id_comprobante,id_estudiante,id_derecho,fecha,monto
+        if (p.length >= 5) {
+          lista.add(new ComprobantePago(p[0].trim(), p[1].trim(), p[2].trim(), p[3].trim(),
+              Double.parseDouble(p[4].trim())));
+        }
+      }
+    } catch (FileNotFoundException e) {
+      System.out.println("No se encontro " + CARPETA_DATOS + "/comprobantes.csv");
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return lista;
+  }
+
+  public static void guardarComprobantes(List<ComprobantePago> comprobantes) {
+    try (PrintWriter pw = new PrintWriter(new FileWriter(CARPETA_DATOS + "/comprobantes.csv"))) {
+      pw.println("id_comprobante,id_estudiante,id_derecho,fecha,monto");
+      for (ComprobantePago comprobante : comprobantes) {
+        pw.println(comprobante.toCsv());
+      }
+    } catch (IOException e) {
+      System.out.println("Error al guardar comprobantes.");
+    }
+  }
+
   public static List<Curso> leerCursos() {
     List<Curso> lista = new ArrayList<>();
     try (BufferedReader br = new BufferedReader(new FileReader(CARPETA_DATOS + "/cursos.csv"))) {
       String linea = br.readLine();
       while ((linea = br.readLine()) != null) {
-        String[] p = linea.split(",");
+        if (linea.isBlank()) {
+          continue;
+        }
+        String[] p = linea.split(",", -1);
         // id_curso,nombre_curso,total_horas_sesion,id_profesor,duracion_curso
+        // [,id_modulo,creditos,horas_teoricas,horas_practicas]
         if (p.length >= 5) {
-          lista.add(new Curso(p[0], p[1], Integer.parseInt(p[2]), p[3], Integer.parseInt(p[4])));
+          String idCurso = p[0].trim();
+          String nombreCurso = p[1].trim();
+          int totalHorasSesion = Integer.parseInt(p[2].trim());
+          String idProfesor = p[3].trim();
+          int duracionCurso = Integer.parseInt(p[4].trim());
+          if (p.length >= 9) {
+            lista.add(new Curso(idCurso, nombreCurso, totalHorasSesion, idProfesor, duracionCurso,
+                p[5].trim(), Integer.parseInt(p[6].trim()), Integer.parseInt(p[7].trim()),
+                Integer.parseInt(p[8].trim())));
+          } else {
+            lista.add(new Curso(idCurso, nombreCurso, totalHorasSesion, idProfesor, duracionCurso));
+          }
         }
       }
     } catch (IOException e) {
@@ -130,10 +518,15 @@ public class ArchivoManager {
     try (BufferedReader br = new BufferedReader(new FileReader(CARPETA_DATOS + "/asistencias.csv"))) {
       String linea = br.readLine();
       while ((linea = br.readLine()) != null) {
-        String[] p = linea.split(",");
-        // id_asistencia,id_curso,id_estudiante,fecha,horas_asistidas,presente
+        if (linea.isBlank()) {
+          continue;
+        }
+        String[] p = linea.split(",", -1);
+        // id_asistencia,id_curso,id_estudiante,fecha,horas_asistidas,presente[,id_sesion]
         if (p.length >= 6 && p[2].equals(idEstudiante)) {
-          lista.add(new RegistroDeAsistencia(p[0], p[1], p[2], p[3], Integer.parseInt(p[4]), esPresente(p[5])));
+          String idSesion = p.length >= 7 ? p[6].trim() : "";
+          lista.add(new RegistroDeAsistencia(p[0].trim(), p[1].trim(), p[2].trim(), p[3].trim(),
+              Integer.parseInt(p[4].trim()), esPresente(p[5].trim()), idSesion));
         }
       }
     } catch (IOException e) {
@@ -147,9 +540,15 @@ public class ArchivoManager {
     try (BufferedReader br = new BufferedReader(new FileReader(CARPETA_DATOS + "/asistencias.csv"))) {
       String linea = br.readLine();
       while ((linea = br.readLine()) != null) {
-        String[] p = linea.split(",");
+        if (linea.isBlank()) {
+          continue;
+        }
+        String[] p = linea.split(",", -1);
+        // id_asistencia,id_curso,id_estudiante,fecha,horas_asistidas,presente[,id_sesion]
         if (p.length >= 6) {
-          lista.add(new RegistroDeAsistencia(p[0], p[1], p[2], p[3], Integer.parseInt(p[4]), esPresente(p[5])));
+          String idSesion = p.length >= 7 ? p[6].trim() : "";
+          lista.add(new RegistroDeAsistencia(p[0].trim(), p[1].trim(), p[2].trim(), p[3].trim(),
+              Integer.parseInt(p[4].trim()), esPresente(p[5].trim()), idSesion));
         }
       }
     } catch (IOException e) {

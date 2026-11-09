@@ -1,0 +1,8 @@
+id_sesion,id_horario,fecha,horas_programadas,id_profesor,id_salon
+SES1,H1,2026-03-09,2,P1,S1
+SES2,H1,2026-03-16,2,P1,S1
+SES3,H2,2026-03-11,2,P1,S2
+SES4,H3,2026-03-10,2,P1,S1
+SES5,H4,2026-03-12,3,P2,S2
+SES6,H5,2026-03-13,3,P3,S3
+SES7,H6,2026-03-14,3,P4,S2

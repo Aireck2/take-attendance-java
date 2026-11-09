@@ -13,18 +13,204 @@ classDiagram
             PROFESOR
             ESTUDIANTE
         }
+        class EstadoPlan {
+            <<enumeration>>
+            VIGENTE
+            HISTORICO
+        }
+        class EstadoPeriodo {
+            <<enumeration>>
+            PLANIFICADO
+            ACTIVO
+            CERRADO
+        }
+        class Turno {
+            <<enumeration>>
+            MANANA
+            TARDE
+            NOCHE
+        }
+        class ModalidadDictado {
+            <<enumeration>>
+            PRESENCIAL
+            VIRTUAL
+            HIBRIDA
+        }
+        class DiaSemana {
+            <<enumeration>>
+            LUNES
+            MARTES
+            MIERCOLES
+            JUEVES
+            VIERNES
+            SABADO
+            DOMINGO
+        }
+        class TipoClase {
+            <<enumeration>>
+            TEORIA
+            PRACTICA
+        }
+        class TipoSalon {
+            <<enumeration>>
+            AULA
+            LABORATORIO
+            TALLER
+        }
+        class EstadoMatricula {
+            <<enumeration>>
+            ACTIVA
+            RETIRADA
+            COMPLETADA
+        }
         class Curso {
             - idCurso: String 
             - nombreCurso: String 
             - totalHorasSesion: int
             - idProfesor: String
             - duracionCurso: int
+            - idModulo: String
+            - creditos: int
+            - horasTeoricas: int
+            - horasPracticas: int
     
             + String getIdCurso()
             + String getNombreCurso()
             + int getTotalHorasSesion()
             + String getIdProfesor()
             + int getDuracionCurso()
+            + String getIdModulo()
+            + int getCreditos()
+            + int getHorasTeoricas()
+            + int getHorasPracticas()
+            + int getHorasLectivasTotales()
+        }
+        class Carrera {
+            - idCarrera: String
+            - nombre: String
+            + String getIdCarrera()
+            + String getNombre()
+        }
+        class PlanEstudios {
+            - idPlan: String
+            - idCarrera: String
+            - codigo: String
+            - nombre: String
+            - creditosTotales: int
+            - horasTotales: int
+            - estado: EstadoPlan
+            + String getIdPlan()
+            + String getIdCarrera()
+            + String getCodigo()
+            + String getNombre()
+            + int getCreditosTotales()
+            + int getHorasTotales()
+            + EstadoPlan getEstado()
+        }
+        class ModuloProfesional {
+            - idModulo: String
+            - idPlan: String
+            - nombre: String
+            - competencia: String
+            - creditosModulo: int
+            + String getIdModulo()
+            + String getIdPlan()
+            + String getNombre()
+            + String getCompetencia()
+            + int getCreditosModulo()
+        }
+        class PeriodoAcademico {
+            - idPeriodo: String
+            - idPlan: String
+            - codigo: String
+            - fechaInicio: String
+            - fechaFin: String
+            - estado: EstadoPeriodo
+            + String getIdPeriodo()
+            + String getIdPlan()
+            + String getCodigo()
+            + String getFechaInicio()
+            + String getFechaFin()
+            + EstadoPeriodo getEstado()
+        }
+        class BloqueSeccion {
+            - idBloque: String
+            - idPeriodo: String
+            - nombre: String
+            - turno: Turno
+            + String getIdBloque()
+            + String getIdPeriodo()
+            + String getNombre()
+            + Turno getTurno()
+        }
+        class SeccionCurso {
+            - idSeccion: String
+            - idBloque: String
+            - idCurso: String
+            - modalidad: ModalidadDictado
+            - idProfesor: String
+            - cupoMaximo: int
+            + String getIdSeccion()
+            + String getIdBloque()
+            + String getIdCurso()
+            + ModalidadDictado getModalidad()
+            + String getIdProfesor()
+            + int getCupoMaximo()
+        }
+        class HorarioSeccion {
+            - idHorario: String
+            - idSeccion: String
+            - diaSemana: DiaSemana
+            - horaInicio: String
+            - horaFin: String
+            - tipoClase: TipoClase
+            - idProfesor: String
+            - idSalon: String
+            + String getIdHorario()
+            + String getIdSeccion()
+            + DiaSemana getDiaSemana()
+            + String getHoraInicio()
+            + String getHoraFin()
+            + TipoClase getTipoClase()
+            + String getIdProfesor()
+            + String getIdSalon()
+        }
+        class SesionClase {
+            - idSesion: String
+            - idHorario: String
+            - fecha: String
+            - horasProgramadas: int
+            - idProfesor: String
+            - idSalon: String
+            + String getIdSesion()
+            + String getIdHorario()
+            + String getFecha()
+            + int getHorasProgramadas()
+            + String getIdProfesor()
+            + String getIdSalon()
+        }
+        class Salon {
+            - idSalon: String
+            - nombre: String
+            - tipo: TipoSalon
+            - capacidad: int
+            + String getIdSalon()
+            + String getNombre()
+            + TipoSalon getTipo()
+            + int getCapacidad()
+        }
+        class Matricula {
+            - idMatricula: String
+            - idEstudiante: String
+            - idBloque: String
+            - fechaMatricula: String
+            - estado: EstadoMatricula
+            + String getIdMatricula()
+            + String getIdEstudiante()
+            + String getIdBloque()
+            + String getFechaMatricula()
+            + EstadoMatricula getEstado()
+            + String toCsv()
         }
        class Profesor {
             - id: String
@@ -89,6 +275,7 @@ classDiagram
             - fecha: String
             - horasAsistidas: int
             - presente: boolean
+            - idSesion: String
             + String getIdAsistencia()
             + void setIdAsistencia(String idAsistencia)
             + String getIdCurso()
@@ -96,6 +283,55 @@ classDiagram
             + String getFecha()
             + int getHorasAsistidas()
             + boolean isPresente()
+            + String getIdSesion()
+            + String toCsv()
+        }
+        class IndicadorLogro {
+            - idIndicador: String
+            - idSeccion: String
+            - nombre: String
+            - peso: int
+            + String getIdIndicador()
+            + String getIdSeccion()
+            + String getNombre()
+            + int getPeso()
+        }
+        class RegistroNota {
+            - idRegistroNota: String
+            - idIndicador: String
+            - idEstudiante: String
+            - nota: int
+            - fecha: String
+            + String getIdRegistroNota()
+            + void setIdRegistroNota(String idRegistroNota)
+            + String getIdIndicador()
+            + String getIdEstudiante()
+            + int getNota()
+            + String getFecha()
+            + String toCsv()
+        }
+        class DerechoPago {
+            - idDerecho: String
+            - codigo: String
+            - nombre: String
+            - monto: double
+            + String getIdDerecho()
+            + String getCodigo()
+            + String getNombre()
+            + double getMonto()
+        }
+        class ComprobantePago {
+            - idComprobante: String
+            - idEstudiante: String
+            - idDerecho: String
+            - fecha: String
+            - monto: double
+            + String getIdComprobante()
+            + void setIdComprobante(String idComprobante)
+            + String getIdEstudiante()
+            + String getIdDerecho()
+            + String getFecha()
+            + double getMonto()
             + String toCsv()
         }
     }
@@ -107,3 +343,33 @@ classDiagram
     Curso ..> Profesor : referencia por idProfesor
     RegistroDeAsistencia ..> Estudiante : referencia por idEstudiante
     RegistroDeAsistencia ..> Curso : referencia por idCurso
+    Carrera --> PlanEstudios : administra
+    PlanEstudios --> ModuloProfesional : organiza
+    PlanEstudios --> PeriodoAcademico : operacionaliza
+    ModuloProfesional --> Curso : agrupa
+    PlanEstudios --> EstadoPlan : tiene
+    PeriodoAcademico --> EstadoPeriodo : tiene
+    PeriodoAcademico --> BloqueSeccion : apertura
+    BloqueSeccion --> SeccionCurso : contiene
+    SeccionCurso ..> Curso : referencia por idCurso
+    SeccionCurso --> ModalidadDictado : tiene
+    BloqueSeccion --> Turno : tiene
+    SeccionCurso --> HorarioSeccion : divide en franjas
+    HorarioSeccion ..> Profesor : referencia por idProfesor
+    HorarioSeccion --> Salon : reserva
+    HorarioSeccion --> DiaSemana : tiene
+    HorarioSeccion --> TipoClase : tiene
+    HorarioSeccion --> SesionClase : proyecta
+    SesionClase ..> Profesor : referencia por idProfesor
+    SesionClase --> Salon : usa
+    Salon --> TipoSalon : tiene
+    Matricula ..> Estudiante : referencia por idEstudiante
+    Matricula ..> BloqueSeccion : referencia por idBloque
+    Matricula --> EstadoMatricula : tiene
+    Matricula --> RegistroDeAsistencia : acumula
+    RegistroDeAsistencia ..> SesionClase : referencia por idSesion
+    IndicadorLogro --> SeccionCurso : configura
+    RegistroNota ..> IndicadorLogro : referencia por idIndicador
+    RegistroNota ..> Estudiante : referencia por idEstudiante
+    ComprobantePago ..> DerechoPago : amortiza
+    ComprobantePago ..> Estudiante : referencia por idEstudiante

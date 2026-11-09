@@ -1,6 +1,6 @@
-id_curso,nombre_curso,total_horas_sesion,id_profesor,duracion_curso
-C1,Seguridad en Redes,4,P1,16
-C2,Ethical Hacking,3,P1,16
-C3,Routing y Switching,4,P2,16
-C4,Cloud Computing,3,P3,16
-C5,Bases de Datos Avanzadas,4,P4,16
+id_curso,nombre_curso,total_horas_sesion,id_profesor,duracion_curso,id_modulo,creditos,horas_teoricas,horas_practicas
+C1,Seguridad en Redes,4,P1,16,M1,4,32,32
+C2,Ethical Hacking,3,P1,16,M1,3,24,24
+C3,Routing y Switching,4,P2,16,M1,4,32,32
+C4,Cloud Computing,3,P3,16,M2,3,24,24
+C5,Bases de Datos Avanzadas,4,P4,16,M3,4,32,32

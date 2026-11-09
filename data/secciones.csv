@@ -1,0 +1,6 @@
+id_seccion,id_bloque,id_curso,modalidad,id_profesor,cupo_maximo
+SEC1,B1,C1,PRESENCIAL,P1,30
+SEC2,B1,C2,PRESENCIAL,P1,30
+SEC3,B1,C3,PRESENCIAL,P2,30
+SEC4,B2,C4,HIBRIDA,P3,25
+SEC5,B2,C5,PRESENCIAL,P4,25
