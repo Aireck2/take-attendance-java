@@ -10,17 +10,19 @@ Runner: `javac` + `java` (proyecto sin dependencias externas).
 - **S1:** El dominio incorpora `Rol` (`PROFESOR`, `ESTUDIANTE`) y `Usuario` (`id`, `correo`, `hashContrasena`, `rol`, `idReferencia`, `activo`). `idReferencia` apunta al `id` de `Profesor` o `Estudiante`.
 - **S2:** Las contraseñas nunca se guardan en texto plano. Se usa PBKDF2-HMAC-SHA256 con sal aleatoria de 16 bytes y 210000 iteraciones, con formato `pbkdf2_sha256$<iteraciones>$<salBase64>$<hashBase64>` y comparación en tiempo constante.
 - **S3:** El programa inicia con el menú `1. Iniciar sesión / 2. Salir`. El inicio de sesión pide correo y contraseña; la contraseña se oculta con `System.console().readPassword()` cuando la terminal lo permite.
-- **S4:** Credenciales correctas abren directamente el menú del profesor o del estudiante según el rol. Credenciales incorrectas muestran un mensaje genérico y permiten hasta 3 intentos.
+- **S4:** Credenciales correctas abren directamente el menú del profesor o del estudiante según el rol. Credenciales incorrectas muestran `Credenciales inválidas.` y vuelven al menú principal; no hay contador de intentos.
 - **S5:** El correo se normaliza (recorta espacios y compara sin distinguir mayúsculas).
 - **S6:** `data/usuarios.csv` persiste `id,correo,hash_contrasena,rol,id_referencia,activo` con 10 usuarios de demostración (5 docentes y 5 estudiantes) y contraseñas documentadas en el README.
 - **S7:** README y diagramas documentan el modelo, la persistencia y el flujo de acceso.
+- **S8:** La toma de asistencia pide solo las horas asistidas por alumno (`Horas asistidas (0 = ausente, máximo X)`). `0` marca ausente; el valor se limita al rango `[0, curso.totalHorasSesion]` y `presente` se deriva de `horas > 0`.
 
 ## Tasks
 
 - T1 | S1, S2 | inline | **hecho** | Tests de `PasswordHasher` en rojo; luego `Rol`, `Usuario` y `PasswordHasher`. Commit `f7a7d39`.
 - T2 | S1, S5, S6 | inline | **hecho** | `ArchivoManager.leerUsuarios`, semilla `data/usuarios.csv`, `AutenticacionService` y tests de login. Commit `f7a7d39`.
-- T3 | S3, S4 | inline | **hecho** | Flujo de inicio de sesión en `SistemaApp` y resolución de perfiles en `ServicioAcademico`. Commit `c0b0b2c`.
+- T3 | S3, S4 | inline | **hecho** | Flujo de inicio de sesión en `SistemaApp` y resolución de perfiles en `ServicioAcademico`. Commit `c0b0b2c`. Corregido en T5: un solo intento.
 - T4 | S7 | inline | **hecho** | README, diagramas Mermaid y verificación funcional. Commit de documentación.
+- T5 | S4, S8 | inline | **hecho** | Asistencia pide solo horas (`0` = ausente, tope por sesión) y login sin contador de intentos. Tests nuevos en rojo y luego verdes (23 pruebas).
 
 ## Log
 
@@ -31,3 +33,5 @@ Runner: `javac` + `java` (proyecto sin dependencias externas).
 - **L5 (2026-11-09):** RED observado: la suite no compila porque faltan `Rol`, `Usuario`, `PasswordHasher` y `AutenticacionService`. GREEN: `java -cp out test.TestRunner` → `OK: 17 pruebas pasaron.`
 - **L6 (2026-11-09):** Verificación funcional con entrada redirigida: login de profesor (`carlos.mendoza@usil.pe`) y de estudiante (`erick.escriba@iestp.pe`), apertura del menú correcto, 3 intentos fallidos con mensaje genérico. Toma de asistencia probada en una copia temporal de `data/`: se agregaron 5 registros (A6–A10) sin tocar el CSV del repositorio.
 - **L7 (2026-11-09):** Commits de la feature: `f7a7d39` (modelo, seguridad, persistencia y tests) y `c0b0b2c` (flujo de login por rol).
+- **L8 (2026-11-09):** "corregir registro de asistencia, solo pedir horas asistidas, inicio de sesion no tendra intentos."
+- **L9 (2026-11-09):** RED observado para T5: `crearRegistro` no acepta 4 argumentos. GREEN: `OK: 23 pruebas pasaron.` Verificación funcional en copia temporal: un intento fallido vuelve al menú con `Credenciales inválidas.`; la asistencia pide solo horas, `0` guarda ausente y `99` se limita al máximo de la sesión.

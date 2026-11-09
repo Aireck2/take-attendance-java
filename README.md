@@ -12,13 +12,13 @@ El sistema implementa una arquitectura limpia por capas (Separación de Responsa
 - **Inicio de sesión real:** el acceso se valida con correo y contraseña contra `data/usuarios.csv`; ya no se elige un usuario de una lista.
 - **Roles:** cada cuenta tiene el rol `PROFESOR` o `ESTUDIANTE`, y el rol determina el menú que se abre.
 - **Contraseñas protegidas:** se almacenan con PBKDF2-HMAC-SHA256, sal aleatoria de 16 bytes y 210 000 iteraciones. Nunca se guarda texto plano.
-- **Intentos limitados:** tras 3 intentos fallidos se vuelve al menú principal.
+- **Un intento por acceso:** si las credenciales son incorrectas se muestra un mensaje genérico y se vuelve al menú principal; no hay contador de intentos.
 - **Contraseña oculta:** en una terminal interactiva se usa `System.console().readPassword()` para no mostrarla.
 
 ### Gestión de Profesores
 - **Consulta de Perfil:** Visualización detallada de datos personales, departamento académico y especialidad.
 - **Cursos Asignados:** Listado de asignaturas a cargo con detalle de carga horaria y lista de alumnos matriculados.
-- **Toma de Asistencia Interactiva:** Registro por sesión con captura automática de fecha actual (`LocalDate`), validación de estado (asistió / faltó) y registro de horas efectivas asistidas con tope por sesión.
+- **Toma de Asistencia Interactiva:** Registro por sesión con captura automática de fecha actual (`LocalDate`). Solo se piden las horas asistidas: `0` significa ausente y el valor se limita al máximo de horas de la sesión.
 
 ### Portal del Estudiante
 - **Consulta de Perfil:** Estado de matrícula (regular, suspendido, reserva, etc.), código institucional y carrera profesional.

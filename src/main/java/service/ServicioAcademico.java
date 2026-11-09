@@ -141,11 +141,14 @@ public class ServicioAcademico {
   }
 
   /**
-   * Crea un registro de asistencia. El identificador se asigna al guardar el lote.
+   * Crea un registro de asistencia a partir de las horas asistidas.
+   * Las horas se limitan entre 0 y el maximo de la sesion; 0 significa ausente.
+   * El identificador se asigna al guardar el lote.
    */
-  public RegistroDeAsistencia crearRegistro(Curso curso, Estudiante estudiante, String fecha, int horasAsistidas,
-      boolean presente) {
-    return new RegistroDeAsistencia(null, curso.getIdCurso(), estudiante.getId(), fecha, horasAsistidas, presente);
+  public RegistroDeAsistencia crearRegistro(Curso curso, Estudiante estudiante, String fecha, int horasAsistidas) {
+    int horasValidas = Math.max(0, Math.min(horasAsistidas, curso.getTotalHorasSesion()));
+    boolean presente = horasValidas > 0;
+    return new RegistroDeAsistencia(null, curso.getIdCurso(), estudiante.getId(), fecha, horasValidas, presente);
   }
 
   /**
