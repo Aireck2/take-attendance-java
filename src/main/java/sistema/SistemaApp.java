@@ -23,7 +23,6 @@ import service.ServicioAcademico;
  * de negocio a la capa de servicio.
  */
 public class SistemaApp {
-  private static final int MAX_INTENTOS_LOGIN = 3;
   private static final Scanner scanner = new Scanner(System.in);
   private static final ServicioAcademico servicio = new ServicioAcademico();
   private static final AutenticacionService autenticacion = new AutenticacionService();
@@ -62,44 +61,39 @@ public class SistemaApp {
 
   /**
    * Pide correo y contraseña, valida las credenciales y abre el menú del rol.
-   * Permite hasta tres intentos antes de volver al menú principal.
+   * Si las credenciales son incorrectas, vuelve al menú principal.
    */
   private static void iniciarSesion() {
     System.out.println("\n--- INICIO DE SESIÓN ---");
-    for (int intento = 1; intento <= MAX_INTENTOS_LOGIN; intento++) {
-      System.out.print("Correo: ");
-      String correo = scanner.nextLine().trim();
-      String contrasena = leerContrasena("Contraseña: ");
+    System.out.print("Correo: ");
+    String correo = scanner.nextLine().trim();
+    String contrasena = leerContrasena("Contraseña: ");
 
-      Usuario usuario = autenticacion.autenticar(correo, contrasena);
-      if (usuario == null) {
-        int restantes = MAX_INTENTOS_LOGIN - intento;
-        System.out.println("Credenciales inválidas. Intentos restantes: " + restantes);
-        continue;
-      }
-
-      System.out.println("Sesión iniciada como " + usuario.getRol() + ".");
-      if (usuario.getRol() == Rol.PROFESOR) {
-        Profesor profesor = servicio.buscarProfesor(usuario.getIdReferencia());
-        if (profesor == null) {
-          System.out.println("No se encontró el perfil del profesor asociado a la cuenta.");
-          return;
-        }
-        System.out.println("Bienvenido, " + profesor.getNombreCompleto() + ".");
-        menuProfesor(profesor);
-      } else {
-        Estudiante estudiante = servicio.buscarEstudiante(usuario.getIdReferencia());
-        if (estudiante == null) {
-          System.out.println("No se encontró el perfil del estudiante asociado a la cuenta.");
-          return;
-        }
-        System.out.println("Bienvenido, " + estudiante.getNombreCompleto() + ".");
-        menuEstudiante(estudiante);
-      }
-      System.out.println("Sesión cerrada.");
+    Usuario usuario = autenticacion.autenticar(correo, contrasena);
+    if (usuario == null) {
+      System.out.println("Credenciales inválidas.");
       return;
     }
-    System.out.println("Demasiados intentos fallidos. Regresando al menú principal.");
+
+    System.out.println("Sesión iniciada como " + usuario.getRol() + ".");
+    if (usuario.getRol() == Rol.PROFESOR) {
+      Profesor profesor = servicio.buscarProfesor(usuario.getIdReferencia());
+      if (profesor == null) {
+        System.out.println("No se encontró el perfil del profesor asociado a la cuenta.");
+        return;
+      }
+      System.out.println("Bienvenido, " + profesor.getNombreCompleto() + ".");
+      menuProfesor(profesor);
+    } else {
+      Estudiante estudiante = servicio.buscarEstudiante(usuario.getIdReferencia());
+      if (estudiante == null) {
+        System.out.println("No se encontró el perfil del estudiante asociado a la cuenta.");
+        return;
+      }
+      System.out.println("Bienvenido, " + estudiante.getNombreCompleto() + ".");
+      menuEstudiante(estudiante);
+    }
+    System.out.println("Sesión cerrada.");
   }
 
   /**
@@ -181,17 +175,9 @@ public class SistemaApp {
       System.out.println("\n--- REGISTRO DE ASISTENCIA ---");
       for (Estudiante est : alumnosCurso) {
         System.out.println("Alumno: " + est.getNombreCompleto() + " (" + est.getCodigo() + ")");
-        int estado = leerOpcion("¿Asistió? (1: Presente / 0: Ausente): ");
-        boolean presente = (estado == 1);
-        int horasAsistidas = 0;
-        if (presente) {
-          int maxHoras = cursoSel.getTotalHorasSesion();
-          horasAsistidas = leerOpcion("Horas asistidas (Máximo " + maxHoras + "): ");
-          if (horasAsistidas > maxHoras) {
-            horasAsistidas = maxHoras;
-          }
-        }
-        registros.add(servicio.crearRegistro(cursoSel, est, fecha, horasAsistidas, presente));
+        int maxHoras = cursoSel.getTotalHorasSesion();
+        int horasAsistidas = leerOpcion("Horas asistidas (0 = ausente, máximo " + maxHoras + "): ");
+        registros.add(servicio.crearRegistro(cursoSel, est, fecha, horasAsistidas));
       }
       servicio.guardarAsistencias(registros);
       System.out.println("¡Asistencia guardada exitosamente en asistencias.csv!");

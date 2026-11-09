@@ -110,7 +110,7 @@ classDiagram
             + List~Curso~ listarCursosEstudiante(Estudiante estudiante)
             + List~RegistroDeAsistencia~ historialEstudiante(Estudiante estudiante)
             + void guardarAsistencias(List~RegistroDeAsistencia~ registros)
-            + RegistroDeAsistencia crearRegistro(Curso curso, Estudiante estudiante, String fecha, int horasAsistidas, boolean presente)
+            + RegistroDeAsistencia crearRegistro(Curso curso, Estudiante estudiante, String fecha, int horasAsistidas)
             + double calcularPorcentajeFaltas(int horasDictadas, int horasAsistidas, int totalHorasCurso)
         }
         class AutenticacionService {
@@ -149,7 +149,6 @@ classDiagram
 
     namespace sistema {
         class SistemaApp {
-            - MAX_INTENTOS_LOGIN: int$
             - scanner: Scanner$
             - servicio: ServicioAcademico$
             - autenticacion: AutenticacionService$
