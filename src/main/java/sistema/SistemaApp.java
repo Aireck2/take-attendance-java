@@ -1,26 +1,32 @@
 package sistema;
 
+import java.io.Console;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 import models.Curso;
 import models.Estudiante;
 import models.Profesor;
 import models.RegistroDeAsistencia;
+import models.Rol;
+import models.Usuario;
+import service.AutenticacionService;
 import service.ServicioAcademico;
-import storage.ArchivoManager;
 
 /**
  * Aplicacion de terminal para tomar asistencia de clases
  * en un sistema universitario.
  *
- * Orquesta el menu principal y delega la logica de negocio
- * a la capa de servicio.
+ * Orquesta el inicio de sesion, los menus por rol y delega la logica
+ * de negocio a la capa de servicio.
  */
 public class SistemaApp {
-  private static final java.util.Scanner scanner = new java.util.Scanner(System.in);
+  private static final int MAX_INTENTOS_LOGIN = 3;
+  private static final Scanner scanner = new Scanner(System.in);
   private static final ServicioAcademico servicio = new ServicioAcademico();
+  private static final AutenticacionService autenticacion = new AutenticacionService();
 
   public static void main(String[] args) {
     int opcion = 0;
@@ -28,17 +34,15 @@ public class SistemaApp {
       System.out.println("\n======================================");
       System.out.println("  SISTEMA DE ASISTENCIA - IESTP CHINCHA  ");
       System.out.println("======================================");
-      System.out.println("1. Iniciar sesión como Profesor");
-      System.out.println("2. Iniciar sesión como Estudiante");
-      System.out.println("3. Salir");
+      System.out.println("1. Iniciar sesión");
+      System.out.println("2. Salir");
       opcion = leerOpcion("Seleccione una opción: ");
       switch (opcion) {
-        case 1 -> menuProfesor();
-        case 2 -> menuEstudiante();
-        case 3 -> System.out.println("Saliendo del sistema...");
+        case 1 -> iniciarSesion();
+        case 2 -> System.out.println("Saliendo del sistema...");
         default -> System.out.println("Opción inválida.");
       }
-    } while (opcion != 3);
+    } while (opcion != 2);
   }
 
   /**
@@ -57,33 +61,77 @@ public class SistemaApp {
   }
 
   /**
-   * Menu del profesor: ver cursos, ver perfil o regresar.
+   * Pide correo y contraseña, valida las credenciales y abre el menú del rol.
+   * Permite hasta tres intentos antes de volver al menú principal.
    */
-  private static void menuProfesor() {
-    List<Profesor> profesores = servicio.listarProfesores();
-    System.out.println("\n--- SELECCIONE UN PROFESOR ---");
-    for (int i = 0; i < profesores.size(); i++) {
-      System.out
-          .println((i + 1) + ". " + profesores.get(i).getNombreCompleto() + " (" + profesores.get(i).getId() + ")");
-    }
-    int idx = leerOpcion("Elija profesor (1-" + profesores.size() + "): ") - 1;
-    if (idx < 0 || idx >= profesores.size()) {
-      System.out.println("Profesor no válido.");
+  private static void iniciarSesion() {
+    System.out.println("\n--- INICIO DE SESIÓN ---");
+    for (int intento = 1; intento <= MAX_INTENTOS_LOGIN; intento++) {
+      System.out.print("Correo: ");
+      String correo = scanner.nextLine().trim();
+      String contrasena = leerContrasena("Contraseña: ");
+
+      Usuario usuario = autenticacion.autenticar(correo, contrasena);
+      if (usuario == null) {
+        int restantes = MAX_INTENTOS_LOGIN - intento;
+        System.out.println("Credenciales inválidas. Intentos restantes: " + restantes);
+        continue;
+      }
+
+      System.out.println("Sesión iniciada como " + usuario.getRol() + ".");
+      if (usuario.getRol() == Rol.PROFESOR) {
+        Profesor profesor = servicio.buscarProfesor(usuario.getIdReferencia());
+        if (profesor == null) {
+          System.out.println("No se encontró el perfil del profesor asociado a la cuenta.");
+          return;
+        }
+        System.out.println("Bienvenido, " + profesor.getNombreCompleto() + ".");
+        menuProfesor(profesor);
+      } else {
+        Estudiante estudiante = servicio.buscarEstudiante(usuario.getIdReferencia());
+        if (estudiante == null) {
+          System.out.println("No se encontró el perfil del estudiante asociado a la cuenta.");
+          return;
+        }
+        System.out.println("Bienvenido, " + estudiante.getNombreCompleto() + ".");
+        menuEstudiante(estudiante);
+      }
+      System.out.println("Sesión cerrada.");
       return;
     }
+    System.out.println("Demasiados intentos fallidos. Regresando al menú principal.");
+  }
 
-    Profesor profActual = profesores.get(idx);
+  /**
+   * Lee la contraseña sin mostrarla cuando la terminal lo permite.
+   * Si no hay consola interactiva (por ejemplo, entrada redirigida), usa el scanner.
+   */
+  private static String leerContrasena(String mensaje) {
+    System.out.print(mensaje);
+    Console console = System.console();
+    if (console != null) {
+      char[] caracteres = console.readPassword();
+      return caracteres == null ? "" : new String(caracteres);
+    }
+    return scanner.nextLine();
+  }
+
+  /**
+   * Menu del profesor: ver cursos, ver perfil o cerrar sesión.
+   */
+  private static void menuProfesor(Profesor profActual) {
     int opcProf = 0;
     do {
       System.out.println("\n--- MENÚ PROFESOR: " + profActual.getNombreCompleto() + " ---");
       System.out.println("1. Ver mis cursos asignados");
       System.out.println("2. Ver mi perfil");
-      System.out.println("3. Regresar al menú principal");
+      System.out.println("3. Cerrar sesión");
       opcProf = leerOpcion("Elija una opción: ");
       switch (opcProf) {
         case 1 -> gestionarCursosProfesor(profActual);
         case 2 -> profActual.mostrarPerfil();
-        case 3 -> System.out.println("Regresando...");
+        case 3 -> {
+        }
         default -> System.out.println("Opción inválida.");
       }
     } while (opcProf != 3);
@@ -151,33 +199,21 @@ public class SistemaApp {
   }
 
   /**
-   * Menu del estudiante: ver resumen de asistencia o ver perfil.
+   * Menu del estudiante: ver resumen de asistencia, ver perfil o cerrar sesión.
    */
-  private static void menuEstudiante() {
-    List<Estudiante> estudiantes = servicio.listarEstudiantes();
-    System.out.println("\n--- SELECCIONE UN ESTUDIANTE ---");
-    for (int i = 0; i < estudiantes.size(); i++) {
-      System.out.println(
-          (i + 1) + ". " + estudiantes.get(i).getNombreCompleto() + " (" + estudiantes.get(i).getCodigo() + ")");
-    }
-    int idx = leerOpcion("Elija estudiante (1-" + estudiantes.size() + "): ") - 1;
-    if (idx < 0 || idx >= estudiantes.size()) {
-      System.out.println("Estudiante no válido.");
-      return;
-    }
-
-    Estudiante estActual = estudiantes.get(idx);
+  private static void menuEstudiante(Estudiante estActual) {
     int opcEst = 0;
     do {
       System.out.println("\n--- MENÚ ESTUDIANTE: " + estActual.getNombreCompleto() + " ---");
       System.out.println("1. Ver cursos asignados y estado de asistencia");
       System.out.println("2. Ver mi perfil");
-      System.out.println("3. Regresar al menú principal");
+      System.out.println("3. Cerrar sesión");
       opcEst = leerOpcion("Elija una opción: ");
       switch (opcEst) {
         case 1 -> mostrarResumenAsistenciaEstudiante(estActual);
         case 2 -> estActual.mostrarPerfil();
-        case 3 -> System.out.println("Regresando...");
+        case 3 -> {
+        }
         default -> System.out.println("Opción inválida.");
       }
     } while (opcEst != 3);
