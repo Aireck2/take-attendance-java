@@ -3,8 +3,12 @@ package service;
 import java.util.ArrayList;
 import java.util.List;
 
+import models.Carrera;
 import models.Curso;
 import models.Estudiante;
+import models.ModuloProfesional;
+import models.PeriodoAcademico;
+import models.PlanEstudios;
 import models.Profesor;
 import models.RegistroDeAsistencia;
 import storage.ArchivoManager;
@@ -69,6 +73,34 @@ public class ServicioAcademico {
    */
   public List<Curso> listarCursos() {
     return ArchivoManager.leerCursos();
+  }
+
+  /**
+   * Lista las carreras / programas de estudio registrados.
+   */
+  public List<Carrera> listarCarreras() {
+    return ArchivoManager.leerCarreras();
+  }
+
+  /**
+   * Lista los planes de estudio registrados.
+   */
+  public List<PlanEstudios> listarPlanesEstudios() {
+    return ArchivoManager.leerPlanesEstudios();
+  }
+
+  /**
+   * Lista los modulos profesionales registrados.
+   */
+  public List<ModuloProfesional> listarModulosProfesionales() {
+    return ArchivoManager.leerModulosProfesionales();
+  }
+
+  /**
+   * Lista los periodos academicos registrados.
+   */
+  public List<PeriodoAcademico> listarPeriodosAcademicos() {
+    return ArchivoManager.leerPeriodosAcademicos();
   }
 
   /**

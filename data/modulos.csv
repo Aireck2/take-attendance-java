@@ -1,0 +1,4 @@
+id_modulo,id_plan,nombre,competencia,creditos_modulo
+M1,PL1,Redes y Seguridad,Administra redes y seguridad informatica,20
+M2,PL1,Infraestructura y Cloud,Administra infraestructura y servicios cloud,20
+M3,PL1,Gestion de Datos,Administra bases de datos y repositorios,20

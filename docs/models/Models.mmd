@@ -13,18 +13,86 @@ classDiagram
             PROFESOR
             ESTUDIANTE
         }
+        class EstadoPlan {
+            <<enumeration>>
+            VIGENTE
+            HISTORICO
+        }
+        class EstadoPeriodo {
+            <<enumeration>>
+            PLANIFICADO
+            ACTIVO
+            CERRADO
+        }
         class Curso {
             - idCurso: String 
             - nombreCurso: String 
             - totalHorasSesion: int
             - idProfesor: String
             - duracionCurso: int
+            - idModulo: String
+            - creditos: int
+            - horasTeoricas: int
+            - horasPracticas: int
     
             + String getIdCurso()
             + String getNombreCurso()
             + int getTotalHorasSesion()
             + String getIdProfesor()
             + int getDuracionCurso()
+            + String getIdModulo()
+            + int getCreditos()
+            + int getHorasTeoricas()
+            + int getHorasPracticas()
+            + int getHorasLectivasTotales()
+        }
+        class Carrera {
+            - idCarrera: String
+            - nombre: String
+            + String getIdCarrera()
+            + String getNombre()
+        }
+        class PlanEstudios {
+            - idPlan: String
+            - idCarrera: String
+            - codigo: String
+            - nombre: String
+            - creditosTotales: int
+            - horasTotales: int
+            - estado: EstadoPlan
+            + String getIdPlan()
+            + String getIdCarrera()
+            + String getCodigo()
+            + String getNombre()
+            + int getCreditosTotales()
+            + int getHorasTotales()
+            + EstadoPlan getEstado()
+        }
+        class ModuloProfesional {
+            - idModulo: String
+            - idPlan: String
+            - nombre: String
+            - competencia: String
+            - creditosModulo: int
+            + String getIdModulo()
+            + String getIdPlan()
+            + String getNombre()
+            + String getCompetencia()
+            + int getCreditosModulo()
+        }
+        class PeriodoAcademico {
+            - idPeriodo: String
+            - idPlan: String
+            - codigo: String
+            - fechaInicio: String
+            - fechaFin: String
+            - estado: EstadoPeriodo
+            + String getIdPeriodo()
+            + String getIdPlan()
+            + String getCodigo()
+            + String getFechaInicio()
+            + String getFechaFin()
+            + EstadoPeriodo getEstado()
         }
        class Profesor {
             - id: String
@@ -107,3 +175,9 @@ classDiagram
     Curso ..> Profesor : referencia por idProfesor
     RegistroDeAsistencia ..> Estudiante : referencia por idEstudiante
     RegistroDeAsistencia ..> Curso : referencia por idCurso
+    Carrera --> PlanEstudios : administra
+    PlanEstudios --> ModuloProfesional : organiza
+    PlanEstudios --> PeriodoAcademico : operacionaliza
+    ModuloProfesional --> Curso : agrupa
+    PlanEstudios --> EstadoPlan : tiene
+    PeriodoAcademico --> EstadoPeriodo : tiene

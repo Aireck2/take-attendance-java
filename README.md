@@ -40,6 +40,21 @@ El sistema implementa una arquitectura limpia por capas (Separación de Responsa
 
 ---
 
+## Jerarquía Académica (base institucional)
+
+La base institucional del dominio se persiste en CSV y se expone a través de `ServicioAcademico`:
+
+- **Carrera / Programa de Estudios** → `Carrera` (1↔N `PlanEstudios`).
+- **Plan de Estudios** → `PlanEstudios` (N↔1 `Carrera`; 1↔N `ModuloProfesional`; 1↔N `PeriodoAcademico`).
+- **Módulo Profesional** → `ModuloProfesional` (N↔1 `PlanEstudios`; 1↔N `Curso`).
+- **Curso / Unidad Didáctica** → `Curso` extendido con `idModulo`, `creditos`, `horasTeoricas` y `horasPracticas`; `getHorasLectivasTotales()` suma las horas lectivas.
+- **Periodo Académico** → `PeriodoAcademico` (N↔1 `PlanEstudios`).
+
+> [!NOTE]
+> `Curso` conserva sus columnas originales y agrega cuatro columnas al final. El lector tolera filas legadas de 5 columnas y, en ese caso, deriva las horas lectivas como `duracionCurso × totalHorasSesion`.
+
+---
+
 ## Arquitectura y Estructura del Código
 
 El proyecto está organizado siguiendo el principio de separación de responsabilidades (SoC):
@@ -84,7 +99,7 @@ El archivo [`docs/Index.mmd`](docs/Index.mmd) centraliza la arquitectura del sis
 | :--- | :--- | :--- |
 | `docs/` | [`Index.mmd`](docs/Index.mmd) | **Diagrama UML global** con todos los paquetes, clases y relaciones entre capas. |
 | `docs/models/` | [`Models.mmd`](docs/models/Models.mmd) | Diagrama de paquete con entidades del dominio, enumeraciones y relaciones internas. |
-| `docs/models/` | `*.mmd` | Diagramas individuales: [`CursoClass.mmd`](docs/models/CursoClass.mmd), [`Estudiante.mmd`](docs/models/Estudiante.mmd), [`Profesor.mmd`](docs/models/Profesor.mmd), [`Usuario.mmd`](docs/models/Usuario.mmd), [`Rol.mmd`](docs/models/Rol.mmd), [`RegistroDeAsistencia.mmd`](docs/models/RegistroDeAsistencia.mmd), [`EstadoEstudiante.mmd`](docs/models/EstadoEstudiante.mmd). |
+| `docs/models/` | `*.mmd` | Diagramas individuales: [`CursoClass.mmd`](docs/models/CursoClass.mmd), [`Estudiante.mmd`](docs/models/Estudiante.mmd), [`Profesor.mmd`](docs/models/Profesor.mmd), [`Usuario.mmd`](docs/models/Usuario.mmd), [`Rol.mmd`](docs/models/Rol.mmd), [`RegistroDeAsistencia.mmd`](docs/models/RegistroDeAsistencia.mmd), [`EstadoEstudiante.mmd`](docs/models/EstadoEstudiante.mmd), [`Carrera.mmd`](docs/models/Carrera.mmd), [`PlanEstudios.mmd`](docs/models/PlanEstudios.mmd), [`ModuloProfesional.mmd`](docs/models/ModuloProfesional.mmd), [`PeriodoAcademico.mmd`](docs/models/PeriodoAcademico.mmd). |
 | `docs/service/` | [`Service.mmd`](docs/service/Service.mmd) | Vista de namespace del paquete `service`. |
 | `docs/service/` | [`ServicioAcademico.mmd`](docs/service/ServicioAcademico.mmd) | Especificación de atributos, constantes y métodos de la lógica de negocio. |
 | `docs/service/` | [`AutenticacionService.mmd`](docs/service/AutenticacionService.mmd) | Validación de credenciales y búsqueda de usuarios por correo. |
@@ -106,7 +121,11 @@ La capa de almacenamiento gestiona archivos delimitados por comas ubicados en `d
 | `data/profesores.csv` | `id, nombre, apellido, correo, tipo_de_documento, nro_documento, telefono, departamento_academico, especialidad` | Padrón de docentes |
 | `data/estudiantes.csv` | `id_estudiante, codigo, nombres, apellidos, correo, escuela_profesional, estado` | Registro de alumnos y condición académica |
 | `data/usuarios.csv` | `id, correo, hash_contrasena, rol, id_referencia, activo` | Credenciales de acceso y rol (`PROFESOR` / `ESTUDIANTE`) |
-| `data/cursos.csv` | `id_curso, nombre_curso, total_horas_sesion, id_profesor, duracion_curso` | Asignaturas y carga horaria |
+| `data/carreras.csv` | `id_carrera, nombre` | Carreras / programas de estudio |
+| `data/planes_estudios.csv` | `id_plan, id_carrera, codigo, nombre, creditos_totales, horas_totales, estado` | Planes de estudio vigentes e históricos |
+| `data/modulos.csv` | `id_modulo, id_plan, nombre, competencia, creditos_modulo` | Módulos profesionales y competencias |
+| `data/periodos.csv` | `id_periodo, id_plan, codigo, fecha_inicio, fecha_fin, estado` | Periodos académicos |
+| `data/cursos.csv` | `id_curso, nombre_curso, total_horas_sesion, id_profesor, duracion_curso, id_modulo, creditos, horas_teoricas, horas_practicas` | Unidades didácticas y carga horaria |
 | `data/inscripciones.csv` | `id_curso, id_estudiante` | Matrícula de estudiantes por asignatura |
 | `data/asistencias.csv` | `id_asistencia, id_curso, id_estudiante, fecha, horas_asistidas, presente` | Bitácora histórica de sesiones tomadas |
 

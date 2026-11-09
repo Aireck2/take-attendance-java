@@ -1,0 +1,3 @@
+id_plan,id_carrera,codigo,nombre,creditos_totales,horas_totales,estado
+PL1,K1,DSI-2026,Plan de Estudios 2026,120,2200,VIGENTE
+PL2,K1,DSI-2022,Plan de Estudios 2022,115,2100,HISTORICO
