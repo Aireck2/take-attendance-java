@@ -8,9 +8,11 @@ import models.Curso;
 import models.DiaSemana;
 import models.Estudiante;
 import models.EstadoEstudiante;
+import models.EstadoMatricula;
 import models.EstadoPeriodo;
 import models.EstadoPlan;
 import models.HorarioSeccion;
+import models.Matricula;
 import models.ModalidadDictado;
 import models.ModuloProfesional;
 import models.PeriodoAcademico;
@@ -47,6 +49,7 @@ public class TestRunner {
     probarFundacionesAcademicas();
     probarUnidadDidactica();
     probarOfertaAcademica();
+    probarMatriculaYReglaNormativa();
 
     System.out.println();
     if (fallos == 0) {
@@ -221,6 +224,75 @@ public class TestRunner {
         "toda franja referencia un ambiente existente");
     afirmar(sesiones.stream().allMatch(s -> idsSalon.contains(s.getIdSalon())),
         "toda sesion referencia un ambiente existente");
+  }
+
+  private static void probarMatriculaYReglaNormativa() {
+    ServicioAcademico servicio = new ServicioAcademico();
+
+    List<Matricula> matriculas = servicio.listarMatriculas();
+    afirmar(matriculas.size() == 5, "lee las matriculas sembradas (encontradas: " + matriculas.size() + ")");
+    Matricula m1 = servicio.buscarMatricula("E1", "B1");
+    afirmar(m1 != null && m1.getIdMatricula().equals("M1"), "resuelve la matricula activa del estudiante");
+    afirmar(m1 != null && m1.getEstado() == EstadoMatricula.ACTIVA, "la matricula sembrada esta activa");
+    afirmar(servicio.listarMatriculasBloque("B1").size() == 5, "filtra matriculas por bloque");
+    afirmar(servicio.listarMatriculasBloque("B2").isEmpty(), "no inventa matriculas en bloques sin alumnos");
+    Matricula repetida = servicio.matricularEstudiante("E1", "B1", "2026-03-01");
+    afirmar(repetida != null && repetida.getIdMatricula().equals("M1"), "no duplica una matricula activa");
+    afirmar(servicio.matricularEstudiante("E99", "B1", "2026-03-01") == null,
+        "rechaza un estudiante inexistente");
+    afirmar(servicio.matricularEstudiante("E1", "B99", "2026-03-01") == null, "rechaza un bloque inexistente");
+
+    afirmar(servicio.listarSesionesBloque("B1").size() == 5, "resuelve las sesiones del bloque");
+    afirmar(servicio.listarSesionesBloque("B2").size() == 2, "resuelve las sesiones del otro bloque");
+
+    RegistroDeAsistencia sesionReg = servicio.registrarAsistenciaSesion("SES1", "E1", 99);
+    afirmar(sesionReg != null && sesionReg.getIdSesion().equals("SES1"), "vincula el registro con la sesion");
+    afirmar(sesionReg != null && sesionReg.getIdCurso().equals("C1"), "deriva la unidad didactica de la sesion");
+    afirmar(sesionReg != null && sesionReg.getHorasAsistidas() == 2 && sesionReg.isPresente(),
+        "limita las horas a las programadas de la sesion");
+    afirmar(servicio.registrarAsistenciaSesion("SES1", "E99", 2) == null,
+        "rechaza la asistencia de un estudiante sin matricula");
+    afirmar(servicio.registrarAsistenciaSesion("SES99", "E1", 2) == null, "rechaza una sesion inexistente");
+
+    List<RegistroDeAsistencia> historialE1 = servicio.historialEstudiante(servicio.buscarEstudiante("E1"));
+    afirmar(historialE1.stream().anyMatch(r -> r.getIdSesion().equals("SES1")),
+        "lee el id_sesion de las filas nuevas");
+    afirmar(historialE1.stream().anyMatch(r -> r.getIdSesion().isEmpty()),
+        "tolera filas legadas sin id_sesion");
+
+    Curso c1 = servicio.listarCursos().stream().filter(c -> c.getIdCurso().equals("C1")).findFirst().orElse(null);
+    afirmar(c1 != null && servicio.horasFaltadasUnidadDidactica(servicio.buscarMatricula("E1", "B1"), c1) == 0,
+        "no acumula faltas en sesiones asistidas completas");
+    afirmar(c1 != null && servicio.horasFaltadasUnidadDidactica(servicio.buscarMatricula("E2", "B1"), c1) == 2,
+        "acumula las horas no asistidas de la sesion tomada");
+
+    Curso curso = new Curso("C-NORM", "Curso normativo", 2, "P1", 5, "M1", 1, 6, 4);
+    Estudiante est = new Estudiante("E-NORM", "U-NORM", "Ana", "Norma", "ana@norm.pe", "Sistemas",
+        EstadoEstudiante.REGULAR);
+    SesionClase s1 = new SesionClase("S-N1", "H-N1", "2026-03-02", 2, "P1", "S1");
+    SesionClase s2 = new SesionClase("S-N2", "H-N2", "2026-03-03", 2, "P1", "S1");
+    List<SesionClase> sesiones = List.of(s1, s2);
+
+    RegistroDeAsistencia r1 = servicio.crearRegistroSesion(s1, curso, est, 2);
+    RegistroDeAsistencia r2 = servicio.crearRegistroSesion(s2, curso, est, 0);
+    afirmar(servicio.calcularHorasFaltadas(sesiones, List.of(r1, r2)) == 2, "suma programadas menos asistidas");
+    afirmar(servicio.calcularHorasFaltadas(sesiones, List.of(r1)) == 0,
+        "ignora las sesiones sin asistencia tomada");
+    afirmar(servicio.calcularPorcentajeInasistencia(2, 10) == 20.0, "calcula el porcentaje sobre horas lectivas");
+    afirmar(!servicio.estaInhabilitadoPorInasistencia(2, 10), "no inhabilita por debajo del 30%");
+
+    RegistroDeAsistencia r3 = servicio.crearRegistroSesion(s1, curso, est, 0);
+    afirmar(servicio.calcularHorasFaltadas(sesiones, List.of(r3, r2)) == 4, "acumula todas las horas faltadas");
+    afirmar(servicio.calcularPorcentajeInasistencia(4, 10) == 40.0, "calcula el 40% de inasistencia");
+    afirmar(servicio.estaInhabilitadoPorInasistencia(4, 10), "inhabilita al superar el 30%");
+    afirmar(!servicio.estaInhabilitadoPorInasistencia(3, 10), "el 30% exacto no inhabilita");
+    afirmar(!servicio.estaInhabilitadoPorInasistencia(0, 0), "sin horas lectivas no inhabilita");
+    afirmar(servicio.calcularPorcentajeInasistencia(-5, 10) == 0.0, "normaliza faltas negativas a 0%");
+
+    Matricula activa = new Matricula("M-NORM", "E-NORM", "B1", "2026-03-01", EstadoMatricula.ACTIVA);
+    Matricula retirada = new Matricula("M-RET", "E-NORM", "B1", "2026-03-01", EstadoMatricula.RETIRADA);
+    afirmar(servicio.puedeRegistrarNotas(activa, curso), "permite notas con matricula activa y 0% de faltas");
+    afirmar(!servicio.puedeRegistrarNotas(retirada, curso), "bloquea notas con matricula retirada");
   }
 
   private static void afirmar(boolean condicion, String descripcion) {

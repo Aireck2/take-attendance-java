@@ -1,8 +1,12 @@
 package models;
 
 /**
- * Registro de asistencia de un estudiante a un curso en una fecha determinada.
- * Guarda cuántas horas asistió el estudiante y si realmente estuvo presente.
+ * Registro de asistencia de un estudiante a una sesion de clase en una fecha
+ * determinada. Guarda cuantas horas asistio el estudiante y si realmente
+ * estuvo presente.
+ *
+ * El campo idSesion vincula el registro con la sesion de clase que lo genero.
+ * Las filas legadas sin sesion conservan una cadena vacia.
  */
 public class RegistroDeAsistencia {
   private String idAsistencia;
@@ -11,15 +15,22 @@ public class RegistroDeAsistencia {
   private String fecha;
   private int horasAsistidas;
   private boolean presente;
+  private String idSesion;
 
   public RegistroDeAsistencia(String idAsistencia, String idCurso, String idEstudiante, String fecha, int horasAsistidas,
       boolean presente) {
+    this(idAsistencia, idCurso, idEstudiante, fecha, horasAsistidas, presente, "");
+  }
+
+  public RegistroDeAsistencia(String idAsistencia, String idCurso, String idEstudiante, String fecha, int horasAsistidas,
+      boolean presente, String idSesion) {
     this.idAsistencia = idAsistencia;
     this.idCurso = idCurso;
     this.idEstudiante = idEstudiante;
     this.fecha = fecha;
     this.horasAsistidas = horasAsistidas;
     this.presente = presente;
+    this.idSesion = idSesion == null ? "" : idSesion;
   }
 
   public String getIdAsistencia() {
@@ -50,8 +61,13 @@ public class RegistroDeAsistencia {
     return presente;
   }
 
+  public String getIdSesion() {
+    return idSesion;
+  }
+
   public String toCsv() {
     // Se guarda el estado como 1 (presente) o 0 (ausente) para facilitar la lectura en CSV.
-    return idAsistencia + "," + idCurso + "," + idEstudiante + "," + fecha + "," + horasAsistidas + "," + (presente ? 1 : 0);
+    return idAsistencia + "," + idCurso + "," + idEstudiante + "," + fecha + "," + horasAsistidas + ","
+        + (presente ? 1 : 0) + "," + idSesion;
   }
 }

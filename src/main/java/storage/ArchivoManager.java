@@ -15,9 +15,11 @@ import models.Curso;
 import models.DiaSemana;
 import models.Estudiante;
 import models.EstadoEstudiante;
+import models.EstadoMatricula;
 import models.EstadoPeriodo;
 import models.EstadoPlan;
 import models.HorarioSeccion;
+import models.Matricula;
 import models.ModalidadDictado;
 import models.ModuloProfesional;
 import models.PeriodoAcademico;
@@ -303,6 +305,40 @@ public class ArchivoManager {
     return lista;
   }
 
+  public static List<Matricula> leerMatriculas() {
+    List<Matricula> lista = new ArrayList<>();
+    try (BufferedReader br = new BufferedReader(new FileReader(CARPETA_DATOS + "/matriculas.csv"))) {
+      String linea = br.readLine(); // Saltar cabecera
+      while ((linea = br.readLine()) != null) {
+        if (linea.isBlank()) {
+          continue;
+        }
+        String[] p = linea.split(",", -1);
+        // id_matricula,id_estudiante,id_bloque,fecha_matricula,estado
+        if (p.length >= 5) {
+          lista.add(new Matricula(p[0].trim(), p[1].trim(), p[2].trim(), p[3].trim(),
+              EstadoMatricula.valueOf(p[4].trim())));
+        }
+      }
+    } catch (FileNotFoundException e) {
+      System.out.println("No se encontro " + CARPETA_DATOS + "/matriculas.csv");
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return lista;
+  }
+
+  public static void guardarMatriculas(List<Matricula> matriculas) {
+    try (PrintWriter pw = new PrintWriter(new FileWriter(CARPETA_DATOS + "/matriculas.csv"))) {
+      pw.println("id_matricula,id_estudiante,id_bloque,fecha_matricula,estado");
+      for (Matricula matricula : matriculas) {
+        pw.println(matricula.toCsv());
+      }
+    } catch (IOException e) {
+      System.out.println("Error al guardar matriculas.");
+    }
+  }
+
   public static List<Curso> leerCursos() {
     List<Curso> lista = new ArrayList<>();
     try (BufferedReader br = new BufferedReader(new FileReader(CARPETA_DATOS + "/cursos.csv"))) {
@@ -366,10 +402,15 @@ public class ArchivoManager {
     try (BufferedReader br = new BufferedReader(new FileReader(CARPETA_DATOS + "/asistencias.csv"))) {
       String linea = br.readLine();
       while ((linea = br.readLine()) != null) {
-        String[] p = linea.split(",");
-        // id_asistencia,id_curso,id_estudiante,fecha,horas_asistidas,presente
+        if (linea.isBlank()) {
+          continue;
+        }
+        String[] p = linea.split(",", -1);
+        // id_asistencia,id_curso,id_estudiante,fecha,horas_asistidas,presente[,id_sesion]
         if (p.length >= 6 && p[2].equals(idEstudiante)) {
-          lista.add(new RegistroDeAsistencia(p[0], p[1], p[2], p[3], Integer.parseInt(p[4]), esPresente(p[5])));
+          String idSesion = p.length >= 7 ? p[6].trim() : "";
+          lista.add(new RegistroDeAsistencia(p[0].trim(), p[1].trim(), p[2].trim(), p[3].trim(),
+              Integer.parseInt(p[4].trim()), esPresente(p[5].trim()), idSesion));
         }
       }
     } catch (IOException e) {
@@ -383,9 +424,15 @@ public class ArchivoManager {
     try (BufferedReader br = new BufferedReader(new FileReader(CARPETA_DATOS + "/asistencias.csv"))) {
       String linea = br.readLine();
       while ((linea = br.readLine()) != null) {
-        String[] p = linea.split(",");
+        if (linea.isBlank()) {
+          continue;
+        }
+        String[] p = linea.split(",", -1);
+        // id_asistencia,id_curso,id_estudiante,fecha,horas_asistidas,presente[,id_sesion]
         if (p.length >= 6) {
-          lista.add(new RegistroDeAsistencia(p[0], p[1], p[2], p[3], Integer.parseInt(p[4]), esPresente(p[5])));
+          String idSesion = p.length >= 7 ? p[6].trim() : "";
+          lista.add(new RegistroDeAsistencia(p[0].trim(), p[1].trim(), p[2].trim(), p[3].trim(),
+              Integer.parseInt(p[4].trim()), esPresente(p[5].trim()), idSesion));
         }
       }
     } catch (IOException e) {

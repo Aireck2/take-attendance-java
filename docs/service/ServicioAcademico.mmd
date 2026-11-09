@@ -1,6 +1,7 @@
 classDiagram
     class ServicioAcademico {
         + LIMITE_INASISTENCIA: double$
+        + LIMITE_INASISTENCIA_NORMATIVO: double$
         + List~Profesor~ listarProfesores()
         + List~Estudiante~ listarEstudiantes()
         + Profesor buscarProfesor(String idProfesor)
@@ -18,6 +19,19 @@ classDiagram
         + List~SesionClase~ listarSesiones()
         + List~SesionClase~ listarSesionesHorario(String idHorario)
         + List~Salon~ listarSalones()
+        + List~Matricula~ listarMatriculas()
+        + List~Matricula~ listarMatriculasBloque(String idBloque)
+        + List~Matricula~ listarMatriculasEstudiante(String idEstudiante)
+        + Matricula buscarMatricula(String idEstudiante, String idBloque)
+        + Matricula matricularEstudiante(String idEstudiante, String idBloque, String fechaMatricula)
+        + List~SesionClase~ listarSesionesBloque(String idBloque)
+        + RegistroDeAsistencia crearRegistroSesion(SesionClase sesion, Curso curso, Estudiante estudiante, int horasAsistidas)
+        + RegistroDeAsistencia registrarAsistenciaSesion(String idSesion, String idEstudiante, int horasAsistidas)
+        + int calcularHorasFaltadas(List~SesionClase~ sesiones, List~RegistroDeAsistencia~ registros)
+        + int horasFaltadasUnidadDidactica(Matricula matricula, Curso curso)
+        + double calcularPorcentajeInasistencia(int horasFaltadas, int horasLectivasTotales)
+        + boolean estaInhabilitadoPorInasistencia(int horasFaltadas, int horasLectivasTotales)
+        + boolean puedeRegistrarNotas(Matricula matricula, Curso curso)
         + List~Curso~ listarCursosProfesor(Profesor profesor)
         + List~Estudiante~ listarEstudiantesCurso(Curso curso)
         + List~Curso~ listarCursosEstudiante(Estudiante estudiante)

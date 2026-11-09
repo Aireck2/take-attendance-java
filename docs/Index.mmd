@@ -57,6 +57,12 @@ classDiagram
             LABORATORIO
             TALLER
         }
+        class EstadoMatricula {
+            <<enumeration>>
+            ACTIVA
+            RETIRADA
+            COMPLETADA
+        }
         class Curso {
             - idCurso: String 
             - nombreCurso: String 
@@ -192,6 +198,19 @@ classDiagram
             + TipoSalon getTipo()
             + int getCapacidad()
         }
+        class Matricula {
+            - idMatricula: String
+            - idEstudiante: String
+            - idBloque: String
+            - fechaMatricula: String
+            - estado: EstadoMatricula
+            + String getIdMatricula()
+            + String getIdEstudiante()
+            + String getIdBloque()
+            + String getFechaMatricula()
+            + EstadoMatricula getEstado()
+            + String toCsv()
+        }
         class Profesor {
             - id: String
             - nombre: String
@@ -253,6 +272,7 @@ classDiagram
             - fecha: String
             - horasAsistidas: int
             - presente: boolean
+            - idSesion: String
             + String getIdAsistencia()
             + void setIdAsistencia(String idAsistencia)
             + String getIdCurso()
@@ -260,6 +280,7 @@ classDiagram
             + String getFecha()
             + int getHorasAsistidas()
             + boolean isPresente()
+            + String getIdSesion()
             + String toCsv()
         }
     }
@@ -267,6 +288,7 @@ classDiagram
     namespace service {
         class ServicioAcademico {
             + LIMITE_INASISTENCIA: double$
+            + LIMITE_INASISTENCIA_NORMATIVO: double$
             + List~Profesor~ listarProfesores()
             + List~Estudiante~ listarEstudiantes()
             + Profesor buscarProfesor(String idProfesor)
@@ -284,6 +306,19 @@ classDiagram
             + List~SesionClase~ listarSesiones()
             + List~SesionClase~ listarSesionesHorario(String idHorario)
             + List~Salon~ listarSalones()
+            + List~Matricula~ listarMatriculas()
+            + List~Matricula~ listarMatriculasBloque(String idBloque)
+            + List~Matricula~ listarMatriculasEstudiante(String idEstudiante)
+            + Matricula buscarMatricula(String idEstudiante, String idBloque)
+            + Matricula matricularEstudiante(String idEstudiante, String idBloque, String fechaMatricula)
+            + List~SesionClase~ listarSesionesBloque(String idBloque)
+            + RegistroDeAsistencia crearRegistroSesion(SesionClase sesion, Curso curso, Estudiante estudiante, int horasAsistidas)
+            + RegistroDeAsistencia registrarAsistenciaSesion(String idSesion, String idEstudiante, int horasAsistidas)
+            + int calcularHorasFaltadas(List~SesionClase~ sesiones, List~RegistroDeAsistencia~ registros)
+            + int horasFaltadasUnidadDidactica(Matricula matricula, Curso curso)
+            + double calcularPorcentajeInasistencia(int horasFaltadas, int horasLectivasTotales)
+            + boolean estaInhabilitadoPorInasistencia(int horasFaltadas, int horasLectivasTotales)
+            + boolean puedeRegistrarNotas(Matricula matricula, Curso curso)
             + List~Curso~ listarCursosProfesor(Profesor profesor)
             + List~Estudiante~ listarEstudiantesCurso(Curso curso)
             + List~Curso~ listarCursosEstudiante(Estudiante estudiante)
@@ -327,6 +362,8 @@ classDiagram
             + List~HorarioSeccion~ leerHorarios()$
             + List~SesionClase~ leerSesiones()$
             + List~Salon~ leerSalones()$
+            + List~Matricula~ leerMatriculas()$
+            + void guardarMatriculas(List~Matricula~ matriculas)$
             + List~String~ leerInscripcionesCurso(String idCurso)$
             + void guardarAsistencia(List~RegistroDeAsistencia~ registros)$
             + List~RegistroDeAsistencia~ leerAsistenciasEstudiante(String idEstudiante)$
@@ -381,6 +418,11 @@ classDiagram
     SesionClase ..> Profesor : referencia por idProfesor
     SesionClase --> Salon : usa
     Salon --> TipoSalon : tiene
+    Matricula ..> Estudiante : referencia por idEstudiante
+    Matricula ..> BloqueSeccion : referencia por idBloque
+    Matricula --> EstadoMatricula : tiene
+    Matricula --> RegistroDeAsistencia : acumula
+    RegistroDeAsistencia ..> SesionClase : referencia por idSesion
 
     %% ==========================================
     %% Relaciones entre Capas (Arquitectura)
@@ -413,6 +455,8 @@ classDiagram
     ServicioAcademico ..> HorarioSeccion : consulta
     ServicioAcademico ..> SesionClase : consulta
     ServicioAcademico ..> Salon : consulta
+    ServicioAcademico ..> Matricula : consulta
+    ServicioAcademico ..> RegistroDeAsistencia : registra por sesion / calcula faltas
 
     ArchivoManager ..> Profesor : deserializa CSV
     ArchivoManager ..> Estudiante : deserializa CSV
@@ -437,3 +481,5 @@ classDiagram
     ArchivoManager ..> DiaSemana : parsea enum
     ArchivoManager ..> TipoClase : parsea enum
     ArchivoManager ..> TipoSalon : parsea enum
+    ArchivoManager ..> Matricula : serializa / deserializa CSV
+    ArchivoManager ..> EstadoMatricula : parsea enum

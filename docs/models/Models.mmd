@@ -57,6 +57,12 @@ classDiagram
             LABORATORIO
             TALLER
         }
+        class EstadoMatricula {
+            <<enumeration>>
+            ACTIVA
+            RETIRADA
+            COMPLETADA
+        }
         class Curso {
             - idCurso: String 
             - nombreCurso: String 
@@ -193,6 +199,19 @@ classDiagram
             + TipoSalon getTipo()
             + int getCapacidad()
         }
+        class Matricula {
+            - idMatricula: String
+            - idEstudiante: String
+            - idBloque: String
+            - fechaMatricula: String
+            - estado: EstadoMatricula
+            + String getIdMatricula()
+            + String getIdEstudiante()
+            + String getIdBloque()
+            + String getFechaMatricula()
+            + EstadoMatricula getEstado()
+            + String toCsv()
+        }
        class Profesor {
             - id: String
             - nombre: String
@@ -256,6 +275,7 @@ classDiagram
             - fecha: String
             - horasAsistidas: int
             - presente: boolean
+            - idSesion: String
             + String getIdAsistencia()
             + void setIdAsistencia(String idAsistencia)
             + String getIdCurso()
@@ -263,6 +283,7 @@ classDiagram
             + String getFecha()
             + int getHorasAsistidas()
             + boolean isPresente()
+            + String getIdSesion()
             + String toCsv()
         }
     }
@@ -294,3 +315,8 @@ classDiagram
     SesionClase ..> Profesor : referencia por idProfesor
     SesionClase --> Salon : usa
     Salon --> TipoSalon : tiene
+    Matricula ..> Estudiante : referencia por idEstudiante
+    Matricula ..> BloqueSeccion : referencia por idBloque
+    Matricula --> EstadoMatricula : tiene
+    Matricula --> RegistroDeAsistencia : acumula
+    RegistroDeAsistencia ..> SesionClase : referencia por idSesion
