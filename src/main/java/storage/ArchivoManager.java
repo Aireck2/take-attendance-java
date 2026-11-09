@@ -1,6 +1,7 @@
 package storage;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.PrintWriter;
@@ -13,6 +14,8 @@ import models.Estudiante;
 import models.EstadoEstudiante;
 import models.Profesor;
 import models.RegistroDeAsistencia;
+import models.Rol;
+import models.Usuario;
 
 /**
  * Administra la persistencia del sistema de asistencia en archivos CSV.
@@ -50,6 +53,29 @@ public class ArchivoManager {
           lista.add(new Estudiante(p[0], p[1], p[2], p[3], p[4], p[5], EstadoEstudiante.valueOf(p[6])));
         }
       }
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return lista;
+  }
+
+  public static List<Usuario> leerUsuarios() {
+    List<Usuario> lista = new ArrayList<>();
+    try (BufferedReader br = new BufferedReader(new FileReader(CARPETA_DATOS + "/usuarios.csv"))) {
+      String linea = br.readLine(); // Saltar cabecera
+      while ((linea = br.readLine()) != null) {
+        if (linea.isBlank()) {
+          continue;
+        }
+        String[] p = linea.split(",", -1);
+        // id,correo,hash_contrasena,rol,id_referencia,activo
+        if (p.length >= 6) {
+          lista.add(new Usuario(p[0].trim(), p[1].trim(), p[2].trim(), Rol.valueOf(p[3].trim()), p[4].trim(),
+              Boolean.parseBoolean(p[5].trim())));
+        }
+      }
+    } catch (FileNotFoundException e) {
+      System.out.println("No se encontro " + CARPETA_DATOS + "/usuarios.csv");
     } catch (IOException e) {
       e.printStackTrace();
     }

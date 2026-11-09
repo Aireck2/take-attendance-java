@@ -35,6 +35,36 @@ public class ServicioAcademico {
   }
 
   /**
+   * Busca un profesor por su identificador. Devuelve null si no existe.
+   */
+  public Profesor buscarProfesor(String idProfesor) {
+    if (idProfesor == null) {
+      return null;
+    }
+    for (Profesor profesor : ArchivoManager.leerProfesores()) {
+      if (profesor.getId().equals(idProfesor)) {
+        return profesor;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Busca un estudiante por su identificador. Devuelve null si no existe.
+   */
+  public Estudiante buscarEstudiante(String idEstudiante) {
+    if (idEstudiante == null) {
+      return null;
+    }
+    for (Estudiante estudiante : ArchivoManager.leerEstudiantes()) {
+      if (estudiante.getId().equals(idEstudiante)) {
+        return estudiante;
+      }
+    }
+    return null;
+  }
+
+  /**
    * Lista todos los cursos registrados en el sistema.
    */
   public List<Curso> listarCursos() {
