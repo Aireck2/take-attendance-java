@@ -1,3 +1,6 @@
 take-attendance.jar
 out/
 .atl/
+
+# ODD task documents (local only)
+odd/tasks/*.md
