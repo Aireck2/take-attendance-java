@@ -8,6 +8,11 @@ classDiagram
             SUSPENDIDO
             EGRESADO
         }
+        class Rol {
+            <<enumeration>>
+            PROFESOR
+            ESTUDIANTE
+        }
         class Curso {
             - idCurso: String 
             - nombreCurso: String 
@@ -58,6 +63,22 @@ classDiagram
             + EstadoEstudiante getEstado()
             + void mostrarPerfil()
         }
+        class Usuario {
+            - id: String
+            - correo: String
+            - hashContrasena: String
+            - rol: Rol
+            - idReferencia: String
+            - activo: boolean
+            + String getId()
+            + String getCorreo()
+            + String getHashContrasena()
+            + Rol getRol()
+            + String getIdReferencia()
+            + boolean isActivo()
+            + boolean esProfesor()
+            + boolean esEstudiante()
+        }
         class RegistroDeAsistencia {
             - idAsistencia: String
             - idCurso: String
@@ -81,6 +102,8 @@ classDiagram
             + LIMITE_INASISTENCIA: double$
             + List~Profesor~ listarProfesores()
             + List~Estudiante~ listarEstudiantes()
+            + Profesor buscarProfesor(String idProfesor)
+            + Estudiante buscarEstudiante(String idEstudiante)
             + List~Curso~ listarCursos()
             + List~Curso~ listarCursosProfesor(Profesor profesor)
             + List~Estudiante~ listarEstudiantesCurso(Curso curso)
@@ -90,6 +113,23 @@ classDiagram
             + RegistroDeAsistencia crearRegistro(Curso curso, Estudiante estudiante, String fecha, int horasAsistidas, boolean presente)
             + double calcularPorcentajeFaltas(int horasDictadas, int horasAsistidas, int totalHorasCurso)
         }
+        class AutenticacionService {
+            + Usuario autenticar(String correo, String contrasena)
+            - Usuario buscarPorCorreo(String correoNormalizado)
+        }
+    }
+
+    namespace security {
+        class PasswordHasher {
+            - ALGORITMO: String$
+            - PREFIJO: String$
+            - ITERACIONES: int$
+            - LONGITUD_CLAVE_BITS: int$
+            - LONGITUD_SAL_BYTES: int$
+            + String hash(String contrasena)$
+            + boolean verificar(String contrasena, String almacenado)$
+            - byte[] derivar(String contrasena, byte[] sal, int iteraciones)$
+        }
     }
 
     namespace storage {
@@ -97,6 +137,7 @@ classDiagram
             - CARPETA_DATOS: String$
             + List~Profesor~ leerProfesores()$
             + List~Estudiante~ leerEstudiantes()$
+            + List~Usuario~ leerUsuarios()$
             + List~Curso~ leerCursos()$
             + List~String~ leerInscripcionesCurso(String idCurso)$
             + void guardarAsistencia(List~RegistroDeAsistencia~ registros)$
@@ -108,13 +149,17 @@ classDiagram
 
     namespace sistema {
         class SistemaApp {
+            - MAX_INTENTOS_LOGIN: int$
             - scanner: Scanner$
             - servicio: ServicioAcademico$
+            - autenticacion: AutenticacionService$
             + void main(String[] args)$
             - int leerOpcion(String mensaje)$
-            - void menuProfesor()$
+            - void iniciarSesion()$
+            - String leerContrasena(String mensaje)$
+            - void menuProfesor(Profesor profActual)$
             - void gestionarCursosProfesor(Profesor prof)$
-            - void menuEstudiante()$
+            - void menuEstudiante(Estudiante estActual)$
             - void mostrarResumenAsistenciaEstudiante(Estudiante est)$
         }
     }
@@ -123,6 +168,9 @@ classDiagram
     %% Relaciones de Dominio (models)
     %% ==========================================
     Estudiante --> EstadoEstudiante : tiene
+    Usuario --> Rol : tiene
+    Usuario ..> Profesor : referencia por idReferencia
+    Usuario ..> Estudiante : referencia por idReferencia
     Curso ..> Profesor : referencia por idProfesor
     RegistroDeAsistencia ..> Estudiante : referencia por idEstudiante
     RegistroDeAsistencia ..> Curso : referencia por idCurso
@@ -131,6 +179,9 @@ classDiagram
     %% Relaciones entre Capas (Arquitectura)
     %% ==========================================
     SistemaApp --> ServicioAcademico : delega lógica de negocio
+    SistemaApp --> AutenticacionService : inicia sesión
+    AutenticacionService ..> PasswordHasher : verifica credenciales
+    AutenticacionService ..> ArchivoManager : lee usuarios
     ServicioAcademico ..> ArchivoManager : persiste y recupera datos
 
     %% ==========================================
@@ -149,6 +200,8 @@ classDiagram
 
     ArchivoManager ..> Profesor : deserializa CSV
     ArchivoManager ..> Estudiante : deserializa CSV
+    ArchivoManager ..> Usuario : deserializa CSV
+    ArchivoManager ..> Rol : parsea enum
     ArchivoManager ..> EstadoEstudiante : parsea enum
     ArchivoManager ..> Curso : deserializa CSV
     ArchivoManager ..> RegistroDeAsistencia : serializa / deserializa CSV

@@ -1,0 +1,10 @@
+classDiagram
+    class AutenticacionService {
+        - HASH_FICTICIO: String$
+        + Usuario autenticar(String correo, String contrasena)
+        - Usuario buscarPorCorreo(String correoNormalizado)
+    }
+
+    AutenticacionService ..> Usuario : autentica
+    AutenticacionService ..> PasswordHasher : verifica hash
+    AutenticacionService ..> ArchivoManager : lee usuarios
