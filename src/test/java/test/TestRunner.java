@@ -2,18 +2,28 @@ package test;
 
 import java.util.List;
 
+import models.BloqueSeccion;
 import models.Carrera;
 import models.Curso;
+import models.DiaSemana;
 import models.Estudiante;
 import models.EstadoEstudiante;
 import models.EstadoPeriodo;
 import models.EstadoPlan;
+import models.HorarioSeccion;
+import models.ModalidadDictado;
 import models.ModuloProfesional;
 import models.PeriodoAcademico;
 import models.PlanEstudios;
 import models.Profesor;
 import models.RegistroDeAsistencia;
 import models.Rol;
+import models.Salon;
+import models.SeccionCurso;
+import models.SesionClase;
+import models.TipoClase;
+import models.TipoSalon;
+import models.Turno;
 import models.Usuario;
 import security.PasswordHasher;
 import service.AutenticacionService;
@@ -36,6 +46,7 @@ public class TestRunner {
     probarRegistroDeAsistencia();
     probarFundacionesAcademicas();
     probarUnidadDidactica();
+    probarOfertaAcademica();
 
     System.out.println();
     if (fallos == 0) {
@@ -154,6 +165,62 @@ public class TestRunner {
     afirmar(legado.getIdModulo().isEmpty(), "un curso legado no declara modulo");
     afirmar(legado.getCreditos() == 0, "un curso legado no declara creditos");
     afirmar(legado.getHorasLectivasTotales() == 64, "deriva las horas lectivas de duracion por horas de sesion");
+  }
+
+  private static void probarOfertaAcademica() {
+    ServicioAcademico servicio = new ServicioAcademico();
+
+    List<BloqueSeccion> bloques = servicio.listarBloques();
+    afirmar(bloques.size() == 2, "lee los bloques de seccion");
+    afirmar(!bloques.isEmpty() && bloques.get(0).getIdPeriodo().equals("PE1"), "el bloque pertenece al periodo");
+    afirmar(!bloques.isEmpty() && bloques.get(0).getTurno() == Turno.NOCHE, "conserva el turno del bloque");
+
+    List<SeccionCurso> secciones = servicio.listarSecciones();
+    afirmar(secciones.size() == 5, "lee las secciones de curso");
+    SeccionCurso sec1 = secciones.stream().filter(s -> s.getIdSeccion().equals("SEC1")).findFirst().orElse(null);
+    afirmar(sec1 != null && sec1.getIdCurso().equals("C1"), "la seccion ejecuta una unidad didactica");
+    afirmar(sec1 != null && sec1.getModalidad() == ModalidadDictado.PRESENCIAL, "conserva la modalidad");
+    afirmar(sec1 != null && sec1.getIdProfesor().equals("P1") && sec1.getCupoMaximo() == 30,
+        "conserva docente y cupo de la seccion");
+    afirmar(servicio.listarSeccionesBloque("B1").size() == 3, "filtra secciones por bloque");
+
+    List<HorarioSeccion> horarios = servicio.listarHorarios();
+    afirmar(horarios.size() == 6, "lee las franjas horarias");
+    HorarioSeccion h1 = horarios.stream().filter(h -> h.getIdHorario().equals("H1")).findFirst().orElse(null);
+    afirmar(h1 != null && h1.getDiaSemana() == DiaSemana.LUNES && h1.getTipoClase() == TipoClase.TEORIA,
+        "conserva dia y tipo de clase");
+    afirmar(h1 != null && h1.getHoraInicio().equals("18:00") && h1.getHoraFin().equals("20:00"),
+        "conserva el rango horario");
+    afirmar(h1 != null && h1.getIdSalon().equals("S1"), "reserva el ambiente de la franja");
+    afirmar(servicio.listarHorariosSeccion("SEC1").size() == 2, "filtra franjas por seccion");
+
+    List<SesionClase> sesiones = servicio.listarSesiones();
+    afirmar(sesiones.size() == 7, "lee las sesiones de clase");
+    SesionClase ses1 = sesiones.stream().filter(s -> s.getIdSesion().equals("SES1")).findFirst().orElse(null);
+    afirmar(ses1 != null && ses1.getIdHorario().equals("H1") && ses1.getFecha().equals("2026-03-09"),
+        "la sesion nace de una franja en una fecha");
+    afirmar(ses1 != null && ses1.getHorasProgramadas() == 2, "conserva las horas programadas");
+    afirmar(servicio.listarSesionesHorario("H1").size() == 2, "filtra sesiones por franja");
+
+    List<Salon> salones = servicio.listarSalones();
+    afirmar(salones.size() == 3, "lee los ambientes");
+    afirmar(salones.stream().anyMatch(s -> s.getIdSalon().equals("S2") && s.getTipo() == TipoSalon.LABORATORIO
+        && s.getCapacidad() == 30), "conserva tipo y capacidad del ambiente");
+
+    List<String> idsBloque = bloques.stream().map(BloqueSeccion::getIdBloque).toList();
+    afirmar(secciones.stream().allMatch(s -> idsBloque.contains(s.getIdBloque())),
+        "toda seccion referencia un bloque existente");
+    List<String> idsSeccion = secciones.stream().map(SeccionCurso::getIdSeccion).toList();
+    afirmar(horarios.stream().allMatch(h -> idsSeccion.contains(h.getIdSeccion())),
+        "toda franja referencia una seccion existente");
+    List<String> idsHorario = horarios.stream().map(HorarioSeccion::getIdHorario).toList();
+    afirmar(sesiones.stream().allMatch(s -> idsHorario.contains(s.getIdHorario())),
+        "toda sesion referencia una franja existente");
+    List<String> idsSalon = salones.stream().map(Salon::getIdSalon).toList();
+    afirmar(horarios.stream().allMatch(h -> idsSalon.contains(h.getIdSalon())),
+        "toda franja referencia un ambiente existente");
+    afirmar(sesiones.stream().allMatch(s -> idsSalon.contains(s.getIdSalon())),
+        "toda sesion referencia un ambiente existente");
   }
 
   private static void afirmar(boolean condicion, String descripcion) {

@@ -3,14 +3,19 @@ package service;
 import java.util.ArrayList;
 import java.util.List;
 
+import models.BloqueSeccion;
 import models.Carrera;
 import models.Curso;
 import models.Estudiante;
+import models.HorarioSeccion;
 import models.ModuloProfesional;
 import models.PeriodoAcademico;
 import models.PlanEstudios;
 import models.Profesor;
 import models.RegistroDeAsistencia;
+import models.Salon;
+import models.SeccionCurso;
+import models.SesionClase;
 import storage.ArchivoManager;
 
 /**
@@ -101,6 +106,80 @@ public class ServicioAcademico {
    */
   public List<PeriodoAcademico> listarPeriodosAcademicos() {
     return ArchivoManager.leerPeriodosAcademicos();
+  }
+
+  /**
+   * Lista los bloques de seccion / turno registrados.
+   */
+  public List<BloqueSeccion> listarBloques() {
+    return ArchivoManager.leerBloques();
+  }
+
+  /**
+   * Lista las secciones de curso registradas.
+   */
+  public List<SeccionCurso> listarSecciones() {
+    return ArchivoManager.leerSecciones();
+  }
+
+  /**
+   * Devuelve las secciones que pertenecen a un bloque.
+   */
+  public List<SeccionCurso> listarSeccionesBloque(String idBloque) {
+    List<SeccionCurso> secciones = new ArrayList<>();
+    for (SeccionCurso seccion : ArchivoManager.leerSecciones()) {
+      if (seccion.getIdBloque().equals(idBloque)) {
+        secciones.add(seccion);
+      }
+    }
+    return secciones;
+  }
+
+  /**
+   * Lista las franjas horarias registradas.
+   */
+  public List<HorarioSeccion> listarHorarios() {
+    return ArchivoManager.leerHorarios();
+  }
+
+  /**
+   * Devuelve las franjas horarias de una seccion.
+   */
+  public List<HorarioSeccion> listarHorariosSeccion(String idSeccion) {
+    List<HorarioSeccion> horarios = new ArrayList<>();
+    for (HorarioSeccion horario : ArchivoManager.leerHorarios()) {
+      if (horario.getIdSeccion().equals(idSeccion)) {
+        horarios.add(horario);
+      }
+    }
+    return horarios;
+  }
+
+  /**
+   * Lista las sesiones de clase registradas.
+   */
+  public List<SesionClase> listarSesiones() {
+    return ArchivoManager.leerSesiones();
+  }
+
+  /**
+   * Devuelve las sesiones generadas por una franja horaria.
+   */
+  public List<SesionClase> listarSesionesHorario(String idHorario) {
+    List<SesionClase> sesiones = new ArrayList<>();
+    for (SesionClase sesion : ArchivoManager.leerSesiones()) {
+      if (sesion.getIdHorario().equals(idHorario)) {
+        sesiones.add(sesion);
+      }
+    }
+    return sesiones;
+  }
+
+  /**
+   * Lista los salones, laboratorios y talleres registrados.
+   */
+  public List<Salon> listarSalones() {
+    return ArchivoManager.leerSalones();
   }
 
   /**

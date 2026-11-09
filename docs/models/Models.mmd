@@ -24,6 +24,39 @@ classDiagram
             ACTIVO
             CERRADO
         }
+        class Turno {
+            <<enumeration>>
+            MANANA
+            TARDE
+            NOCHE
+        }
+        class ModalidadDictado {
+            <<enumeration>>
+            PRESENCIAL
+            VIRTUAL
+            HIBRIDA
+        }
+        class DiaSemana {
+            <<enumeration>>
+            LUNES
+            MARTES
+            MIERCOLES
+            JUEVES
+            VIERNES
+            SABADO
+            DOMINGO
+        }
+        class TipoClase {
+            <<enumeration>>
+            TEORIA
+            PRACTICA
+        }
+        class TipoSalon {
+            <<enumeration>>
+            AULA
+            LABORATORIO
+            TALLER
+        }
         class Curso {
             - idCurso: String 
             - nombreCurso: String 
@@ -93,6 +126,72 @@ classDiagram
             + String getFechaInicio()
             + String getFechaFin()
             + EstadoPeriodo getEstado()
+        }
+        class BloqueSeccion {
+            - idBloque: String
+            - idPeriodo: String
+            - nombre: String
+            - turno: Turno
+            + String getIdBloque()
+            + String getIdPeriodo()
+            + String getNombre()
+            + Turno getTurno()
+        }
+        class SeccionCurso {
+            - idSeccion: String
+            - idBloque: String
+            - idCurso: String
+            - modalidad: ModalidadDictado
+            - idProfesor: String
+            - cupoMaximo: int
+            + String getIdSeccion()
+            + String getIdBloque()
+            + String getIdCurso()
+            + ModalidadDictado getModalidad()
+            + String getIdProfesor()
+            + int getCupoMaximo()
+        }
+        class HorarioSeccion {
+            - idHorario: String
+            - idSeccion: String
+            - diaSemana: DiaSemana
+            - horaInicio: String
+            - horaFin: String
+            - tipoClase: TipoClase
+            - idProfesor: String
+            - idSalon: String
+            + String getIdHorario()
+            + String getIdSeccion()
+            + DiaSemana getDiaSemana()
+            + String getHoraInicio()
+            + String getHoraFin()
+            + TipoClase getTipoClase()
+            + String getIdProfesor()
+            + String getIdSalon()
+        }
+        class SesionClase {
+            - idSesion: String
+            - idHorario: String
+            - fecha: String
+            - horasProgramadas: int
+            - idProfesor: String
+            - idSalon: String
+            + String getIdSesion()
+            + String getIdHorario()
+            + String getFecha()
+            + int getHorasProgramadas()
+            + String getIdProfesor()
+            + String getIdSalon()
+        }
+        class Salon {
+            - idSalon: String
+            - nombre: String
+            - tipo: TipoSalon
+            - capacidad: int
+            + String getIdSalon()
+            + String getNombre()
+            + TipoSalon getTipo()
+            + int getCapacidad()
         }
        class Profesor {
             - id: String
@@ -181,3 +280,17 @@ classDiagram
     ModuloProfesional --> Curso : agrupa
     PlanEstudios --> EstadoPlan : tiene
     PeriodoAcademico --> EstadoPeriodo : tiene
+    PeriodoAcademico --> BloqueSeccion : apertura
+    BloqueSeccion --> SeccionCurso : contiene
+    SeccionCurso ..> Curso : referencia por idCurso
+    SeccionCurso --> ModalidadDictado : tiene
+    BloqueSeccion --> Turno : tiene
+    SeccionCurso --> HorarioSeccion : divide en franjas
+    HorarioSeccion ..> Profesor : referencia por idProfesor
+    HorarioSeccion --> Salon : reserva
+    HorarioSeccion --> DiaSemana : tiene
+    HorarioSeccion --> TipoClase : tiene
+    HorarioSeccion --> SesionClase : proyecta
+    SesionClase ..> Profesor : referencia por idProfesor
+    SesionClase --> Salon : usa
+    Salon --> TipoSalon : tiene

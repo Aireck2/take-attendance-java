@@ -48,7 +48,12 @@ La base institucional del dominio se persiste en CSV y se expone a través de `S
 - **Plan de Estudios** → `PlanEstudios` (N↔1 `Carrera`; 1↔N `ModuloProfesional`; 1↔N `PeriodoAcademico`).
 - **Módulo Profesional** → `ModuloProfesional` (N↔1 `PlanEstudios`; 1↔N `Curso`).
 - **Curso / Unidad Didáctica** → `Curso` extendido con `idModulo`, `creditos`, `horasTeoricas` y `horasPracticas`; `getHorasLectivasTotales()` suma las horas lectivas.
-- **Periodo Académico** → `PeriodoAcademico` (N↔1 `PlanEstudios`).
+- **Periodo Académico** → `PeriodoAcademico` (N↔1 `PlanEstudios`; 1↔N `BloqueSeccion`).
+- **Bloque de Sección / Turno** → `BloqueSeccion` (N↔1 `PeriodoAcademico`; 1↔N `SeccionCurso`; turno `MANANA` / `TARDE` / `NOCHE`).
+- **Sección de Curso** → `SeccionCurso` (N↔1 `BloqueSeccion`; N↔1 `Curso`; modalidad `PRESENCIAL` / `VIRTUAL` / `HIBRIDA`; 1↔N `HorarioSeccion`).
+- **Horario de Sección / Franja Horaria** → `HorarioSeccion` (N↔1 `SeccionCurso`; N↔1 `Profesor`; N↔1 `Salon`; tipo de clase `TEORIA` / `PRACTICA`; 1↔N `SesionClase`).
+- **Sesión de Clase** → `SesionClase` (N↔1 `HorarioSeccion`; N↔1 `Profesor`; N↔1 `Salon`; fecha exacta y horas programadas).
+- **Salón / Laboratorio / Taller** → `Salon` (tipo `AULA` / `LABORATORIO` / `TALLER`; capacidad).
 
 > [!NOTE]
 > `Curso` conserva sus columnas originales y agrega cuatro columnas al final. El lector tolera filas legadas de 5 columnas y, en ese caso, deriva las horas lectivas como `duracionCurso × totalHorasSesion`.
@@ -99,7 +104,7 @@ El archivo [`docs/Index.mmd`](docs/Index.mmd) centraliza la arquitectura del sis
 | :--- | :--- | :--- |
 | `docs/` | [`Index.mmd`](docs/Index.mmd) | **Diagrama UML global** con todos los paquetes, clases y relaciones entre capas. |
 | `docs/models/` | [`Models.mmd`](docs/models/Models.mmd) | Diagrama de paquete con entidades del dominio, enumeraciones y relaciones internas. |
-| `docs/models/` | `*.mmd` | Diagramas individuales: [`CursoClass.mmd`](docs/models/CursoClass.mmd), [`Estudiante.mmd`](docs/models/Estudiante.mmd), [`Profesor.mmd`](docs/models/Profesor.mmd), [`Usuario.mmd`](docs/models/Usuario.mmd), [`Rol.mmd`](docs/models/Rol.mmd), [`RegistroDeAsistencia.mmd`](docs/models/RegistroDeAsistencia.mmd), [`EstadoEstudiante.mmd`](docs/models/EstadoEstudiante.mmd), [`Carrera.mmd`](docs/models/Carrera.mmd), [`PlanEstudios.mmd`](docs/models/PlanEstudios.mmd), [`ModuloProfesional.mmd`](docs/models/ModuloProfesional.mmd), [`PeriodoAcademico.mmd`](docs/models/PeriodoAcademico.mmd). |
+| `docs/models/` | `*.mmd` | Diagramas individuales: [`CursoClass.mmd`](docs/models/CursoClass.mmd), [`Estudiante.mmd`](docs/models/Estudiante.mmd), [`Profesor.mmd`](docs/models/Profesor.mmd), [`Usuario.mmd`](docs/models/Usuario.mmd), [`Rol.mmd`](docs/models/Rol.mmd), [`RegistroDeAsistencia.mmd`](docs/models/RegistroDeAsistencia.mmd), [`EstadoEstudiante.mmd`](docs/models/EstadoEstudiante.mmd), [`Carrera.mmd`](docs/models/Carrera.mmd), [`PlanEstudios.mmd`](docs/models/PlanEstudios.mmd), [`ModuloProfesional.mmd`](docs/models/ModuloProfesional.mmd), [`PeriodoAcademico.mmd`](docs/models/PeriodoAcademico.mmd), [`BloqueSeccion.mmd`](docs/models/BloqueSeccion.mmd), [`SeccionCurso.mmd`](docs/models/SeccionCurso.mmd), [`HorarioSeccion.mmd`](docs/models/HorarioSeccion.mmd), [`SesionClase.mmd`](docs/models/SesionClase.mmd), [`Salon.mmd`](docs/models/Salon.mmd). |
 | `docs/service/` | [`Service.mmd`](docs/service/Service.mmd) | Vista de namespace del paquete `service`. |
 | `docs/service/` | [`ServicioAcademico.mmd`](docs/service/ServicioAcademico.mmd) | Especificación de atributos, constantes y métodos de la lógica de negocio. |
 | `docs/service/` | [`AutenticacionService.mmd`](docs/service/AutenticacionService.mmd) | Validación de credenciales y búsqueda de usuarios por correo. |
@@ -125,6 +130,11 @@ La capa de almacenamiento gestiona archivos delimitados por comas ubicados en `d
 | `data/planes_estudios.csv` | `id_plan, id_carrera, codigo, nombre, creditos_totales, horas_totales, estado` | Planes de estudio vigentes e históricos |
 | `data/modulos.csv` | `id_modulo, id_plan, nombre, competencia, creditos_modulo` | Módulos profesionales y competencias |
 | `data/periodos.csv` | `id_periodo, id_plan, codigo, fecha_inicio, fecha_fin, estado` | Periodos académicos |
+| `data/bloques.csv` | `id_bloque, id_periodo, nombre, turno` | Bloques de sección por turno |
+| `data/secciones.csv` | `id_seccion, id_bloque, id_curso, modalidad, id_profesor, cupo_maximo` | Secciones de curso aperturadas |
+| `data/horarios.csv` | `id_horario, id_seccion, dia_semana, hora_inicio, hora_fin, tipo_clase, id_profesor, id_salon` | Franjas horarias recurrentes |
+| `data/sesiones.csv` | `id_sesion, id_horario, fecha, horas_programadas, id_profesor, id_salon` | Sesiones de clase con fecha exacta |
+| `data/salones.csv` | `id_salon, nombre, tipo, capacidad` | Aulas, laboratorios y talleres |
 | `data/cursos.csv` | `id_curso, nombre_curso, total_horas_sesion, id_profesor, duracion_curso, id_modulo, creditos, horas_teoricas, horas_practicas` | Unidades didácticas y carga horaria |
 | `data/inscripciones.csv` | `id_curso, id_estudiante` | Matrícula de estudiantes por asignatura |
 | `data/asistencias.csv` | `id_asistencia, id_curso, id_estudiante, fecha, horas_asistidas, presente` | Bitácora histórica de sesiones tomadas |
