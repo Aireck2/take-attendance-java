@@ -168,79 +168,129 @@ A continuación se detalla el conjunto de herramientas y especificaciones técni
 
 ### iv. Solución del caso
 
-#### Análisis
+#### 1. Análisis (Identificación de datos de Entrada y Salida)
 
-La solución operacionaliza los requerimientos identificados mediante la segregación de actores y flujos de negocio trazables:
+El análisis del sistema establece la especificación formal de los datos que ingresan a la aplicación, las transformaciones lógicas internas y la información resultante que se genera para la toma de decisiones pedagógicas y operativas.
 
-##### 1. Descomposición de Actores y Casos de Uso del Negocio
+##### A. Datos de Entrada (Inputs)
 
-- **Actor Docente (`PROFESOR`):**
-  - **CU-01 Iniciar Sesión:** Autenticación institucional con contraseña derivada por PBKDF2 y resolución de carga académica.
-  - **CU-02 Consultar Carga Lectiva:** Exploración de Unidades Didácticas asignadas, horarios programados y nóminas de alumnos con matrícula activa.
-  - **CU-03 Toma de Asistencia por Sesión:** Selección de sesión horaria (`SesionClase`) y captura determinista de horas asistidas ($0 \leq h \leq horasProgramadas$), persistiendo la bitácora en `data/registro_de_asistencia.csv`.
-  - **CU-04 Asentamiento de Evaluaciones:** Registro de notas vigesimales ($0.0 \leq nota \leq 20.0$) en Indicadores de Logro, sujeto a la verificación automatizada de inhabilitación por inasistencia normada ($> 30\%$).
+Los datos de entrada provienen de dos fuentes principales: la interacción dinámica del usuario a través de la interfaz de consola (CLI / TTY) y los datos persistentes precargados desde los archivos CSV institucionales:
 
-- **Actor Estudiante (`ESTUDIANTE`):**
-  - **CU-05 Iniciar Sesión:** Acceso seguro a su portal personal.
-  - **CU-06 Monitoreo Analítico de Asistencia:** Visualización de balances de horas asistidas vs. dictadas, porcentaje de inasistencias y advertencias tempranas preventivas ($> 15\%$).
-  - **CU-07 Consulta de Calificaciones:** Visualización de notas asentadas en sus unidades didácticas y estado de habilitación académica.
+| Categoría                  | Parámetro / Campo        | Tipo de Dato                           | Origen / Canal                                     | Restricciones y Validación Defensiva                                                      | Propósito en el Sistema                                                                  |
+| :------------------------- | :----------------------- | :------------------------------------- | :------------------------------------------------- | :---------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------- |
+| **Credenciales de Acceso** | `correo`                 | `String`                               | Entrada de consola (`Scanner`)                     | No nulo, alfanumérico, normalizado mediante `trim().toLowerCase()`.                       | Identificador institucional para autenticación y resolución de rol.                      |
+| **Credenciales de Acceso** | `contrasena`             | `char[]` / `String`                    | Consola segura (`System.console().readPassword()`) | Longitud mínima recomendada, sin eco de caracteres en terminal interactiva.               | Vector secreto para verificación criptográfica contra el hash persistido.                |
+| **Navegación en Menú**     | `opcion`                 | `int`                                  | Entrada de consola (`Scanner`)                     | Entero restringido al dominio de opciones del menú; validado con `scanner.hasNextInt()`.  | Selección de flujos operativos (ver perfil, tomar asistencia, resumen, salir).           |
+| **Selección de Curso**     | `idxCurso`               | `int`                                  | Entrada de consola (`Scanner`)                     | Entero dentro del rango $[1, N]$ de asignaturas a cargo del docente.                      | Especifica la Unidad Didáctica sobre la cual se ejecutará la toma de asistencia.         |
+| **Confirmación de Acción** | `tomar`                  | `int`                                  | Entrada de consola (`Scanner`)                     | Dominio discreto: $1$ (Sí) o $2$ (No).                                                    | Autorización explícita del docente para aperturar la sesión de asistencia del día.       |
+| **Registro de Asistencia** | `horasAsistidas`         | `int`                                  | Entrada de consola (`Scanner`)                     | Entero acotado al intervalo cerrado $[0, \text{horasProgramadas}]$.                       | Cuantificación horaria presencial del estudiante en la sesión.                           |
+| **Contexto de Sesión**     | `fecha`                  | `LocalDate`                            | Sistema operativo (`LocalDate.now()`)              | Formato determinista ISO-8601 (`YYYY-MM-DD`).                                             | Marca temporal oficial de la sesión lectiva en ejecución.                                |
+| **Contexto de Sesión**     | `idSesion`               | `String`                               | Objeto `SesionClase` programado                    | Clave foránea válida referenciada en `data/sesion_clase.csv`.                             | Vinculación relacional de la asistencia con la instancia de clase correspondiente.       |
+| **Catálogo Maestro (CSV)** | Registros de 19 archivos | Texto delimitado por comas (CSV UTF-8) | Almacenamiento secundario en `data/`               | Esquemas relacionales normalizados, cabeceras estrictas y tolerancia a campos históricos. | Hidratación inicial del grafo de entidades en memoria (alumnos, cursos, horarios, etc.). |
 
-##### 2. Matriz de Trazabilidad: Requisitos vs. Módulos del Sistema
+##### B. Procesamiento Interno (Transformación)
 
-| Requisito Funcional                        | Capa de Presentación (`sistema`)      | Capa de Servicio (`service`)               | Capa de Seguridad / Persistencia    | Entidades de Dominio (`models`)                   |
-| :----------------------------------------- | :------------------------------------ | :----------------------------------------- | :---------------------------------- | :------------------------------------------------ |
-| **RF-01** (Autenticación / RBAC)           | `SistemaApp.iniciarSesion`            | `AutenticacionService.autenticar`          | `PasswordHasher`, `ArchivoManager`  | `Usuario`, `Rol`                                  |
-| **RF-02 - RF-05** (Entidades y Sesiones)   | `SistemaApp.gestionarCursosProfesor`  | `ServicioAcademico.listarEstudiantesCurso` | `ArchivoManager.leerEstudiantes`    | `Estudiante`, `Curso`, `SesionClase`, `Matricula` |
-| **RF-06 - RF-07** (Registro de Horas)      | `SistemaApp.gestionarCursosProfesor`  | `ServicioAcademico.crearRegistroSesion`    | `ArchivoManager.guardarAsistencias` | `RegistroDeAsistencia`, `SesionClase`             |
-| **RF-08 - RF-09** (Alertas y Regla MINEDU) | `SistemaApp.mostrarResumenAsistencia` | `ServicioAcademico.puedeRegistrarNotas`    | Regla lógica de negocio en memoria  | `Curso`, `Matricula`, `RegistroDeAsistencia`      |
-| **RF-10 - RF-12** (Notas y Persistencia)   | `SistemaApp.menuDocente`              | `ServicioAcademico.registrarNota`          | `ArchivoManager.guardarNotas`       | `RegistroNota`, `IndicadorLogro`                  |
+El núcleo computacional del sistema ejecuta transformaciones deterministas sobre los datos de entrada aplicando principios de programación orientada a objetos, criptografía y lógica de negocio normada:
 
----
+1. **Derivación y Verificación Criptográfica de Contraseñas:**
+   - La contraseña en texto plano ingresada por el usuario es procesada junto con la sal aleatoria de 16 bytes (128 bits) recuperada desde `data/usuario.csv`.
+   - Se ejecuta la función pseudoaleatoria `PBKDF2WithHmacSHA256` configurada con $c = 210\,000$ iteraciones y una longitud de clave de 256 bits (32 bytes).
+   - Se realiza una comparación de cadenas en tiempo constante entre el hash recién derivado y el hash almacenado, autenticando la identidad y resolviendo el perfil polimórfico del actor (`Profesor` o `Estudiante`) según el `Rol` asociado.
 
-#### Diseño
+2. **Validación Defensiva y Normalización de Horas Asistidas:**
+   - Cada valor numérico de horas ingresado por el docente es evaluado mediante control de fronteras en `ServicioAcademico`:
+     $$horasValidas = \max(0, \min(horasAsistidas, sesion.getHorasProgramadas()))$$
+   - A partir de este valor se deriva automáticamente la condición booleana de presencia:
+     $$presente = \begin{cases} \text{true} & \text{si } horasValidas > 0 \\ \text{false} & \text{si } horasValidas = 0 \end{cases}$$
+   - Se verifica la precondición relacional de que el estudiante cuente con una `Matricula` en estado `ACTIVA` vinculada al bloque de la sección lectiva.
 
-##### Arquitectura por Capas y Principios de Diseño
+3. **Cómputo Acumulativo de Inasistencias y Horas Faltadas:**
+   - Para cada sesión impartida con registro tomado, se calculan las horas no asistidas:
+     $$horasFaltadas_s = horasProgramadas_s - horasAsistidas_s$$
+   - Se realiza la sumatoria continua de horas faltadas sobre el universo de sesiones dictadas del curso:
+     $$HorasFaltadasTotales = \sum_{s \in SesionesDictadas} (horasProgramadas_s - horasAsistidas_s)$$
+   - Se calcula el porcentaje acumulado de faltas respecto a la carga horaria programada de la Unidad Didáctica:
+     $$\% \text{ Faltas} = \left( \frac{\text{Horas Dictadas} - \text{Horas Asistidas Totales}}{\text{Duración en Días} \times \text{Horas por Sesión}} \right) \times 100$$
+     o en términos del total de horas lectivas de la asignatura ($horasLectivasTotales = horasTeoricas + horasPracticas$):
+     $$\% \text{ Inasistencia Normativa} = \left( \frac{HorasFaltadasTotales}{HorasLectivasTotales} \right) \times 100$$
 
-El sistema implementa una **Arquitectura en Capas (Layered Architecture)** siguiendo el principio de Separación de Responsabilidades (_Separation of Concerns_ - SoC) y directrices de diseño limpio (_Clean Architecture_):
+4. **Evaluación de Reglas de Negocio Normativas y Auditoría de Permanencia:**
+   - **Regla Preventiva de Alerta Temprana (15%):** Si $\% \text{ Faltas} > 15.0\%$, se activa una bandera de advertencia para notificar preventivamente al alumno sobre el riesgo de desaprobación.
+   - **Regla Ministerial de Inhabilitación (MINEDU 30% / Ley N.° 30512):** Si $\% \text{ Inasistencia Normativa} > 30.0\%$, el método `estaInhabilitadoPorInasistencia(...)` retorna `true`. Como consecuencia, `puedeRegistrarNotas(...)` evalúa estrictamente a `false`, bloqueando de manera automática el registro de calificaciones en los `IndicadorLogro` de la sección.
+
+##### C. Datos de Salida (Outputs)
+
+La información resultante se proyecta en dos medios: visualización textual estructurada en terminal para la toma de decisiones del usuario y persistencia atómica en almacenamiento secundario:
+
+| Medio de Salida              | Componente / Archivo              | Dato o Estructura Producida         | Formato / Representación                                                                                 | Propósito Pedagógico y Operativo                                                               |
+| :--------------------------- | :-------------------------------- | :---------------------------------- | :------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------- |
+| **Consola (CLI)**            | `SistemaApp`                      | Menú adaptativo por rol             | Interfaz textual interactiva                                                                             | Provee navegación contextual según privilegios RBAC (`PROFESOR` o `ESTUDIANTE`).               |
+| **Consola (CLI)**            | `SistemaApp`                      | Carga lectiva docente               | Listado tabular (`ID`, nombre, horas/sesión)                                                             | Permite al docente seleccionar la asignatura y visualizar la lista nominal de estudiantes.     |
+| **Consola (CLI)**            | `SistemaApp`                      | Resumen analítico de asistencia     | Métricas consolidadas por curso: días asistidos/dictados, horas asistidas/dictadas y $\% \text{ Faltas}$ | Proporciona al estudiante retroalimentación inmediata sobre su asistencia en tiempo real.      |
+| **Consola (CLI)**            | `SistemaApp`                      | Alerta visual preventiva            | `[ALERTA: Límite de inasistencia superado]`                                                              | Notificación pedagógica de alerta temprana cuando las inasistencias superan el 15%.            |
+| **Consola (CLI)**            | `SistemaApp`                      | Dictamen de habilitación evaluativa | Estado de habilitación (Habilitado / Inhabilitado)                                                       | Comunica formalmente la restricción de evaluación al superar el 30% normativo del MINEDU.      |
+| **Almacenamiento CSV**       | `data/registro_de_asistencia.csv` | Nuevos registros de asistencia      | `id_asistencia, id_curso, id_estudiante, fecha, horas_asistidas, presente, id_sesion, id_matricula`      | Persistencia histórica y trazable de cada toma de asistencia por sesión horaria.               |
+| **Almacenamiento CSV**       | `data/registro_nota.csv`          | Nuevos registros de evaluación      | `id_nota, id_indicador, id_estudiante, nota, fecha`                                                      | Persistencia de calificaciones vigesimales ($0.0 \leq nota \leq 20.0$) por indicador de logro. |
+| **Canal de Error / Control** | `System.out` / Terminal           | Mensajes defensivos de validación   | Mensajes contextuales ("Opción inválida", "Curso no válido", etc.)                                       | Notifica al usuario sobre entradas fuera de rango sin interrumpir la ejecución del sistema.    |
+
+#### 2. Diseño
+
+##### A. Arquitectura por Capas y Principios de Diseño (SoC & Clean Architecture)
+
+El sistema implementa una **Arquitectura en Capas (Layered Architecture)** siguiendo el principio de Separación de Responsabilidades (_Separation of Concerns_ - SoC) y directrices de diseño limpio (_Clean Architecture_), estructurado en cinco paquetes desacoplados bajo [`src/main/java/`](src/main/java/):
 
 1. **Capa de Presentación (`sistema`):**  
-   Gestiona la interacción textual por consola, control de flujos de navegación, captura de entradas y formateo visual de reportes. No contiene lógica de negocio ni manipulación de archivos.
+   Encapsulada en [`sistema.SistemaApp`](src/main/java/sistema/SistemaApp.java). Es responsable exclusivo de la interacción textual en terminal de comandos (CLI / TTY), gestión de ciclos de menús interactivos por rol (`menuProfesor`, `menuEstudiante`), captura de entradas numéricas mediante buffers defensivos (`scanner.hasNextInt()`), lectura oculta de credenciales con `System.console().readPassword()` y despliegue visual de reportes analíticos y alertas preventivas. No contiene reglas de negocio ni interactúa directamente con el sistema de archivos.
+
 2. **Capa de Servicios de Aplicación y Lógica de Negocio (`service`):**  
-   Encapsula las reglas de negocio institucionales, orquestación de operaciones de asistencia, cálculo de porcentajes normativos, habilitación de evaluaciones y mediación de autenticación.
+   Orquesta las operaciones del dominio e implementa la totalidad de las reglas normativas:
+   - [`service.AutenticacionService`](src/main/java/service/AutenticacionService.java): Controla el flujo de autenticación de identidades, normalización canónica de correos institucionales (`trim().toLowerCase()`) y verificación contra hashes ficticios en tiempo constante para neutralizar ataques de temporización por enumeración de cuentas.
+   - [`service.ServicioAcademico`](src/main/java/service/ServicioAcademico.java): Centraliza la lógica de asistencia y evaluación. Gestiona la búsqueda de entidades, validación relacional de matrículas activas, acotamiento defensivo de horas asistidas ($0 \leq h \leq horasProgramadas$), cálculo continuo de horas faltadas, activación de la alerta preventiva temprana del 15% (`LIMITE_INASISTENCIA = 15.0`) y aplicación estricta de la regla de inhabilitación ministerial del 30% (`LIMITE_INASISTENCIA_NORMATIVO = 30.0` según Ley N.° 30512 / MINEDU), la cual gobierna la condición booleana de `puedeRegistrarNotas(...)`.
+
 3. **Capa de Seguridad Criptográfica (`security`):**  
-   Encargada de la generación de sal pseudoaleatoria y derivación de hashes criptográficos mediante PBKDF2-HMAC-SHA256, aislada de la lógica del dominio.
+   Implementada en [`security.PasswordHasher`](src/main/java/security/PasswordHasher.java). Aísla los mecanismos de protección de credenciales aplicando el estándar PBKDF2 con primitiva pseudoaleatoria HMAC-SHA256, 210,000 iteraciones computacionales, sales criptográficas aleatorias de 16 bytes generadas por `java.security.SecureRandom` y claves derivadas de 256 bits. Emplea `MessageDigest.isEqual(...)` para comparaciones en tiempo constante y `PBEKeySpec.clearPassword()` para la sanitización inmediata de secretos en memoria no administrada.
+
 4. **Capa de Persistencia e Integración (`storage`):**  
-   Responsable del acceso al almacenamiento secundario (I/O), serialización y parseo de entidades delimitadas por comas con manejo de compatibilidad retrospectiva.
+   Centralizada en [`storage.ArchivoManager`](src/main/java/storage/ArchivoManager.java). Proporciona métodos estáticos para la serialización y deserialización atómica y bidireccional hacia los 19 archivos planos CSV ubicados en `data/` bajo codificación UTF-8. Implementa analizadores sintácticos defensivos con tolerancia a esquemas legados (retrocompatibilidad para registros históricos de cursos y asistencias), sanitización contra inyección de delimitadores y verificación de integridad referencial.
+
 5. **Capa de Dominio y Modelos (`models`):**  
-   Entidades y enumeraciones del dominio académico con atributos fuertemente tipados, constructores defensivos y métodos de dominio atómicos.
+   Contiene las 18 entidades y 10 enumeraciones fuertemente tipadas que modelan con exactitud el ecosistema del IESTP Chincha: `Carrera`, `PlanEstudios`, `ModuloProfesional`, `PeriodoAcademico`, `BloqueSeccion`, `Curso`, `SeccionCurso`, `HorarioSeccion`, `SesionClase`, `Salon`, `Profesor`, `Estudiante`, `Matricula`, `RegistroDeAsistencia`, `IndicadorLogro`, `RegistroNota`, `DerechoPago`, `ComprobantePago`, `Usuario`, y enumeraciones como `Rol`, `EstadoEstudiante`, `EstadoMatricula`, `Turno`, `ModalidadDictado`, etc.
 
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│                        Capa de Presentación (CLI)                      │
-│                          sistema.SistemaApp                            │
-└───────────────────────────────────┬────────────────────────────────────┘
-                                    │ delega operaciones
-                                    ▼
-┌────────────────────────────────────────────────────────────────────────┐
-│                        Capa de Servicios y Negocio                     │
-│               service.ServicioAcademico │ service.AutenticacionService │
-└───────────────┬───────────────────────────────────────┬────────────────┘
-                │ persiste / consulta                   │ verifica credenciales
-                ▼                                       ▼
-┌──────────────────────────────────────┐ ┌───────────────────────────────┐
-│       Capa de Persistencia (I/O)     │ │       Capa de Seguridad       │
-│         storage.ArchivoManager       │ │     security.PasswordHasher   │
-└───────────────┬──────────────────────┘ └───────────────────────────────┘
-                │ hidrata colecciones
-                ▼
-┌────────────────────────────────────────────────────────────────────────┐
-│                        Capa de Dominio (Modelos)                       │
-│    Carrera, PlanEstudios, ModuloProfesional, Curso, SesionClase,       │
-│   RegistroDeAsistencia, Matricula, IndicadorLogro, RegistroNota, ...   │
-└────────────────────────────────────────────────────────────────────────┘
+```mermaid
+graph TD
+    subgraph Pres["Capa de Presentación (CLI)"]
+        App["sistema.SistemaApp"]
+    end
+
+    subgraph Negocio["Capa de Servicios y Negocio"]
+        ServAca["service.ServicioAcademico"]
+        ServAuth["service.AutenticacionService"]
+    end
+
+    subgraph IO["Capa de Persistencia (I/O)"]
+        Manager["storage.ArchivoManager"]
+    end
+
+    subgraph Sec["Capa de Seguridad"]
+        Hasher["security.PasswordHasher"]
+    end
+
+    subgraph Dominio["Capa de Dominio (Modelos)"]
+        Models["Carrera, PlanEstudios, ModuloProfesional, Curso, SesionClase,<br/>RegistroDeAsistencia, Matricula, IndicadorLogro, RegistroNota, ..."]
+    end
+
+    App -->|delega operaciones de asistencia y notas| ServAca
+    App -->|autentica credenciales por consola| ServAuth
+    ServAuth -->|verifica hash PBKDF2| Hasher
+    ServAuth -->|lee catálogo de usuarios| Manager
+    ServAca -->|persiste y consulta 19 archivos CSV| Manager
+    ServAca -->|aplica reglas sobre| Dominio
+    Manager -->|hidrata y serializa entidades| Dominio
 ```
 
-##### Diagrama de Clases UML del Sistema
+##### B. Diagrama de Clases UML del Sistema
+
+El siguiente diagrama formaliza las clases principales de cada capa, sus miembros y las relaciones de asociación, dependencia y composición observadas en el repositorio:
 
 ```mermaid
 classDiagram
@@ -248,57 +298,75 @@ classDiagram
 
     namespace sistema {
         class SistemaApp {
-            +main(args: String[])
-            -ejecutarMenuDocente(profesor: Profesor)
-            -ejecutarMenuEstudiante(estudiante: Estudiante)
-            -tomarAsistencia(profesor: Profesor)
-            -mostrarReporteEstudiante(estudiante: Estudiante)
-            -leerContrasenaOculta() String
+            -Scanner scanner$
+            -ServicioAcademico servicio$
+            -AutenticacionService autenticacion$
+            +main(args: String[])$ void
+            -leerOpcion(mensaje: String)$ int
+            -iniciarSesion()$ void
+            -leerContrasena(prompt: String)$ String
+            -menuProfesor(profActual: Profesor)$ void
+            -gestionarCursosProfesor(prof: Profesor)$ void
+            -menuEstudiante(estActual: Estudiante)$ void
+            -mostrarResumenAsistenciaEstudiante(est: Estudiante)$ void
         }
     }
 
     namespace service {
         class AutenticacionService {
-            -List~Usuario~ usuarios
-            +iniciarSesion(correo: String, contrasena: String) Usuario
-            +buscarUsuarioPorCorreo(correo: String) Usuario
+            -String HASH_FICTICIO$
+            +autenticar(correo: String, contrasena: String) Usuario
+            -buscarPorCorreo(correoNormalizado: String) Usuario
         }
         class ServicioAcademico {
-            +LIMITE_INASISTENCIA: double = 15.0
-            +LIMITE_INASISTENCIA_NORMATIVO: double = 30.0
-            +calcularHorasFaltadas(idEstudiante: String, idCurso: String) int
-            +calcularPorcentajeInasistencia(idEstudiante: String, idCurso: String) double
-            +puedeRegistrarNotas(idEstudiante: String, idCurso: String) boolean
-            +puedeRegistrarNota(idEstudiante: String, idSeccion: String) boolean
-            +registrarAsistencia(asistencia: RegistroDeAsistencia) void
+            +LIMITE_INASISTENCIA: double$ = 15.0
+            +LIMITE_INASISTENCIA_NORMATIVO: double$ = 30.0
+            +listarCursosProfesor(profesor: Profesor) List~Curso~
+            +listarEstudiantesCurso(curso: Curso) List~Estudiante~
+            +listarCursosEstudiante(estudiante: Estudiante) List~Curso~
+            +historialEstudiante(estudiante: Estudiante) List~RegistroDeAsistencia~
+            +crearRegistroSesion(sesion: SesionClase, curso: Curso, estudiante: Estudiante, horasAsistidas: int, idMatricula: String) RegistroDeAsistencia
+            +registrarAsistenciaSesion(idSesion: String, idEstudiante: String, horasAsistidas: int) RegistroDeAsistencia
+            +guardarAsistencias(registros: List~RegistroDeAsistencia~) void
+            +calcularHorasFaltadas(sesiones: List~SesionClase~, registros: List~RegistroDeAsistencia~) int
+            +horasFaltadasUnidadDidactica(matricula: Matricula, curso: Curso) int
+            +calcularPorcentajeInasistencia(horasFaltadas: int, horasLectivasTotales: int) double
+            +calcularPorcentajeFaltas(horasDictadas: int, horasAsistidas: int, totalHorasCurso: int) double
+            +estaInhabilitadoPorInasistencia(horasFaltadas: int, horasLectivasTotales: int) boolean
+            +puedeRegistrarNotas(matricula: Matricula, curso: Curso) boolean
+            +puedeRegistrarNota(matricula: Matricula, curso: Curso, sesiones: List~SesionClase~, registros: List~RegistroDeAsistencia~) boolean
             +registrarNota(nota: RegistroNota) void
-            +obtenerSesionesPorHorario(idHorario: String) List~SesionClase~
         }
     }
 
     namespace security {
         class PasswordHasher {
-            -ITERACIONES: int = 210000
-            -LONGITUD_SAL: int = 16
-            -LONGITUD_HASH: int = 256
-            +hash(contrasena: String) String
-            +verificar(contrasena: String, hashEsperado: String) boolean
-            -toHex(bytes: byte[]) String
-            -fromHex(hex: String) byte[]
+            -ALGORITMO: String$ = "PBKDF2WithHmacSHA256"
+            -PREFIJO: String$ = "pbkdf2_sha256"
+            -ITERACIONES: int$ = 210000
+            -LONGITUD_CLAVE_BITS: int$ = 256
+            -LONGITUD_SAL_BYTES: int$ = 16
+            +hash(contrasena: String)$ String
+            +verificar(contrasena: String, almacenado: String)$ boolean
+            -derivar(contrasena: String, sal: byte[], iteraciones: int)$ byte[]
         }
     }
 
     namespace storage {
         class ArchivoManager {
-            +cargarCursos() List~Curso~
-            +cargarEstudiantes() List~Estudiante~
-            +cargarProfesores() List~Profesor~
-            +cargarAsistencias() List~RegistroDeAsistencia~
-            +guardarAsistencias(asistencias: List~RegistroDeAsistencia~) void
-            +cargarNotas() List~RegistroNota~
-            +guardarNotas(notas: List~RegistroNota~) void
-            +cargarUsuarios() List~Usuario~
-            +guardarUsuarios(usuarios: List~Usuario~) void
+            -CARPETA_DATOS: String$ = "data"
+            +leerProfesores()$ List~Profesor~
+            +leerEstudiantes()$ List~Estudiante~
+            +leerUsuarios()$ List~Usuario~
+            +leerCursos()$ List~Curso~
+            +leerSesiones()$ List~SesionClase~
+            +leerMatriculas()$ List~Matricula~
+            +guardarMatriculas(matriculas: List~Matricula~)$ void
+            +leerAsistencias()$ List~RegistroDeAsistencia~
+            +guardarAsistencias(asistencias: List~RegistroDeAsistencia~)$ void
+            +leerIndicadores()$ List~IndicadorLogro~
+            +leerNotas()$ List~RegistroNota~
+            +guardarNotas(notas: List~RegistroNota~)$ void
         }
     }
 
@@ -309,7 +377,6 @@ classDiagram
             -String tipo
             +getIdCarrera() String
             +getNombre() String
-            +getTipo() String
         }
         class PlanEstudios {
             -String idPlan
@@ -331,45 +398,88 @@ classDiagram
             -int horasTeoricas
             -int horasPracticas
             +getHorasLectivasTotales() int
+            +getTotalHorasSesion() int
+            +getDuracionCurso() int
         }
         class SeccionCurso {
             -String idSeccion
+            -String idBloque
             -String idCurso
             -ModalidadDictado modalidad
         }
         class SesionClase {
             -String idSesion
-            -LocalDate fecha
+            -String idHorario
+            -String fecha
             -int horasProgramadas
+            -String idProfesor
+            -String idSalon
             +getIdSesion() String
             +getHorasProgramadas() int
+            +getFecha() String
         }
         class RegistroDeAsistencia {
             -String idAsistencia
             -String idCurso
             -String idEstudiante
-            -LocalDate fecha
+            -String fecha
             -int horasAsistidas
             -boolean presente
             -String idSesion
             -String idMatricula
             +getHorasAsistidas() int
             +isPresente() boolean
+            +getIdSesion() String
             +getIdMatricula() String
+        }
+        class Matricula {
+            -String idMatricula
+            -String idEstudiante
+            -String idBloque
+            -String fechaMatricula
+            -EstadoMatricula estado
+            +getIdMatricula() String
+            +getIdEstudiante() String
+            +getIdBloque() String
+            +getEstado() EstadoMatricula
         }
         class IndicadorLogro {
             -String idIndicador
             -String idSeccion
             -String nombre
-            -double peso
+            -int peso
+            +getIdIndicador() String
+            +getNombre() String
         }
         class RegistroNota {
-            -String idNota
+            -String idRegistroNota
             -String idIndicador
             -String idEstudiante
-            -double nota
-            -LocalDate fecha
-            +getNota() double
+            -int nota
+            -String fecha
+            +getNota() int
+            +getIdIndicador() String
+        }
+        class Profesor {
+            -String id
+            -String nombre
+            -String apellido
+            -String correo
+            -String especialidad
+            +getNombreCompleto() String
+            +mostrarPerfil() void
+        }
+        class Estudiante {
+            -String id
+            -String codigo
+            -String nombre
+            -String apellido
+            -String correo
+            -String escuelaProfesional
+            -EstadoEstudiante estado
+            +getNombreCompleto() String
+            +getCodigo() String
+            +mostrarPerfil() void
         }
         class Usuario {
             -String id
@@ -380,21 +490,35 @@ classDiagram
             -boolean activo
             +getRol() Rol
             +isActivo() boolean
+            +getIdReferencia() String
         }
         class Rol {
             <<enumeration>>
             PROFESOR
             ESTUDIANTE
         }
+        class EstadoMatricula {
+            <<enumeration>>
+            ACTIVA
+            RETIRADA
+            COMPLETADA
+        }
+        class EstadoEstudiante {
+            <<enumeration>>
+            REGULAR
+            SUSPENDIDO
+            RESERVA_MATRICULA
+        }
     }
 
-    SistemaApp --> ServicioAcademico : orquesta operaciones
+    SistemaApp --> ServicioAcademico : delega operaciones
     SistemaApp --> AutenticacionService : delega inicio de sesión
     AutenticacionService ..> PasswordHasher : verifica derivación criptográfica
-    AutenticacionService ..> ArchivoManager : carga catálogo de usuarios
+    AutenticacionService ..> ArchivoManager : lee usuarios
     ServicioAcademico ..> ArchivoManager : persiste y consulta registros
     ServicioAcademico ..> Curso : valida carga lectiva
     ServicioAcademico ..> RegistroDeAsistencia : procesa inasistencias
+    ServicioAcademico ..> Matricula : verifica condición activa
     ServicioAcademico ..> RegistroNota : valida y asienta evaluación
     Usuario --> Rol : tipado de permisos
     Curso --> ModuloProfesional : pertenece a
@@ -402,8 +526,31 @@ classDiagram
     PlanEstudios --> Carrera : pertenece a
     SeccionCurso --> Curso : apertura de
     SesionClase ..> RegistroDeAsistencia : referencia horaria
+    Matricula --> RegistroDeAsistencia : vincula por idMatricula
+    Matricula ..> Estudiante : asocia
     RegistroNota --> IndicadorLogro : evalúa
+    RegistroNota ..> Estudiante : califica
 ```
+
+##### C. Diagrama de flujo de la aplicacion
+
+- Diagrama de flujo general de la aplicación de terminal (Inicio de sesion)
+
+- Diagrama de flujo de la aplicación de terminal (Docente)
+
+- Diagrama de flujo de la aplicación de terminal (Alumno)
+
+##### D. Principios de Diseño, SOLID y Seguridad por Diseño
+
+La concepción arquitectónica del software responde a principios y patrones consolidados en la ingeniería de software:
+
+| Principio / Patrón                                 | Aplicación Concreta en el Código del Repositorio                                                                                                                                                              | Justificación de Ingeniería y Beneficio                                                                                                                            |
+| :------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Separación de Responsabilidades (SoC)**          | Estructuración estricta en 5 paquetes: `sistema` (I/O consola), `service` (negocio), `security` (criptografía), `storage` (I/O CSV) y `models` (entidades).                                                   | Garantiza que cambios en la presentación (CLI) o persistencia (CSV a BD) no impacten en las reglas de cálculo de inasistencias ni en el dominio.                   |
+| **Single Responsibility Principle (SRP)**          | `PasswordHasher` sólo deriva y verifica contraseñas; `ArchivoManager` sólo parsea y guarda archivos CSV; `ServicioAcademico` sólo aplica reglas institucionales.                                              | Alta cohesión de clases y bajo acoplamiento, simplificando las pruebas unitarias y el mantenimiento.                                                               |
+| **Programación Defensiva (Defensive Programming)** | Delimitación matemática de horas en `ServicioAcademico`: $horas = \max(0, \min(h, max))$, control de streams en `SistemaApp` con `scanner.hasNextInt()` y manejo de esquemas CSV legados en `ArchivoManager`. | Inmunidad frente a entradas anómalas, evitando fallos en tiempo de ejecución (`InputMismatchException`, `NumberFormatException` o desbordamiento de horas).        |
+| **Seguridad por Diseño (Security by Design)**      | Hash PBKDF2 con 210,000 iteraciones, mitigación de ataques de temporización mediante hash ficticio en `AutenticacionService` y comparación en tiempo constante con `MessageDigest.isEqual`.                   | Protección robusta de credenciales frente a ataques de fuerza bruta offline, tablas arcoíris y timing attacks sin requerir librerías externas.                     |
+| **Cero Dependencias Externas (Zero Dependencies)** | Construcción del 100% del código apoyándose exclusivamente en Java SE 21 LTS (`java.time`, `java.security`, `javax.crypto`).                                                                                  | Neutralización de vulnerabilidades en la cadena de suministro de software (_Supply Chain Attacks_) y portabilidad inmediata en cualquier entorno con JVM estándar. |
 
 > [!NOTE]
 > La especificación detallada de relaciones, asociaciones y navegabilidad a nivel de entidad se encuentra formalizada en los archivos Mermaid de la carpeta [`docs/`](docs/) y el índice maestro [`docs/Index.mmd`](docs/Index.mmd).
@@ -432,132 +579,7 @@ src/main/java/
     └── SistemaApp.java
 ```
 
-##### Mecanismos de Seguridad y Derivación Criptográfica (PBKDF2)
-
-La clase [`security.PasswordHasher`](src/main/java/security/PasswordHasher.java) implementa el algoritmo PBKDF2 (_Password-Based Key Derivation Function 2_) empleando la primitiva pseudoaleatoria HMAC-SHA256:
-
-$$\text{DK} = \text{PBKDF2}(\text{PRF}=\text{HMAC-SHA256}, \text{Password}, \text{Salt}, c=210\,000, dkLen=256)$$
-
-1. **Generación de Sal Criptográfica:**  
-   Se utiliza `java.security.SecureRandom` para generar un vector aleatorio de 16 bytes (128 bits) por cada contraseña, garantizando unicidad y neutralizando ataques basados en tablas precalculadas (_Rainbow Tables_).
-2. **Derivación de Clave:**  
-   Se invoca `SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")` aplicando 210,000 iteraciones para obtener una clave derivada de 256 bits (32 bytes).
-3. **Formato de Almacenamiento Canónico:**  
-   El hash final se almacena en `data/usuario.csv` concatenando la sal y la clave derivada en formato hexadecimal:
-   $$\text{Formato Persistido} = \text{hex}(\text{Salt}) \mathbin{\Vert} \text{":"} \mathbin{\Vert} \text{hex}(\text{DerivedKey})$$
-4. **Verificación en Tiempo Constante:**  
-   La validación contrasta el hash recalculado contra el hash esperado almacenado sin revelar diferencias temporales que permitan ataques de canal lateral (_Timing Attacks_).
-
-##### Lógica de Negocio y Reglas de Control de Asistencia
-
-1. **Inasistencia Preventiva de Curso (15%):**  
-   Cálculo sobre las horas dictadas programadas para advertir riesgo inminente:
-   $$\% \text{ Faltas} = \left( \frac{\text{Horas Dictadas} - \text{Horas Asistidas}}{\text{Duración en Días} \times \text{Horas por Sesión}} \right) \times 100$$
-   Si $\% \text{ Faltas} > 15.0\%$, se activa la alerta visual en consola.
-
-2. **Regla Normativa Ministerial de Inasistencia (MINEDU 30%):**  
-   Computado rigurosamente sobre el total de horas lectivas de la Unidad Didáctica (`getHorasLectivasTotales()`):
-   $$\text{Horas Faltadas Acumuladas} = \sum_{s \in \text{SesionesTomadas}} (\text{horasProgramadas}_s - \text{horasAsistidas}_s)$$
-   $$\% \text{ Inasistencia Normativa} = \left( \frac{\text{Horas Faltadas Acumuladas}}{\text{Horas Lectivas Totales de la Unidad Didáctica}} \right) \times 100$$
-   > [!IMPORTANT]
-   > Si el $\% \text{ Inasistencia Normativa} > 30.0\%$, el método `puedeRegistrarNotas` retorna estrictamente `false`. El sistema impide asentar cualquier calificación en los Indicadores de Logro de dicha sección.
-
-##### Catálogo de Persistencia en Archivos CSV
-
-La persistencia del sistema está distribuida en 19 archivos dentro de la carpeta [`data/`](data/):
-
-| Archivo CSV                       | Estructura de Campos                                                                                               | Función en la Arquitectura                                               |
-| :-------------------------------- | :----------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------- |
-| `data/usuario.csv`                | `id, correo, hash_contrasena, rol, id_referencia, activo`                                                          | Almacén de credenciales con salt/hash PBKDF2 y roles RBAC.               |
-| `data/profesor.csv`               | `id, nombre, apellido, correo, tipo_doc, nro_doc, telefono, depto, especialidad`                                   | Catálogo de docentes y afiliación académica.                             |
-| `data/estudiante.csv`             | `id_estudiante, codigo, nombres, apellidos, dni, correo, escuela_profesional, estado`                              | Registro estudiantil, DNI y condición académica formal.                  |
-| `data/carrera.csv`                | `id_carrera, nombre, tipo`                                                                                         | Programas formativos superiores autorizados (tipo `Educación Superior`). |
-| `data/plan_estudios.csv`          | `id_plan, id_carrera, codigo, nombre, creditos_totales, horas_totales, estado`                                     | Mallas curriculares vigentes e históricas.                               |
-| `data/modulo_profesional.csv`     | `id_modulo, id_plan, nombre, competencia, creditos_modulo`                                                         | Módulos profesionales de certificación progresiva.                       |
-| `data/periodo_academico.csv`      | `id_periodo, id_plan, codigo, fecha_inicio, fecha_fin, estado`                                                     | Ciclos y periodos lectivos.                                              |
-| `data/bloque_seccion.csv`         | `id_bloque, id_periodo, nombre, turno`                                                                             | Agrupación de secciones por turno (`MANANA`, `TARDE`, `NOCHE`).          |
-| `data/curso.csv`                  | `id_curso, nombre_curso, id_modulo, creditos, horas_teoricas, horas_practicas, total_horas_sesion, duracion_curso` | Unidades didácticas con desagregación de horas teóricas y prácticas.     |
-| `data/seccion_curso.csv`          | `id_seccion, id_bloque, id_curso, modalidad, cupo_maximo`                                                          | Secciones ofertadas por periodo formativo.                               |
-| `data/horario_seccion.csv`        | `id_horario, id_seccion, dia_semana, hora_inicio, hora_fin, tipo_clase, id_prof, id_salon`                         | Programación horaria semanal de cada sección.                            |
-| `data/sesion_clase.csv`           | `id_sesion, id_horario, fecha, horas_programadas, id_profesor, id_salon`                                           | Instancias individuales de sesión con fecha de calendario.               |
-| `data/salon.csv`                  | `id_salon, nombre, tipo, capacidad`                                                                                | Espacios físicos (`AULA`, `LABORATORIO`, `TALLER`).                      |
-| `data/matricula.csv`              | `id_matricula, id_estudiante, id_bloque, fecha_matricula, estado`                                                  | Vinculación formal de alumnos con bloques de estudio.                    |
-| `data/registro_de_asistencia.csv` | `id_asistencia, id_curso, id_estudiante, fecha, horas_asistidas, presente, id_sesion, id_matricula`                | Registro histórico de asistencia por sesión, matrícula y alumno.         |
-| `data/indicador_logro.csv`        | `id_indicador, id_seccion, nombre, peso`                                                                           | Indicadores de logro evaluativos de la sección.                          |
-| `data/registro_nota.csv`          | `id_nota, id_indicador, id_estudiante, nota, fecha`                                                                | Calificaciones vigesimales ($0.0 \leq \text{nota} \leq 20.0$).           |
-| `data/derecho_pago.csv`           | `id_derecho, codigo, nombre, monto`                                                                                | Conceptos de cobro normados institucionalmente.                          |
-| `data/comprobante_pago.csv`       | `id_comprobante, id_estudiante, id_derecho, fecha, monto, estado`                                                  | Trazabilidad financiera, comprobantes emitidos y su estado.              |
-
-##### Compilación y Despliegue Operativo
-
-Para compilar y ejecutar la aplicación de consola mediante herramientas nativas del JDK:
-
-```bash
-# 1. Compilación de clases del aplicativo en el directorio 'out'
-javac -d out $(find src/main/java -name "*.java")
-
-# 2. Ejecución de la aplicación principal
-java -cp out sistema.SistemaApp
-```
-
-##### Credenciales de Prueba Sembradas en Almacén
-
-> [!WARNING]
-> Las contraseñas expuestas a continuación corresponden a usuarios semilla provistos con fines de demostración académica en entorno de pruebas. En un entorno de producción, deben ser cambiadas de inmediato.
-
-| Rol Asignado | Correo Institucional                 | Contraseña de Prueba | Identificador Asociado |
-| :----------- | :----------------------------------- | :------------------- | :--------------------- |
-| `PROFESOR`   | `carlos.mendoza@iestpchincha.edu.pe` | `Docente2026*`       | `DOC-001`              |
-| `PROFESOR`   | `ana.torres@iestpchincha.edu.pe`     | `Docente2026*`       | `DOC-003`              |
-| `PROFESOR`   | `luis.quispe@iestpchincha.edu.pe`    | `Docente2026*`       | `DOC-004`              |
-| `PROFESOR`   | `maria.huaman@iestpchincha.edu.pe`   | `Docente2026*`       | `DOC-005`              |
-| `PROFESOR`   | `jorge.ramos@iestpchincha.edu.pe`    | `Docente2026*`       | `DOC-006`              |
-| `ESTUDIANTE` | `erick.escriba@iestpchincha.edu.pe`  | `Alumno2026*`        | `ALU-2024101`          |
-| `ESTUDIANTE` | `sofia.gomez@iestpchincha.edu.pe`    | `Alumno2026*`        | `ALU-2024102`          |
-| `ESTUDIANTE` | `mateo.silva@iestpchincha.edu.pe`    | `Alumno2026*`        | `ALU-2024103`          |
-| `ESTUDIANTE` | `lucia.cardenas@iestpchincha.edu.pe` | `Alumno2026*`        | `ALU-2024104`          |
-| `ESTUDIANTE` | `diego.morales@iestpchincha.edu.pe`  | `Alumno2026*`        | `ALU-2024105`          |
-
----
-
-#### Pruebas
-
-##### Estrategia de Pruebas y Aseguramiento de Calidad
-
-La estrategia de validación se fundamenta en pruebas unitarias de caja blanca automatizadas, orquestadas mediante la clase [`test.TestRunner`](src/test/java/test/TestRunner.java). Dicha suite no requiere frameworks externos (e.g., JUnit) y valida el 100% de los invariantes de seguridad y reglas de negocio del sistema.
-
-##### Ejecución de la Suite de Pruebas
-
-```bash
-# 1. Compilación conjunta de código fuente y suite de pruebas
-javac -d out $(find src/main/java src/test/java -name "*.java")
-
-# 2. Ejecución de la suite determinista
-java -cp out test.TestRunner
-```
-
-**Salida de Ejecución Observada:**
-
-```text
-OK: 129 pruebas pasaron.
-```
-
-##### Matriz de Casos de Prueba Críticos
-
-| ID Caso   | Módulo Evaluado        | Vector de Entrada / Condición                                                           | Comportamiento Esperado y Criterio de Aceptación                                                                      |   Dictamen   |
-| :-------- | :--------------------- | :-------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------- | :----------: |
-| **CP-01** | `PasswordHasher`       | Generación sucesiva de hash para la cadena `"secreto"`                                  | Generación de sales aleatorias distintas con hashes resultantes no idénticos; verificación exitosa de ambos (`true`). | **APROBADO** |
-| **CP-02** | `PasswordHasher`       | Verificación de contraseña incorrecta contra hash válido                                | El método `verificar` retorna estrictamente `false`.                                                                  | **APROBADO** |
-| **CP-03** | `AutenticacionService` | Correo con espacios periféricos y mayúsculas (`" CARLOS.MENDOZA@USIL.PE "`)             | Normalización canónica (trim + lowercase); autenticación exitosa resolviendo `DOC-001`.                               | **APROBADO** |
-| **CP-04** | `AutenticacionService` | Intento de acceso con usuario deshabilitado (`activo = false`)                          | Rechazo de autenticación retornando `null` independientemente de la contraseña provista.                              | **APROBADO** |
-| **CP-05** | `ServicioAcademico`    | Registro de horas asistidas válidas: $0 \leq h \leq \text{horasProgramadas}$            | Persistencia satisfactoria de asistencia en memoria y bitácora CSV.                                                   | **APROBADO** |
-| **CP-06** | `ServicioAcademico`    | Registro de horas anómalas: $h < 0$ o $h > \text{horasProgramadas}$                     | Captura defensiva mediante `IllegalArgumentException`; estado de persistencia inalterado.                             | **APROBADO** |
-| **CP-07** | `ServicioAcademico`    | Inasistencia acumulada $> 15.0\%$ del curso                                             | Activación de bandera de alerta temprana preventiva en el balance del alumno.                                         | **APROBADO** |
-| **CP-08** | `ServicioAcademico`    | Inasistencia acumulada $> 30.0\%$ de horas lectivas de la unidad didáctica              | Invocación de `puedeRegistrarNotas` devuelve `false`, bloqueando el asentamiento de notas.                            | **APROBADO** |
-| **CP-09** | `ServicioAcademico`    | Registro de nota en rango válido $[0.0, 20.0]$ con alumno habilitado                    | Asentamiento exitoso de la nota vigesimal en `data/registro_nota.csv`.                                                | **APROBADO** |
-| **CP-10** | `ServicioAcademico`    | Intento de registro de nota sobre alumno inhabilitado por inasistencia ($>30\%$)        | Operación rechazada por regla de negocio; no se modifica `data/registro_nota.csv`.                                    | **APROBADO** |
-| **CP-11** | `ArchivoManager`       | Lectura de registro de `Curso` legado (5 columnas en lugar de 9)                        | Derivación dinámica de horas lectivas (`duracion × totalHorasSesion`) sin error de parsing.                           | **APROBADO** |
-| **CP-12** | `ArchivoManager`       | Lectura de `RegistroDeAsistencia` legado (6 columnas sin `id_sesion` ni `id_matricula`) | Carga resiliente asignando sesión y matrícula nulas sin interrupción de la inicialización del sistema.                | **APROBADO** |
+### Pruebas (evidencias de ejecución)
 
 ## Referencias
 
