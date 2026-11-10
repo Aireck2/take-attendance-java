@@ -1,0 +1,129 @@
+flowchart TD
+    %% ==========================================
+    %% PROCESO 1: INICIO DE SESION (AUTENTICACION)
+    %% ==========================================
+
+    Start([INICIO]) --> Main["main(): new SistemaApp().iniciar()"]
+
+    Main --> Init["Instancia: Scanner + ServicioAcademico + AutenticacionService"]
+    Init --> Menu["MENU PRINCIPAL - SISTEMA DE ASISTENCIA - IESTP CHINCHA<br>1. Iniciar sesion<br>2. Salir"]
+
+    Menu --> LeerOp[/"leerOpcion('Seleccione una opcion: ')"/]
+    LeerOp --> EsNum{"scanner.hasNextInt()?"}
+    EsNum -- No --> Descartar[/"scanner.next() descarta el token no numerico<br>Se vuelve a pedir el dato"/]
+    Descartar --> LeerOp
+    EsNum -- Si --> LeerInt["opcion = scanner.nextInt()<br>scanner.nextLine()"]
+    LeerInt --> Switch{{"switch (opcion)"}}
+
+    Switch -- "1" --> CallSesion[["Llamar iniciarSesion()"]]
+    Switch -- "2" --> Salir[/"Escribir 'Saliendo del sistema...'"/]
+    Switch -- "default" --> OpInvalida[/"Escribir 'Opcion invalida.'"/]
+
+    OpInvalida --> Menu
+    Salir --> Fin([FIN])
+
+    CallSesion --> Encabezado[/"Escribir '--- INICIO DE SESION ---'"/]
+    Encabezado --> ReadCorreo[/"Leer correo y aplicar trim()"/]
+    ReadCorreo --> ReadPass[/"Leer contrasena<br>Console.readPassword() si hay consola interactiva<br>si no, scanner.nextLine()"/]
+    ReadPass --> CallAuth[["Llamar autenticacion.autenticar(correo, contrasena)"]]
+    CallAuth --> A((A))
+
+    %% ==========================================
+    %% PARTE A: AutenticacionService.autenticar
+    %% ==========================================
+
+    A((A)) --> AuthStart([INICIO])
+    AuthStart --> Normalizar["correoNormalizado = correo.trim().toLowerCase(Locale.ROOT)"]
+    Normalizar --> Nulos{"correo == null o contrasena == null?"}
+    Nulos -- Si --> AuthNull[/"Devolver null"/]
+    Nulos -- No --> Vacias{"correo vacio o contrasena vacia?"}
+    Vacias -- Si --> AuthNull
+    Vacias -- No --> CallBuscar[["Llamar buscarPorCorreo(correoNormalizado)"]]
+    CallBuscar --> B((B))
+
+    %% ==========================================
+    %% PARTE B: buscarPorCorreo (data/usuario.csv)
+    %% ==========================================
+
+    B((B)) --> BuscarStart([INICIO])
+    BuscarStart --> LeerUsuarios[["Llamar ArchivoManager.leerUsuarios()"]]
+    LeerUsuarios --> ForU{{"Para cada usuario de la lista"}}
+    ForU --> Coincide{"usuario.getCorreo().equalsIgnoreCase(correoNormalizado)?"}
+    Coincide -- Si --> DevolverUsuario[/"Devolver usuario encontrado (break)"/]
+    Coincide -- No --> J1(( ))
+    J1 --> ForU
+    ForU -- Fin --> NoExiste[/"Devolver null (correo no registrado)"/]
+    DevolverUsuario --> H((H))
+    NoExiste --> H((H))
+
+    %% ==========================================
+    %% PARTE A (continuacion): decision de acceso
+    %% ==========================================
+
+    H((H)) --> Existe{"usuario != null?"}
+    Existe -- No --> Ficticio[["Llamar PasswordHasher.verificar(contrasena, HASH_FICTICIO)<br>Iguala el tiempo de calculo y no revela si el correo existe"]]
+    Existe -- Si --> Activo{"usuario.isActivo()?"}
+    Activo -- No --> Ficticio
+    Activo -- Si --> VerifReal[["Llamar PasswordHasher.verificar(contrasena, usuario.getHashContrasena())"]]
+    Ficticio --> C((C))
+    VerifReal --> C((C))
+
+    %% ==========================================
+    %% PARTE C: PasswordHasher.verificar (PBKDF2-HMAC-SHA256)
+    %% ==========================================
+
+    C((C)) --> HashStart([INICIO])
+    HashStart --> NulosHash{"contrasena == null o almacenado == null?"}
+    NulosHash -- Si --> HashFalse[/"Devolver false"/]
+    NulosHash -- No --> Partes["Partes = dividir el hash almacenado en 4 campos<br>prefijo, iteraciones, salBase64, hashBase64"]
+    Partes --> Formato{"prefijo == 'pbkdf2_sha256'<br>y la cantidad de partes es 4?"}
+    Formato -- No --> HashFalse
+    Formato -- Si --> Decodificar["iteraciones = parseInt(partes[1])<br>sal = Base64.decode(partes[2])<br>esperada = Base64.decode(partes[3])"]
+    Decodificar --> Derivar[["Llamar derivar(contrasena, sal, iteraciones)<br>PBEKeySpec + SecretKeyFactory PBKDF2WithHmacSHA256"]]
+    Derivar --> ErrorDeriva{"Ocurrio NoSuchAlgorithmException<br>o InvalidKeySpecException?"}
+    ErrorDeriva -- Si --> Fatal(["FALLA: IllegalStateException no controlada"])
+    ErrorDeriva -- No --> Comparar["MessageDigest.isEqual(esperada, calculada)"]
+    Comparar --> J((J))
+    HashFalse --> J((J))
+
+    %% ==========================================
+    %% PARTE A (cierre): resultado de la autenticacion
+    %% ==========================================
+
+    J((J)) --> VerifOk{"La contrasena coincide?"}
+    VerifOk -- No --> AuthNull
+    VerifOk -- Si --> AuthOk[/"Devolver usuario autenticado"/]
+
+    %% ==========================================
+    %% PARTE D: RESOLUCION DEL PERFIL Y REDIRECCION SEGUN ROL
+    %% ==========================================
+
+    AuthNull --> CredencialesInvalidas[/"Escribir 'Credenciales invalidas.'<br>return → vuelve al menu principal"/]
+    CredencialesInvalidas --> VolverMenu
+    AuthOk --> D((D))
+
+    D((D)) --> RolMsg[/"Escribir 'Sesion iniciada como ' + usuario.getRol()"/]
+    RolMsg --> EsProf{"usuario.getRol() == Rol.PROFESOR?"}
+    EsProf -- Si --> CallProf[["Llamar servicio.buscarProfesor(usuario.getIdReferencia())"]]
+    EsProf -- No --> CallEst[["Llamar servicio.buscarEstudiante(usuario.getIdReferencia())"]]
+    CallProf --> K((K))
+    K --> ProfNull{"profesor != null?"}
+    ProfNull -- No --> ErrorProf[/"Escribir 'No se encontro el perfil del profesor asociado a la cuenta.'<br>return → vuelve al menu principal"/]
+    ProfNull -- Si --> BienvProf[/"Escribir 'Bienvenido, ' + profesor.getNombreCompleto()"/]
+    BienvProf --> E((E))
+    CallEst --> L((L))
+    L --> EstNull{"estudiante != null?"}
+    EstNull -- No --> ErrorEst[/"Escribir 'No se encontro el perfil del estudiante asociado a la cuenta.'<br>return → vuelve al menu principal"/]
+    EstNull -- Si --> BienvEst[/"Escribir 'Bienvenido, ' + estudiante.getNombreCompleto()"/]
+    BienvEst --> F((F))
+
+    %% ==========================================
+    %% CIERRE DE SESION Y RETORNO AL MENU PRINCIPAL
+    %% ==========================================
+
+    E((E)) --> MenuProfCall[["Llamar menuProfesor(profesor)<br>ver Proceso 2"]]
+    MenuProfCall --> SesionCerrada[/"Escribir 'Sesion cerrada.'"/]
+    F((F)) --> MenuEstCall[["Llamar menuEstudiante(estudiante)<br>ver Proceso 3"]]
+    MenuEstCall --> SesionCerrada
+    SesionCerrada --> VolverMenu
+    VolverMenu["Volver al menu principal (repite el do-while)"] --> Menu

@@ -1,0 +1,254 @@
+classDiagram
+    direction TB
+
+    namespace sistema {
+        class SistemaApp {
+            - scanner : Scanner
+            - servicio : ServicioAcademico
+            - autenticacion : AutenticacionService
+            + main(args : String[]) void$
+            + iniciar() void
+            - leerOpcion(mensaje : String) int
+            - iniciarSesion() void
+            - leerContrasena(prompt : String) String
+            - menuProfesor(profActual : Profesor) void
+            - gestionarCursosProfesor(prof : Profesor) void
+            - menuEstudiante(estActual : Estudiante) void
+            - mostrarResumenAsistenciaEstudiante(est : Estudiante) void
+        }
+    }
+
+    namespace service {
+        class AutenticacionService {
+            - HASH_FICTICIO : String$
+            + autenticar(correo : String, contrasena : String) Usuario
+            - buscarPorCorreo(correoNormalizado : String) Usuario
+        }
+        class ServicioAcademico {
+            + LIMITE_INASISTENCIA : double = 15.0$
+            + LIMITE_INASISTENCIA_NORMATIVO : double = 30.0$
+            + listarCursosProfesor(profesor : Profesor) List~Curso~
+            + listarEstudiantesCurso(curso : Curso) List~Estudiante~
+            + listarCursosEstudiante(estudiante : Estudiante) List~Curso~
+            + historialEstudiante(estudiante : Estudiante) List~RegistroDeAsistencia~
+            + crearRegistroSesion(sesion : SesionClase, curso : Curso, estudiante : Estudiante, horasAsistidas : int, idMatricula : String) RegistroDeAsistencia
+            + registrarAsistenciaSesion(idSesion : String, idEstudiante : String, horasAsistidas : int) RegistroDeAsistencia
+            + guardarAsistencias(registros : List~RegistroDeAsistencia~) void
+            + calcularHorasFaltadas(sesiones : List~SesionClase~, registros : List~RegistroDeAsistencia~) int
+            + horasFaltadasUnidadDidactica(matricula : Matricula, curso : Curso) int
+            + calcularPorcentajeInasistencia(horasFaltadas : int, horasLectivasTotales : int) double
+            + calcularPorcentajeFaltas(horasDictadas : int, horasAsistidas : int, totalHorasCurso : int) double
+            + estaInhabilitadoPorInasistencia(horasFaltadas : int, horasLectivasTotales : int) boolean
+            + puedeRegistrarNotas(matricula : Matricula, curso : Curso) boolean
+            + puedeRegistrarNota(matricula : Matricula, curso : Curso, sesiones : List~SesionClase~, registros : List~RegistroDeAsistencia~) boolean
+            + crearRegistroNota(idIndicador : String, idEstudiante : String, nota : int, fecha : String) RegistroNota
+            + guardarNotas(notas : List~RegistroNota~) void
+        }
+    }
+
+    namespace security {
+        class PasswordHasher {
+            - ALGORITMO : String = "PBKDF2WithHmacSHA256"$
+            - PREFIJO : String = "pbkdf2_sha256"$
+            - ITERACIONES : int = 210000$
+            - LONGITUD_CLAVE_BITS : int = 256$
+            - LONGITUD_SAL_BYTES : int = 16$
+            + hash(contrasena : String) String$
+            + verificar(contrasena : String, almacenado : String) boolean$
+            - derivar(contrasena : String, sal : byte[], iteraciones : int) byte[]$
+        }
+    }
+
+    namespace storage {
+        class ArchivoManager {
+            - CARPETA_DATOS : String = "data"$
+            + leerProfesores() List~Profesor~$
+            + leerEstudiantes() List~Estudiante~$
+            + leerUsuarios() List~Usuario~$
+            + leerCursos() List~Curso~$
+            + leerSesiones() List~SesionClase~$
+            + leerMatriculas() List~Matricula~$
+            + guardarMatriculas(matriculas : List~Matricula~) void$
+            + leerTodasAsistencias() List~RegistroDeAsistencia~$
+            + leerAsistenciasEstudiante(idEstudiante : String) List~RegistroDeAsistencia~$
+            + guardarAsistencia(registros : List~RegistroDeAsistencia~) void$
+            + leerIndicadores() List~IndicadorLogro~$
+            + leerNotas() List~RegistroNota~$
+            + guardarNotas(notas : List~RegistroNota~) void$
+        }
+    }
+
+    namespace models {
+        class Carrera {
+            - idCarrera : String
+            - nombre : String
+            - tipo : String
+            + getIdCarrera() String
+            + getNombre() String
+        }
+        class PlanEstudios {
+            - idPlan : String
+            - idCarrera : String
+            - codigo : String
+            - estado : EstadoPlan
+        }
+        class ModuloProfesional {
+            - idModulo : String
+            - idPlan : String
+            - nombre : String
+        }
+        class Curso {
+            - idCurso : String
+            - nombreCurso : String
+            - totalHorasSesion : int
+            - duracionCurso : int
+            - creditos : int
+            - horasTeoricas : int
+            - horasPracticas : int
+            + getHorasLectivasTotales() int
+            + getTotalHorasSesion() int
+            + getDuracionCurso() int
+        }
+        class SeccionCurso {
+            - idSeccion : String
+            - idBloque : String
+            - idCurso : String
+            - modalidad : ModalidadDictado
+        }
+        class SesionClase {
+            - idSesion : String
+            - idHorario : String
+            - fecha : String
+            - horasProgramadas : int
+            - idProfesor : String
+            - idSalon : String
+            + getIdSesion() String
+            + getHorasProgramadas() int
+            + getFecha() String
+        }
+        class RegistroDeAsistencia {
+            - idAsistencia : String
+            - idCurso : String
+            - idEstudiante : String
+            - fecha : String
+            - horasAsistidas : int
+            - presente : boolean
+            - idSesion : String
+            - idMatricula : String
+            + getHorasAsistidas() int
+            + isPresente() boolean
+            + getIdSesion() String
+            + getIdMatricula() String
+        }
+        class Matricula {
+            - idMatricula : String
+            - idEstudiante : String
+            - idBloque : String
+            - fechaMatricula : String
+            - estado : EstadoMatricula
+            + getIdMatricula() String
+            + getIdEstudiante() String
+            + getIdBloque() String
+            + getEstado() EstadoMatricula
+        }
+        class IndicadorLogro {
+            - idIndicador : String
+            - idSeccion : String
+            - nombre : String
+            - peso : int
+            + getIdIndicador() String
+            + getNombre() String
+        }
+        class RegistroNota {
+            - idRegistroNota : String
+            - idIndicador : String
+            - idEstudiante : String
+            - nota : int
+            - fecha : String
+            + getNota() int
+            + getIdIndicador() String
+        }
+        class Profesor {
+            - id : String
+            - nombre : String
+            - apellido : String
+            - correo : String
+            - especialidad : String
+            + getNombreCompleto() String
+            + mostrarPerfil() void
+        }
+        class Estudiante {
+            - id : String
+            - codigo : String
+            - nombres : String
+            - apellidos : String
+            - dni : String
+            - correo : String
+            - escuelaProfesional : String
+            - estado : EstadoEstudiante
+            + getNombreCompleto() String
+            + getCodigo() String
+            + mostrarPerfil() void
+        }
+        class Usuario {
+            - id : String
+            - correo : String
+            - hashContrasena : String
+            - rol : Rol
+            - idReferencia : String
+            - activo : boolean
+            + getRol() Rol
+            + isActivo() boolean
+            + getIdReferencia() String
+        }
+        class Rol {
+            <<enumeration>>
+            PROFESOR
+            ESTUDIANTE
+        }
+        class EstadoPlan {
+            <<enumeration>>
+            VIGENTE
+            HISTORICO
+        }
+        class EstadoMatricula {
+            <<enumeration>>
+            ACTIVA
+            RETIRADA
+            COMPLETADA
+        }
+        class EstadoEstudiante {
+            <<enumeration>>
+            REGULAR
+            SUSPENDIDO
+            RESERVA_MATRICULA
+        }
+        class ModalidadDictado {
+            <<enumeration>>
+            PRESENCIAL
+            VIRTUAL
+            HIBRIDA
+        }
+    }
+
+    SistemaApp --> ServicioAcademico : delega operaciones
+    SistemaApp --> AutenticacionService : delega inicio de sesión
+    AutenticacionService ..> PasswordHasher : verifica derivación criptográfica
+    AutenticacionService ..> ArchivoManager : lee usuarios
+    ServicioAcademico ..> ArchivoManager : persiste y consulta registros
+    ServicioAcademico ..> Curso : valida carga lectiva
+    ServicioAcademico ..> RegistroDeAsistencia : procesa inasistencias
+    ServicioAcademico ..> Matricula : verifica condición activa
+    ServicioAcademico ..> RegistroNota : valida y asienta evaluación
+    Usuario --> Rol : tipado de permisos
+    Curso --> ModuloProfesional : pertenece a
+    ModuloProfesional --> PlanEstudios : compone
+    PlanEstudios --> Carrera : pertenece a
+    PlanEstudios --> EstadoPlan : estado
+    SeccionCurso --> Curso : apertura de
+    SeccionCurso --> ModalidadDictado : modalidad
+    SesionClase ..> RegistroDeAsistencia : referencia horaria
+    Matricula --> RegistroDeAsistencia : vincula por idMatricula
+    Matricula ..> Estudiante : asocia
+    RegistroNota --> IndicadorLogro : evalúa
+    RegistroNota ..> Estudiante : califica

@@ -1,0 +1,57 @@
+flowchart TD
+    %% ==========================================
+    %% PROCESO 3: FLUJO DEL PROGRAMA COMO ESTUDIANTE
+    %% ==========================================
+
+    F((F)) --> EstStart([INICIO])
+    EstStart --> MenuEst["MENU ESTUDIANTE: nombre completo<br>1. Ver cursos asignados y estado de asistencia<br>2. Ver mi perfil<br>3. Cerrar sesion"]
+    MenuEst --> LeerOpE[/"leerOpcion('Elija una opcion: ')"/]
+    LeerOpE --> SwitchE{{"switch (opcEst)"}}
+
+    SwitchE -- "1" --> CallResumen[["Llamar mostrarResumenAsistenciaEstudiante(estActual)"]]
+    SwitchE -- "2" --> PerfilE[["Llamar estActual.mostrarPerfil()"]]
+    SwitchE -- "3" --> CerrarE[/"Cerrar sesion (opcion 3, sin acciones extra)"/]
+    SwitchE -- "default" --> OpInvalidaE[/"Escribir 'Opcion invalida.'"/]
+
+    PerfilE --> MenuEst
+    OpInvalidaE --> MenuEst
+    CerrarE --> Z((Z))
+
+    SwitchE -.-> NotasNoExpuestas["No expuesto en el menu actual<br>La capa de servicio ya tiene la consulta de notas<br>listarNotasEstudiante, listarNotasIndicador<br>y el saldo de derechos de pago"]
+
+    %% ==========================================
+    %% PARTE A: mostrarResumenAsistenciaEstudiante
+    %% ==========================================
+
+    CallResumen --> A((A))
+    A((A)) --> ResumenStart([INICIO])
+    ResumenStart --> Datos[["Llamar servicio.listarCursosEstudiante(est)<br>Llamar servicio.historialEstudiante(est)"]]
+    Datos --> DerivarDatos["Cursos: matriculas ACTIVA → secciones del bloque<br>Historial: registros de data/registro_de_asistencia.csv"]
+    DerivarDatos --> Cabecera[/"Escribir 'RESUMEN DE ASISTENCIA Y CURSOS'"/]
+    Cabecera --> ForCurso{{"Para cada curso de la lista"}}
+    ForCurso --> Acumuladores["clasesDictadas = 0; clasesAsistidas = 0<br>horasDictadas = 0; horasAsistidas = 0"]
+    Acumuladores --> ForReg{{"Para cada registro de misAsistencias"}}
+    ForReg --> MismoCurso{"reg.getIdCurso() == curso.getIdCurso()?"}
+    MismoCurso -- No --> N(( ))
+    MismoCurso -- Si --> Dictadas["clasesDictadas++<br>horasDictadas += curso.getTotalHorasSesion()"]
+    Dictadas --> Presente{"reg.isPresente()?"}
+    Presente -- Si --> SumarAsistidas["clasesAsistidas++<br>horasAsistidas += reg.getHorasAsistidas()"]
+    Presente -- No --> N(( ))
+    SumarAsistidas --> N(( ))
+    N --> ForReg
+    ForReg -- Fin --> Calculo
+    Calculo["totalHorasCurso = duracionCurso * totalHorasSesion"] --> Porcentaje[["Llamar servicio.calcularPorcentajeFaltas(horasDictadas, horasAsistidas, totalHorasCurso)"]]
+    Porcentaje --> TotalCero{"totalHorasCurso <= 0?"}
+    TotalCero -- Si --> FaltasCero["porcentajeFaltas = 0.0"]
+    TotalCero -- No --> Restar["horasNoAsistidas = horasDictadas - horasAsistidas<br>si el resultado es negativo se deja en 0"]
+    Restar --> Formula["porcentajeFaltas = (horasNoAsistidas / totalHorasCurso) * 100"]
+    FaltasCero --> Imprimir
+    Formula --> Imprimir
+    Imprimir[/"Escribir el curso, dias asistidos, horas asistidas<br>y el porcentaje de inasistencia con 2 decimales"/] --> Alerta{"porcentajeFaltas > LIMITE_INASISTENCIA (15.0)?"}
+    Alerta -- Si --> MsgAlerta[/"Escribir '[ALERTA: Limite de inasistencia superado]'"/]
+    Alerta -- No --> Separador
+    MsgAlerta --> Separador[/"Escribir la linea separadora del curso"/]
+    Separador --> P(( ))
+    P --> ForCurso
+    ForCurso -- Fin --> FinResumen([FIN])
+    FinResumen --> MenuEst
