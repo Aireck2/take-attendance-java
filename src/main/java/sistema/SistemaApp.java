@@ -180,7 +180,7 @@ public class SistemaApp {
         registros.add(servicio.crearRegistro(cursoSel, est, fecha, horasAsistidas));
       }
       servicio.guardarAsistencias(registros);
-      System.out.println("¡Asistencia guardada exitosamente en asistencias.csv!");
+      System.out.println("¡Asistencia guardada exitosamente en registro_de_asistencia.csv!");
     }
   }
 

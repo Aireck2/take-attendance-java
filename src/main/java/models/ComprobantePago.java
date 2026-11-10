@@ -2,7 +2,7 @@ package models;
 
 /**
  * Comprobante de pago: registro financiero emitido a un alumno que amortiza un
- * derecho de pago.
+ * derecho de pago. Conserva su estado (pagado, pendiente o anulado).
  */
 public class ComprobantePago {
   private String idComprobante;
@@ -10,13 +10,16 @@ public class ComprobantePago {
   private String idDerecho;
   private String fecha;
   private double monto;
+  private EstadoComprobante estado;
 
-  public ComprobantePago(String idComprobante, String idEstudiante, String idDerecho, String fecha, double monto) {
+  public ComprobantePago(String idComprobante, String idEstudiante, String idDerecho, String fecha, double monto,
+      EstadoComprobante estado) {
     this.idComprobante = idComprobante;
     this.idEstudiante = idEstudiante;
     this.idDerecho = idDerecho;
     this.fecha = fecha;
     this.monto = monto;
+    this.estado = estado;
   }
 
   public String getIdComprobante() {
@@ -43,7 +46,11 @@ public class ComprobantePago {
     return monto;
   }
 
+  public EstadoComprobante getEstado() {
+    return estado;
+  }
+
   public String toCsv() {
-    return idComprobante + "," + idEstudiante + "," + idDerecho + "," + fecha + "," + monto;
+    return idComprobante + "," + idEstudiante + "," + idDerecho + "," + fecha + "," + monto + "," + estado;
   }
 }

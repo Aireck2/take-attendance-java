@@ -9,6 +9,7 @@ import models.ComprobantePago;
 import models.Curso;
 import models.DerechoPago;
 import models.Estudiante;
+import models.EstadoComprobante;
 import models.EstadoMatricula;
 import models.HorarioSeccion;
 import models.IndicadorLogro;
@@ -258,16 +259,20 @@ public class ServicioAcademico {
       return existente;
     }
     List<Matricula> matriculas = ArchivoManager.leerMatriculas();
+    String prefijo = prefijoMatricula(fechaMatricula);
     int maxId = 0;
     for (Matricula matricula : matriculas) {
-      try {
-        maxId = Math.max(maxId, Integer.parseInt(matricula.getIdMatricula().replace("M", "")));
-      } catch (NumberFormatException e) {
-        // Ignorar identificadores con formato distinto
+      String id = matricula.getIdMatricula();
+      if (id != null && id.startsWith(prefijo + "-")) {
+        try {
+          maxId = Math.max(maxId, Integer.parseInt(id.substring(prefijo.length() + 1)));
+        } catch (NumberFormatException e) {
+          // Ignorar identificadores con formato distinto
+        }
       }
     }
-    Matricula nueva = new Matricula("M" + (maxId + 1), idEstudiante, idBloque, fechaMatricula,
-        EstadoMatricula.ACTIVA);
+    Matricula nueva = new Matricula(String.format("%s-%03d", prefijo, maxId + 1), idEstudiante, idBloque,
+        fechaMatricula, EstadoMatricula.ACTIVA);
     matriculas.add(nueva);
     ArchivoManager.guardarMatriculas(matriculas);
     return nueva;
@@ -293,10 +298,19 @@ public class ServicioAcademico {
    */
   public RegistroDeAsistencia crearRegistroSesion(SesionClase sesion, Curso curso, Estudiante estudiante,
       int horasAsistidas) {
+    return crearRegistroSesion(sesion, curso, estudiante, horasAsistidas, null);
+  }
+
+  /**
+   * Crea un registro de asistencia para una sesion concreta, ligado a la
+   * matricula del alumno en el bloque de la sesion.
+   */
+  public RegistroDeAsistencia crearRegistroSesion(SesionClase sesion, Curso curso, Estudiante estudiante,
+      int horasAsistidas, String idMatricula) {
     int horasValidas = Math.max(0, Math.min(horasAsistidas, sesion.getHorasProgramadas()));
     boolean presente = horasValidas > 0;
     return new RegistroDeAsistencia(null, curso.getIdCurso(), estudiante.getId(), sesion.getFecha(), horasValidas,
-        presente, sesion.getIdSesion());
+        presente, sesion.getIdSesion(), idMatricula);
   }
 
   /**
@@ -321,7 +335,8 @@ public class ServicioAcademico {
     if (buscarMatricula(idEstudiante, seccion.getIdBloque()) == null) {
       return null;
     }
-    return crearRegistroSesion(sesion, curso, estudiante, horasAsistidas);
+    Matricula matricula = buscarMatricula(idEstudiante, seccion.getIdBloque());
+    return crearRegistroSesion(sesion, curso, estudiante, horasAsistidas, matricula.getIdMatricula());
   }
 
   /**
@@ -516,15 +531,19 @@ public class ServicioAcademico {
    */
   public void guardarNotas(List<RegistroNota> notas) {
     List<RegistroNota> existentes = ArchivoManager.leerNotas();
-    int maxId = 0;
-    for (RegistroNota nota : existentes) {
-      try {
-        maxId = Math.max(maxId, Integer.parseInt(nota.getIdRegistroNota().replace("N", "")));
-      } catch (NumberFormatException e) {
-        // Ignorar identificadores con formato distinto
-      }
-    }
     for (RegistroNota nota : notas) {
+      String prefijo = prefijoAnual("NOT-", nota.getFecha());
+      int maxId = 0;
+      for (RegistroNota existente : existentes) {
+        String id = existente.getIdRegistroNota();
+        if (id != null && id.startsWith(prefijo + "-")) {
+          try {
+            maxId = Math.max(maxId, Integer.parseInt(id.substring(prefijo.length() + 1)));
+          } catch (NumberFormatException e) {
+            // Ignorar identificadores con formato distinto
+          }
+        }
+      }
       RegistroNota previa = null;
       for (RegistroNota candidata : existentes) {
         if (candidata.getIdIndicador().equals(nota.getIdIndicador())
@@ -537,8 +556,7 @@ public class ServicioAcademico {
         existentes.remove(previa);
         nota.setIdRegistroNota(previa.getIdRegistroNota());
       } else {
-        maxId++;
-        nota.setIdRegistroNota("N" + maxId);
+        nota.setIdRegistroNota(String.format("%s-%03d", prefijo, maxId + 1));
       }
       existentes.add(nota);
     }
@@ -602,7 +620,7 @@ public class ServicioAcademico {
     if (monto <= 0 || monto > saldoPendiente(idEstudiante, idDerecho)) {
       return null;
     }
-    return new ComprobantePago(null, idEstudiante, idDerecho, fecha, monto);
+    return new ComprobantePago(null, idEstudiante, idDerecho, fecha, monto, EstadoComprobante.PAGADO);
   }
 
   /**
@@ -611,29 +629,54 @@ public class ServicioAcademico {
    */
   public void guardarComprobantes(List<ComprobantePago> comprobantes) {
     List<ComprobantePago> existentes = ArchivoManager.leerComprobantes();
-    int maxId = 0;
-    for (ComprobantePago comprobante : existentes) {
-      try {
-        maxId = Math.max(maxId, Integer.parseInt(comprobante.getIdComprobante().replace("CP", "")));
-      } catch (NumberFormatException e) {
-        // Ignorar identificadores con formato distinto
-      }
-    }
     for (ComprobantePago comprobante : comprobantes) {
-      maxId++;
-      comprobante.setIdComprobante("CP" + maxId);
+      String prefijo = prefijoAnual("REC-", comprobante.getFecha());
+      int maxId = 0;
+      for (ComprobantePago existente : existentes) {
+        String id = existente.getIdComprobante();
+        if (id != null && id.startsWith(prefijo + "-")) {
+          try {
+            maxId = Math.max(maxId, Integer.parseInt(id.substring(prefijo.length() + 1)));
+          } catch (NumberFormatException e) {
+            // Ignorar identificadores con formato distinto
+          }
+        }
+      }
+      comprobante.setIdComprobante(String.format("%s-%04d", prefijo, maxId + 1));
       existentes.add(comprobante);
     }
     ArchivoManager.guardarComprobantes(existentes);
   }
 
   /**
-   * Devuelve los cursos asignados a un profesor.
+   * Devuelve los cursos asignados a un profesor, derivados de las franjas
+   * horarias de las secciones que dicta.
    */
   public List<Curso> listarCursosProfesor(Profesor profesor) {
     List<Curso> cursos = new ArrayList<>();
-    for (Curso curso : ArchivoManager.leerCursos()) {
-      if (curso.getIdProfesor().equals(profesor.getId())) {
+    if (profesor == null) {
+      return cursos;
+    }
+    for (HorarioSeccion horario : ArchivoManager.leerHorarios()) {
+      if (!profesor.getId().equals(horario.getIdProfesor())) {
+        continue;
+      }
+      SeccionCurso seccion = buscarSeccion(horario.getIdSeccion());
+      if (seccion == null) {
+        continue;
+      }
+      Curso curso = buscarCurso(seccion.getIdCurso());
+      if (curso == null) {
+        continue;
+      }
+      boolean yaAgregado = false;
+      for (Curso candidato : cursos) {
+        if (candidato.getIdCurso().equals(curso.getIdCurso())) {
+          yaAgregado = true;
+          break;
+        }
+      }
+      if (!yaAgregado) {
         cursos.add(curso);
       }
     }
@@ -641,13 +684,27 @@ public class ServicioAcademico {
   }
 
   /**
-   * Devuelve los estudiantes inscritos en un curso.
+   * Devuelve la nomina de un curso, derivada de las secciones que lo dictan y
+   * de las matriculas activas del bloque al que pertenecen esas secciones.
    */
   public List<Estudiante> listarEstudiantesCurso(Curso curso) {
     List<Estudiante> alumnos = new ArrayList<>();
-    for (String idEstudiante : ArchivoManager.leerInscripcionesCurso(curso.getIdCurso())) {
-      for (Estudiante estudiante : ArchivoManager.leerEstudiantes()) {
-        if (estudiante.getId().equals(idEstudiante)) {
+    if (curso == null) {
+      return alumnos;
+    }
+    List<Estudiante> estudiantes = ArchivoManager.leerEstudiantes();
+    List<Matricula> matriculas = ArchivoManager.leerMatriculas();
+    for (SeccionCurso seccion : ArchivoManager.leerSecciones()) {
+      if (!curso.getIdCurso().equals(seccion.getIdCurso())) {
+        continue;
+      }
+      for (Matricula matricula : matriculas) {
+        if (matricula.getEstado() != EstadoMatricula.ACTIVA
+            || !matricula.getIdBloque().equals(seccion.getIdBloque())) {
+          continue;
+        }
+        Estudiante estudiante = buscarEstudianteEn(estudiantes, matricula.getIdEstudiante());
+        if (estudiante != null && buscarEstudianteEn(alumnos, estudiante.getId()) == null) {
           alumnos.add(estudiante);
         }
       }
@@ -656,16 +713,49 @@ public class ServicioAcademico {
   }
 
   /**
-   * Devuelve los cursos en los que esta inscrito un estudiante.
+   * Devuelve los cursos de un estudiante, derivados de sus matriculas activas
+   * y de las secciones del bloque en el que esta matriculado.
    */
   public List<Curso> listarCursosEstudiante(Estudiante estudiante) {
     List<Curso> cursos = new ArrayList<>();
-    for (Curso curso : ArchivoManager.leerCursos()) {
-      if (ArchivoManager.leerInscripcionesCurso(curso.getIdCurso()).contains(estudiante.getId())) {
-        cursos.add(curso);
+    if (estudiante == null) {
+      return cursos;
+    }
+    List<SeccionCurso> secciones = ArchivoManager.leerSecciones();
+    for (Matricula matricula : ArchivoManager.leerMatriculas()) {
+      if (matricula.getEstado() != EstadoMatricula.ACTIVA
+          || !estudiante.getId().equals(matricula.getIdEstudiante())) {
+        continue;
+      }
+      for (SeccionCurso seccion : secciones) {
+        if (!matricula.getIdBloque().equals(seccion.getIdBloque())) {
+          continue;
+        }
+        Curso curso = buscarCurso(seccion.getIdCurso());
+        if (curso != null && !contieneCurso(cursos, curso.getIdCurso())) {
+          cursos.add(curso);
+        }
       }
     }
     return cursos;
+  }
+
+  private boolean contieneCurso(List<Curso> cursos, String idCurso) {
+    for (Curso curso : cursos) {
+      if (curso.getIdCurso().equals(idCurso)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private Estudiante buscarEstudianteEn(List<Estudiante> estudiantes, String idEstudiante) {
+    for (Estudiante estudiante : estudiantes) {
+      if (estudiante.getId().equals(idEstudiante)) {
+        return estudiante;
+      }
+    }
+    return null;
   }
 
   /**
@@ -680,17 +770,21 @@ public class ServicioAcademico {
    * Asigna un identificador consecutivo a cada registro del lote antes de guardar.
    */
   public void guardarAsistencias(List<RegistroDeAsistencia> registros) {
+    List<RegistroDeAsistencia> existentes = ArchivoManager.leerTodasAsistencias();
     int maxId = 0;
-    for (RegistroDeAsistencia reg : ArchivoManager.leerTodasAsistencias()) {
-      try {
-        maxId = Math.max(maxId, Integer.parseInt(reg.getIdAsistencia().replace("A", "")));
-      } catch (NumberFormatException e) {
-        // Ignorar identificadores con formato distinto
+    for (RegistroDeAsistencia reg : existentes) {
+      String id = reg.getIdAsistencia();
+      if (id != null && id.startsWith("REG-ASI-")) {
+        try {
+          maxId = Math.max(maxId, Integer.parseInt(id.substring("REG-ASI-".length())));
+        } catch (NumberFormatException e) {
+          // Ignorar identificadores con formato distinto
+        }
       }
     }
     int siguienteId = maxId + 1;
     for (RegistroDeAsistencia reg : registros) {
-      reg.setIdAsistencia("A" + siguienteId);
+      reg.setIdAsistencia(String.format("REG-ASI-%04d", siguienteId));
       siguienteId++;
     }
     ArchivoManager.guardarAsistencia(registros);
@@ -818,5 +912,44 @@ public class ServicioAcademico {
       }
     }
     return null;
+  }
+
+  /**
+   * Prefijo anual de un identificador (por ejemplo NOT-2026) derivado de una
+   * fecha en formato ISO. Si la fecha no es valida usa el anio por defecto.
+   */
+  private static String prefijoAnual(String base, String fecha) {
+    String anio = "2026";
+    if (fecha != null && fecha.length() >= 4) {
+      String candidato = fecha.substring(0, 4);
+      try {
+        Integer.parseInt(candidato);
+        anio = candidato;
+      } catch (NumberFormatException e) {
+        // Mantener el anio por defecto
+      }
+    }
+    return base + anio;
+  }
+
+  /**
+   * Prefijo de matricula (por ejemplo MAT-20261) derivado del anio y semestre
+   * de la fecha de matricula.
+   */
+  private static String prefijoMatricula(String fechaMatricula) {
+    String anio = "2026";
+    int semestre = 1;
+    if (fechaMatricula != null && fechaMatricula.length() >= 7) {
+      try {
+        anio = fechaMatricula.substring(0, 4);
+        Integer.parseInt(anio);
+        int mes = Integer.parseInt(fechaMatricula.substring(5, 7));
+        semestre = mes <= 6 ? 1 : 2;
+      } catch (NumberFormatException e) {
+        anio = "2026";
+        semestre = 1;
+      }
+    }
+    return "MAT-" + anio + semestre;
   }
 }
