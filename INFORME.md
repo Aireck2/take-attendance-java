@@ -1,6 +1,6 @@
-# Sistema de Control y Monitoreo de Asistencia — IESTP Chincha
+# Programa de consola para el control de asistencia estudiantil del IESTP Chincha — IESTP Chincha
 
-**Informe Técnico y Documentación de Ingeniería de Software**  
+**Informe Técnico/académico**  
 _Curso:_ Paradigmas de Programación I  
 _Facultad:_ Facultad de Ingeniería e Inteligencia Artificial  
 _Carrera:_ Escuela Profesional de Ingeniería en Ciberseguridad  
@@ -8,7 +8,58 @@ _Plataforma:_ Java Platform, Standard Edition 21 (Java SE 21 LTS)
 
 ---
 
-## Objetivos
+## e) Descripción del caso de estudio
+
+1. Contexto Institucional y Ubicación
+   El presente proyecto se desarrolla en el Instituto de Educación Superior Tecnológico Público (IESTP) Chincha, ubicado en la provincia de Chincha, departamento de Ica, Perú (Ministerio de Educación [MINEDU], 2021). La institución imparte carreras profesionales tecnológicas orientadas a la alta demanda laboral, en donde el control del rendimiento, la permanencia y la asistencia de los estudiantes constituye un pilar reglamentario para el cumplimiento de las mallas curriculares normadas por el sector educativo nacional (Ley N.° 30512, 2016).
+
+2. Mapeo de Procesos (Principal y Secundarios)
+   El flujo operativo del caso de estudio comprende la interacción entre la planificación académica institucional y el control directo en el aula:
+
+Proceso Principal — Control y Registro de Asistencia por Sesión: Evento mediante el cual se apertura una sesión de clase, se verifica la presencia del estudiante y se almacena la cantidad exacta de horas asistidas frente al total de horas programadas (Pressman & Maxim, 2025).
+
+Procesos Secundarios Relacionados:
+
+Gestión de la Malla y Plan de Estudios: Definición jerárquica de carreras, planes, módulos profesionales y unidades didácticas conforme a los lineamientos académicos (MINEDU, 2021).
+
+Programación Horaria y Carga Docente: Establecimiento de bloques de sección (ciclo y turno), franjas horarias (time slots), asignación de profesores y reserva de aulas o laboratorios (Sommerville, 2019).
+
+Matrícula y Control de Tasas: Transacción formal que vincula al alumno con el bloque académico tras validar sus comprobantes de pago correspondientes a las tasas administrativas institucionales.
+
+Evaluación y Auditoría de Permanencia: Registro de calificaciones vigesimales y control automatizado de inhabilitación por superar el límite reglamentario del 30% de inasistencias injustificadas (Ley N.° 30512, 2016).
+
+3. Diagnóstico de la Problemática y Tríada de Seguridad
+   Actualmente, el proceso de asistencia en el IESTP Chincha se ejecuta mediante listas impresas en papel, donde cada alumno firma manualmente a lapicero. Este procedimiento empírico presenta cuatro limitaciones críticas que vulneran los principios de la ciberseguridad y la gestión de información (Stallings & Brown, 2018):
+
+Violación a la Integridad y Autenticación: La firma física carece de verificación de identidad en tiempo real, permitiendo la suplantación de estudiantes que firman por terceros y alterando la veracidad de los registros académicos.
+
+Afectación a la Disponibilidad Temporal: La circulación de hojas físicas interrumpe la dinámica pedagógica y consume tiempo valioso de la sesión de clase.
+
+Riesgo sobre la Conservación del Soporte: El uso de papel expone la información a deterioro físico, extravío o manipulación indebida, obstaculizando el respaldo histórico de las actividades lectivas.
+
+Ausencia de Repositorio Centralizado: Al mantenerse registros aislados por cada fecha, se carece de un punto central de consulta en tiempo real, exigiendo un esfuerzo manual intensivo para consolidar el historial del alumno (Elmasri & Navathe, 2016).
+
+4. Modelo de Dominio y Entidades Principales
+   Para estructurar la solución digital, el dominio académico se modela bajo un enfoque relacional robusto que interconecta las siguientes entidades (Connolly & Begg, 2015):
+
+Estructura Académica: Carrera, Plan de Estudios, Módulo Profesional y Curso / Unidad Didáctica.
+
+Programación y Espacios: Periodo Académico, Bloque de Sección, Sección de Curso, Modalidad de Dictado, Horario de Sección (Franja Horaria), Salón / Laboratorio y Sesión de Clase.
+
+Actores y Gestión: Alumno, Profesor, Matrícula, Derecho de Pago y Comprobante de Pago.
+
+Evaluación y Auditoría: Registro de Asistencia (almacenando el volumen exacto de horas asistidas) e Indicadores de Logro / Registro de Notas.
+
+5. Reglas de Negocio del Dominio
+   El sistema opera bajo restricciones lógicas estrictas para garantizar la consistencia e integridad de los datos (Elmasri & Navathe, 2016):
+
+Unicidad de Ambiente: Un salón o laboratorio no puede asignarse a dos franjas horarias que compartan el mismo día y presenten solapamiento de horas dentro del mismo periodo académico.
+
+Unicidad Docente: Ningún profesor puede tener franjas horarias concurrentes que se traslapen en el mismo periodo académico.
+
+Auditoría de Inasistencia: El sistema etiqueta automáticamente como inhabilitado al alumno cuya sumatoria de horas no asistidas rebase el 30% de las horas programadas de la unidad didáctica (Ley N.° 30512, 2016).
+
+## f) Objetivos
 
 ### i. Objetivo General
 
@@ -95,30 +146,23 @@ A nivel operativo, el aplicativo fue concebido bajo una arquitectura liviana y p
 
 El entorno de desarrollo, gestión de dependencias y ejecución del sistema se configuró íntegramente sobre herramientas especializadas bajo el sistema operativo **macOS Tahoe versión 26.7.3**, garantizando un entorno POSIX confiable y determinista:
 
-```text
-$ java --version
-java 21.0.9 2025-10-21 LTS
-Java(TM) SE Runtime Environment Oracle GraalVM 21.0.9+7.1 (build 21.0.9+7-LTS-jvmci-23.1-b79)
-Java HotSpot(TM) 64-Bit Server VM Oracle GraalVM 21.0.9+7.1 (build 21.0.9+7-LTS-jvmci-23.1-b79, mixed mode, sharing)
-```
-
 A continuación se detalla el conjunto de herramientas y especificaciones técnicas que integran la cadena de ingeniería del software:
 
-| Componente                           | Especificación / Versión                                             |
-| :----------------------------------- | :------------------------------------------------------------------- |
-| **Sistema Operativo**                | macOS Tahoe versión 26.7.3                                           |
-| **Lenguaje de Programación**         | Java Platform, Standard Edition 21 (Java SE 21 LTS)                  |
-| **Entorno de Ejecución (JRE / JDK)** | Oracle GraalVM 21.0.9+7.1 (build 21.0.9+7-LTS-jvmci-23.1-b79)        |
-| **Gestor de SDKs y Versiones**       | SDKMAN! (_Software Development Kit Manager_)                         |
-| **Emulador de Terminal**             | Kitty (0.50.0)                                                       |
-| **Entorno de Desarrollo (IDE)**      | Visual Studio Code (VS Code 1.145.2)                                 |
-| **Control de Versiones Local**       | Git (2.50.1)                                                         |
-| **Repositorio Remoto**               | GitHub                                                               |
-| **Paradigmas de Programación**       | Orientado a Objetos (POO), Imperativo-Modular y Seguridad por Diseño |
-| **Persistencia de Datos**            | Archivos planos CSV codificados en UTF-8                             |
-| **Criptografía de Credenciales**     | PBKDF2WithHmacSHA256 (`javax.crypto`, `SecureRandom`)                |
-| **Política de Dependencias**         | _Zero External Dependencies_                                         |
-| **Documentación y Modelado**         | Markdown (GFM) y diagramas Mermaid.js                                |
+| Componente                           | Especificación / Versión                                                                          |
+| :----------------------------------- | :------------------------------------------------------------------------------------------------ |
+| **Sistema Operativo**                | macOS Tahoe versión 26.7.3                                                                        |
+| **Lenguaje de Programación**         | Java Platform, Standard Edition 21 (Java SE 21 LTS)                                               |
+| **Entorno de Ejecución (JRE / JDK)** | Oracle GraalVM 21.0.9+7.1 (build 21.0.9+7-LTS-jvmci-23.1-b79)                                     |
+| **Gestor de SDKs y Versiones**       | SDKMAN! (_Software Development Kit Manager_)                                                      |
+| **Emulador de Terminal**             | Kitty (0.50.0)                                                                                    |
+| **Entorno de Desarrollo (IDE)**      | Visual Studio Code (VS Code 1.145.2)                                                              |
+| **Control de Versiones Local**       | Git (2.50.1)                                                                                      |
+| **Repositorio Remoto**               | GitHub                                                                                            |
+| **Paradigmas de Programación**       | Orientado a Objetos (POO), Procedimental, Estructurado, Imperativo-Modular y Seguridad por Diseño |
+| **Persistencia de Datos**            | Archivos planos CSV codificados en UTF-8                                                          |
+| **Criptografía de Credenciales**     | PBKDF2WithHmacSHA256 (`javax.crypto`, `SecureRandom`)                                             |
+| **Política de Dependencias**         | _Zero External Dependencies_                                                                      |
+| **Documentación y Modelado**         | Markdown (GFM) y diagramas Mermaid.js                                                             |
 
 ---
 
@@ -514,3 +558,19 @@ OK: 129 pruebas pasaron.
 | **CP-10** | `ServicioAcademico`    | Intento de registro de nota sobre alumno inhabilitado por inasistencia ($>30\%$)        | Operación rechazada por regla de negocio; no se modifica `data/registro_nota.csv`.                                    | **APROBADO** |
 | **CP-11** | `ArchivoManager`       | Lectura de registro de `Curso` legado (5 columnas en lugar de 9)                        | Derivación dinámica de horas lectivas (`duracion × totalHorasSesion`) sin error de parsing.                           | **APROBADO** |
 | **CP-12** | `ArchivoManager`       | Lectura de `RegistroDeAsistencia` legado (6 columnas sin `id_sesion` ni `id_matricula`) | Carga resiliente asignando sesión y matrícula nulas sin interrupción de la inicialización del sistema.                | **APROBADO** |
+
+## Referencias
+
+- Connolly, T., & Begg, C. (2015). Database systems: A practical approach to design, implementation, and management (6th ed.). Pearson.
+
+- Elmasri, R., & Navathe, S. B. (2016). Fundamentals of database systems (7th ed.). Pearson.
+
+- Ley N.° 30512. (2016, 2 de noviembre). Ley de institutos y escuelas de educación superior y de la carrera pública de sus docentes. Diario Oficial El Peruano. https://www.gob.pe/institucion/minedu/normas-legales/122557-30512
+
+- Ministerio de Educación [MINEDU]. (2021). Lineamientos académicos generales para los institutos de educación superior y escuelas de educación superior tecnológica. MINEDU.
+
+- Pressman, R. S., & Maxim, B. R. (2025). Software engineering: A practitioner's approach (10th ed.). McGraw-Hill Education.
+
+- Stallings, W., & Brown, L. (2018). Computer security: Principles and practice (4th ed.). Pearson.
+
+- Sommerville, I. (2019). Software engineering (10th ed.). Pearson.
