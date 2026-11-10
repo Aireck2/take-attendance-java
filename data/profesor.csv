@@ -1,0 +1,7 @@
+id_profesor,nombre,apellido,correo,tipo_de_documento,nro_documento,telefono,departamento_academico,especialidad
+DOC-001,Carlos,Mendoza,carlos.mendoza@iestpchincha.edu.pe,DNI,12345678,987654321,Facultad Ingenieria,Ciberseguridad
+DOC-002,Ana,Paredes,ana.paredes@iestpchincha.edu.pe,DNI,87654321,987654326,Facultad Ingenieria,Redes
+DOC-003,Ana,Torres,ana.torres@iestpchincha.edu.pe,DNI,23456789,987654322,Facultad Ingenieria,Redes
+DOC-004,Luis,Quispe,luis.quispe@iestpchincha.edu.pe,DNI,34567890,987654323,Facultad Ingenieria,Arquitectura Software
+DOC-005,Maria,Huaman,maria.huaman@iestpchincha.edu.pe,DNI,45678901,987654324,Facultad Ingenieria,Base de Datos
+DOC-006,Jorge,Ramos,jorge.ramos@iestpchincha.edu.pe,DNI,56789012,987654325,Facultad Ingenieria,Sistemas Operativos

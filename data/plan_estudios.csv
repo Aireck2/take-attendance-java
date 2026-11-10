@@ -1,0 +1,4 @@
+id_plan,id_carrera,codigo,nombre,creditos_totales,horas_totales,estado
+PLAN-APSTI-2026,PROG-APSTI,APSTI-2026,Plan de Estudios 2026,120,2200,VIGENTE
+PLAN-APSTI-2022,PROG-APSTI,APSTI-2022,Plan de Estudios 2022,115,2100,HISTORICO
+PLAN-DSI-2023,PROG-DSI,DSI-2023,Plan Curricular 2023-2027 (Por Competencias),120,2200,VIGENTE

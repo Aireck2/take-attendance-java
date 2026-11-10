@@ -1,0 +1,6 @@
+id_salon,nombre,tipo,capacidad
+AMB-AULA301,Aula 301,AULA,40
+AMB-LABREDES,Laboratorio de Redes,LABORATORIO,30
+AMB-TALLERSW,Taller de Software,TALLER,25
+AMB-AULA102,Aula 102 (Teoría),AULA,40
+AMB-LAB02,Laboratorio de Cómputo 2,LABORATORIO,30

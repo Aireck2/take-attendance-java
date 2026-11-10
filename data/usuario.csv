@@ -1,0 +1,11 @@
+id,correo,hash_contrasena,rol,id_referencia,activo
+USR-001,carlos.mendoza@iestpchincha.edu.pe,pbkdf2_sha256$210000$3b9fGLGHbUAzXZuKKNjQTw==$BqZ4Xr5KP+azeQGuj9kiu72VhQqB/8bkXSCnC8+6fUM=,PROFESOR,DOC-001,true
+USR-002,ana.torres@iestpchincha.edu.pe,pbkdf2_sha256$210000$IGtfVzAL4Z2x+SlM46hkng==$1mRBYI8zK9qYQ86zVALwPPVpnyZHo/PLp45POr0WRhM=,PROFESOR,DOC-003,true
+USR-003,luis.quispe@iestpchincha.edu.pe,pbkdf2_sha256$210000$eDE/QnGTWKciWR9q54R5hQ==$xSYB7E/UvvbJ8PSRs8fdPzLXU6goSOoY/fRM6sHEX0w=,PROFESOR,DOC-004,true
+USR-004,maria.huaman@iestpchincha.edu.pe,pbkdf2_sha256$210000$eaKXrZQ3/HAj8RQ+6bdB/A==$apCk8KkleYhV9dTK6iGZFv1rVDL16qdu6M+jrYcu33w=,PROFESOR,DOC-005,true
+USR-005,jorge.ramos@iestpchincha.edu.pe,pbkdf2_sha256$210000$gebJhHjkFwAUg0jVGNM3+g==$lVSJwOrPbCIz2Xcsx6B1A81eGYp6AlbJWFuPpJuJmek=,PROFESOR,DOC-006,true
+USR-006,erick.escriba@iestpchincha.edu.pe,pbkdf2_sha256$210000$gEHRGA/hi808jQWXQg3NpA==$2tNSqRPs59RW+xdUnWB0tLnTSsfNL2QDVq7NA5ozwVs=,ESTUDIANTE,ALU-2024101,true
+USR-007,sofia.gomez@iestpchincha.edu.pe,pbkdf2_sha256$210000$Nwskl6FnYPlpaD6GXvle9g==$0j0zr9McH/+5KTH3SvHqLN6/HtovqFDiNsmMLlfMXT8=,ESTUDIANTE,ALU-2024102,true
+USR-008,mateo.silva@iestpchincha.edu.pe,pbkdf2_sha256$210000$NhezRX86Dt5q5IVcEKklew==$+3Oxv1sxxXga17+4+ep7anju7ckEwEypct4rC6gD7V8=,ESTUDIANTE,ALU-2024103,true
+USR-009,lucia.cardenas@iestpchincha.edu.pe,pbkdf2_sha256$210000$2lzjRCUeRWMN1p/9niaKVQ==$cEbEVSBkh1GGv4DAPtESOPqUk3J1X3mqY/SJvoIFe9s=,ESTUDIANTE,ALU-2024104,true
+USR-010,diego.morales@iestpchincha.edu.pe,pbkdf2_sha256$210000$GohJ3qH+/8ZELUmDmCcXJA==$qrQmIfSzPi2vNVqCnlEoPGSGQSDDUcbdaetl1wtulFY=,ESTUDIANTE,ALU-2024105,true

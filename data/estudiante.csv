@@ -1,0 +1,7 @@
+id_estudiante,codigo,nombres,apellidos,dni,correo,escuela_profesional,estado
+ALU-2024101,U2024101,Erick,Escriba,71234501,erick.escriba@iestpchincha.edu.pe,Ingenieria en Ciberseguridad,REGULAR
+ALU-2024102,U2024102,Sofia,Gomez,71234502,sofia.gomez@iestpchincha.edu.pe,Ingenieria de Software,REGULAR
+ALU-2024103,U2024103,Mateo,Silva,71234503,mateo.silva@iestpchincha.edu.pe,Sistemas,REGULAR
+ALU-2024104,U2024104,Lucia,Cardenas,71234504,lucia.cardenas@iestpchincha.edu.pe,Redes,REGULAR
+ALU-2024105,U2024105,Diego,Morales,71234505,diego.morales@iestpchincha.edu.pe,Arquitectura,REGULAR
+ALU-2026045,U2026045,Juan,Pérez,72819034,juan.perez@iestpchincha.edu.pe,Desarrollo de Sistemas de Información,REGULAR

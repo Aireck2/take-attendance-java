@@ -1,3 +1,0 @@
-id_periodo,id_plan,codigo,fecha_inicio,fecha_fin,estado
-PE1,PL1,2026-I,2026-03-01,2026-07-15,ACTIVO
-PE2,PL1,2026-II,2026-08-01,2026-12-15,PLANIFICADO

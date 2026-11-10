@@ -1,0 +1,5 @@
+id_modulo,id_plan,nombre,competencia,creditos_modulo
+MP-APSTI-01,PLAN-APSTI-2026,Redes y Seguridad,Administra redes y seguridad informatica,20
+MP-APSTI-02,PLAN-APSTI-2026,Infraestructura y Cloud,Administra infraestructura y servicios cloud,20
+MP-APSTI-03,PLAN-APSTI-2026,Gestion de Datos,Administra bases de datos y repositorios,20
+MP-01,PLAN-DSI-2023,Desarrollo de Software y Gestión de Bases de Datos,Auxiliar Técnico en Soporte y Programación,20

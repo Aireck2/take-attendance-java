@@ -1,0 +1,6 @@
+id_indicador,id_seccion,nombre,peso
+IND-02,SEC-SEGREDES-3N,Evaluacion Parcial,30
+IND-03,SEC-SEGREDES-3N,Evaluacion Final,40
+IND-04,SEC-SEGREDES-3N,Practicas Calificadas,30
+IND-05,SEC-ETHHACK-3N,Evaluacion Final,100
+IND-01,SEC-REDES1-3N,Configura redes LAN bajo el modelo OSI y TCP/IP,30
