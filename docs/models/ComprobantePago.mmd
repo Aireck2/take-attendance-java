@@ -5,11 +5,13 @@ classDiagram
         - idDerecho: String
         - fecha: String
         - monto: double
+        - estado: EstadoComprobante
         + String getIdComprobante()
         + void setIdComprobante(String idComprobante)
         + String getIdEstudiante()
         + String getIdDerecho()
         + String getFecha()
         + double getMonto()
+        + EstadoComprobante getEstado()
         + String toCsv()
     }

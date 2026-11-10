@@ -63,32 +63,38 @@ classDiagram
             RETIRADA
             COMPLETADA
         }
+        class EstadoComprobante {
+            <<enumeration>>
+            PAGADO
+            PENDIENTE
+            ANULADO
+        }
         class Curso {
             - idCurso: String 
             - nombreCurso: String 
-            - totalHorasSesion: int
-            - idProfesor: String
-            - duracionCurso: int
             - idModulo: String
             - creditos: int
             - horasTeoricas: int
             - horasPracticas: int
+            - totalHorasSesion: int
+            - duracionCurso: int
             + String getIdCurso()
             + String getNombreCurso()
-            + int getTotalHorasSesion()
-            + String getIdProfesor()
-            + int getDuracionCurso()
             + String getIdModulo()
             + int getCreditos()
             + int getHorasTeoricas()
             + int getHorasPracticas()
+            + int getTotalHorasSesion()
+            + int getDuracionCurso()
             + int getHorasLectivasTotales()
         }
         class Carrera {
             - idCarrera: String
             - nombre: String
+            - tipo: String
             + String getIdCarrera()
             + String getNombre()
+            + String getTipo()
         }
         class PlanEstudios {
             - idPlan: String
@@ -147,13 +153,11 @@ classDiagram
             - idBloque: String
             - idCurso: String
             - modalidad: ModalidadDictado
-            - idProfesor: String
             - cupoMaximo: int
             + String getIdSeccion()
             + String getIdBloque()
             + String getIdCurso()
             + ModalidadDictado getModalidad()
-            + String getIdProfesor()
             + int getCupoMaximo()
         }
         class HorarioSeccion {
@@ -238,12 +242,14 @@ classDiagram
             - codigo: String
             - nombres: String
             - apellidos: String
+            - dni: String
             - correo: String
             - escuelaProfesional: String
             - estado: EstadoEstudiante
             + String getId()
             + String getCodigo()
             + String getNombreCompleto()
+            + String getDni()
             + String getCorreo()
             + String getEscuelaProfesional()
             + EstadoEstudiante getEstado()
@@ -273,6 +279,7 @@ classDiagram
             - horasAsistidas: int
             - presente: boolean
             - idSesion: String
+            - idMatricula: String
             + String getIdAsistencia()
             + void setIdAsistencia(String idAsistencia)
             + String getIdCurso()
@@ -281,6 +288,7 @@ classDiagram
             + int getHorasAsistidas()
             + boolean isPresente()
             + String getIdSesion()
+            + String getIdMatricula()
             + String toCsv()
         }
         class IndicadorLogro {
@@ -323,12 +331,14 @@ classDiagram
             - idDerecho: String
             - fecha: String
             - monto: double
+            - estado: EstadoComprobante
             + String getIdComprobante()
             + void setIdComprobante(String idComprobante)
             + String getIdEstudiante()
             + String getIdDerecho()
             + String getFecha()
             + double getMonto()
+            + EstadoComprobante getEstado()
             + String toCsv()
         }
     }
@@ -361,6 +371,7 @@ classDiagram
             + Matricula matricularEstudiante(String idEstudiante, String idBloque, String fechaMatricula)
             + List~SesionClase~ listarSesionesBloque(String idBloque)
             + RegistroDeAsistencia crearRegistroSesion(SesionClase sesion, Curso curso, Estudiante estudiante, int horasAsistidas)
+            + RegistroDeAsistencia crearRegistroSesion(SesionClase sesion, Curso curso, Estudiante estudiante, int horasAsistidas, String idMatricula)
             + RegistroDeAsistencia registrarAsistenciaSesion(String idSesion, String idEstudiante, int horasAsistidas)
             + int calcularHorasFaltadas(List~SesionClase~ sesiones, List~RegistroDeAsistencia~ registros)
             + int horasFaltadasUnidadDidactica(Matricula matricula, Curso curso)
@@ -433,7 +444,6 @@ classDiagram
             + List~DerechoPago~ leerDerechosPago()$
             + List~ComprobantePago~ leerComprobantes()$
             + void guardarComprobantes(List~ComprobantePago~ comprobantes)$
-            + List~String~ leerInscripcionesCurso(String idCurso)$
             + void guardarAsistencia(List~RegistroDeAsistencia~ registros)$
             + List~RegistroDeAsistencia~ leerAsistenciasEstudiante(String idEstudiante)$
             + List~RegistroDeAsistencia~ leerTodasAsistencias()$
@@ -464,7 +474,6 @@ classDiagram
     Usuario --> Rol : tiene
     Usuario ..> Profesor : referencia por idReferencia
     Usuario ..> Estudiante : referencia por idReferencia
-    Curso ..> Profesor : referencia por idProfesor
     RegistroDeAsistencia ..> Estudiante : referencia por idEstudiante
     RegistroDeAsistencia ..> Curso : referencia por idCurso
     Carrera --> PlanEstudios : administra
@@ -490,13 +499,14 @@ classDiagram
     Matricula ..> Estudiante : referencia por idEstudiante
     Matricula ..> BloqueSeccion : referencia por idBloque
     Matricula --> EstadoMatricula : tiene
-    Matricula --> RegistroDeAsistencia : acumula
+    Matricula --> RegistroDeAsistencia : referencia por idMatricula
     RegistroDeAsistencia ..> SesionClase : referencia por idSesion
     IndicadorLogro --> SeccionCurso : configura
     RegistroNota ..> IndicadorLogro : referencia por idIndicador
     RegistroNota ..> Estudiante : referencia por idEstudiante
     DerechoPago ..> Curso : referencia por creditosModulo
     ComprobantePago ..> DerechoPago : amortiza
+    ComprobantePago --> EstadoComprobante : tiene
     ComprobantePago ..> Estudiante : referencia por idEstudiante
 
     %% ==========================================
@@ -562,6 +572,7 @@ classDiagram
     ArchivoManager ..> TipoSalon : parsea enum
     ArchivoManager ..> Matricula : serializa / deserializa CSV
     ArchivoManager ..> EstadoMatricula : parsea enum
+    ArchivoManager ..> EstadoComprobante : parsea enum
     ArchivoManager ..> IndicadorLogro : serializa / deserializa CSV
     ArchivoManager ..> RegistroNota : serializa / deserializa CSV
     ArchivoManager ..> DerechoPago : serializa / deserializa CSV

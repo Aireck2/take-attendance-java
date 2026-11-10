@@ -2,22 +2,20 @@ classDiagram
     class Curso {
             - idCurso: String 
             - nombreCurso: String 
-            - totalHorasSesion: int
-            - idProfesor: String
-            - duracionCurso: int
             - idModulo: String
             - creditos: int
             - horasTeoricas: int
             - horasPracticas: int
+            - totalHorasSesion: int
+            - duracionCurso: int
 
             + String getIdCurso()
             + String getNombreCurso()
-            + int getTotalHorasSesion()
-            + String getIdProfesor()
-            + int getDuracionCurso()
             + String getIdModulo()
             + int getCreditos()
             + int getHorasTeoricas()
             + int getHorasPracticas()
+            + int getTotalHorasSesion()
+            + int getDuracionCurso()
             + int getHorasLectivasTotales()
     }
