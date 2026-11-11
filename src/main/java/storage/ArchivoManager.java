@@ -186,10 +186,11 @@ public class ArchivoManager {
           continue;
         }
         String[] p = linea.split(",", -1);
-        // id_periodo,id_plan,codigo,fecha_inicio,fecha_fin,estado
+        // id_periodo,id_plan,codigo,fecha_inicio,fecha_fin,estado,semanas_lectivas (opcional en filas legadas)
         if (p.length >= 6) {
           lista.add(new PeriodoAcademico(p[0].trim(), p[1].trim(), p[2].trim(), p[3].trim(), p[4].trim(),
-              EstadoPeriodo.valueOf(p[5].trim())));
+              EstadoPeriodo.valueOf(p[5].trim()), p.length >= 7 && !p[6].isBlank()
+                  ? Integer.parseInt(p[6].trim()) : PeriodoAcademico.DEFAULT_SEMANAS_LECTIVAS));
         }
       }
     } catch (FileNotFoundException e) {
@@ -466,17 +467,28 @@ public class ArchivoManager {
   public static List<Curso> leerCursos() {
     List<Curso> lista = new ArrayList<>();
     try (BufferedReader br = new BufferedReader(new FileReader(CARPETA_DATOS + "/curso.csv"))) {
-      String linea = br.readLine();
+      String cabecera = br.readLine();
+      boolean tieneTotalHorasLectivas = cabecera != null && cabecera.contains("total_horas_lectivas");
+      String linea;
       while ((linea = br.readLine()) != null) {
         if (linea.isBlank()) {
           continue;
         }
         String[] p = linea.split(",", -1);
-        // id_curso,nombre_curso,id_modulo,creditos,horas_teoricas,horas_practicas,total_horas_sesion,duracion_curso
-        if (p.length >= 8) {
+        // Current: ...horas_teoricas,horas_practicas,total_horas_lectivas
+        if (tieneTotalHorasLectivas && p.length >= 7) {
+          lista.add(new Curso(p[0].trim(), p[1].trim(), p[2].trim(), Integer.parseInt(p[3].trim()),
+              Integer.parseInt(p[4].trim()), Integer.parseInt(p[5].trim()), Integer.parseInt(p[6].trim())));
+        } else if (p.length >= 8) {
+          // Legacy modern row with a trailing duracion_curso field.
           lista.add(new Curso(p[0].trim(), p[1].trim(), p[2].trim(), Integer.parseInt(p[3].trim()),
               Integer.parseInt(p[4].trim()), Integer.parseInt(p[5].trim()), Integer.parseInt(p[6].trim()),
               Integer.parseInt(p[7].trim())));
+        } else if (p.length >= 7) {
+          // Legacy row without an explicit total: derive theory plus practice and ignore its session-hours value.
+          lista.add(new Curso(p[0].trim(), p[1].trim(), p[2].trim(), Integer.parseInt(p[3].trim()),
+              Integer.parseInt(p[4].trim()), Integer.parseInt(p[5].trim()),
+              Integer.parseInt(p[4].trim()) + Integer.parseInt(p[5].trim())));
         } else if (p.length >= 5) {
           // Fila legada: id_curso,nombre_curso,total_horas_sesion,id_profesor,duracion_curso
           lista.add(new Curso(p[0].trim(), p[1].trim(), Integer.parseInt(p[2].trim()),

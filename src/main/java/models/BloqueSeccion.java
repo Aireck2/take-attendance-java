@@ -32,4 +32,17 @@ public class BloqueSeccion {
   public Turno getTurno() {
     return turno;
   }
+
+  /**
+   * Ciclo academico declarado en el nombre del bloque.
+   * La convencion del catalogo es "3er Ciclo - Turno Noche"; si el nombre no
+   * sigue esa convencion se devuelve completo para no perder informacion.
+   */
+  public String getCiclo() {
+    if (nombre == null) {
+      return "";
+    }
+    int separador = nombre.indexOf(" - ");
+    return separador > 0 ? nombre.substring(0, separador) : nombre;
+  }
 }

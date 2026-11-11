@@ -2,7 +2,8 @@ package models;
 
 /**
  * Sesion de clase: instancia real de una franja en una fecha exacta, con
- * docente, ambiente final y horas programadas.
+ * docente, ambiente final y horas programadas, que deben coincidir con la
+ * duracion del horario recurrente que instancia.
  */
 public class SesionClase {
   private String idSesion;
@@ -14,6 +15,9 @@ public class SesionClase {
 
   public SesionClase(String idSesion, String idHorario, String fecha, int horasProgramadas, String idProfesor,
       String idSalon) {
+    if (horasProgramadas <= 0) {
+      throw new IllegalArgumentException("La sesion debe tener horas programadas positivas");
+    }
     this.idSesion = idSesion;
     this.idHorario = idHorario;
     this.fecha = fecha;

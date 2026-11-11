@@ -1,8 +1,13 @@
 package models;
 
+import java.time.Duration;
+import java.time.LocalTime;
+import java.time.format.DateTimeParseException;
+
 /**
  * Horario de seccion / franja horaria: regla semanal recurrente con dia,
- * rango de horas, tipo de clase, docente y ambiente reservado.
+ * rango de horas, tipo de clase, docente y ambiente reservado. Su duracion
+ * recurrente distribuye la carga semanal de la unidad didactica.
  */
 public class HorarioSeccion {
   private String idHorario;
@@ -24,6 +29,7 @@ public class HorarioSeccion {
     this.tipoClase = tipoClase;
     this.idProfesor = idProfesor;
     this.idSalon = idSalon;
+    getDuracionMinutos();
   }
 
   public String getIdHorario() {
@@ -44,6 +50,19 @@ public class HorarioSeccion {
 
   public String getHoraFin() {
     return horaFin;
+  }
+
+  /** Duracion del bloque semanal, expresada en minutos para conservar fracciones de hora. */
+  public int getDuracionMinutos() {
+    try {
+      long minutos = Duration.between(LocalTime.parse(horaInicio), LocalTime.parse(horaFin)).toMinutes();
+      if (minutos <= 0 || minutos > Integer.MAX_VALUE) {
+        throw new IllegalArgumentException("El horario debe tener una duracion positiva en el mismo dia");
+      }
+      return (int) minutos;
+    } catch (DateTimeParseException e) {
+      throw new IllegalArgumentException("Las horas del horario deben usar el formato HH:mm", e);
+    }
   }
 
   public TipoClase getTipoClase() {

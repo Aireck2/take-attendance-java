@@ -1,8 +1,9 @@
 package models;
 
 /**
- * Plan de estudios: malla curricular con creditos y horas lectivas que rige
- * a una promocion. Pertenece a una carrera y agrupa modulos y periodos.
+ * Plan de estudios: fuente curricular que define los totales agregados de
+ * creditos y horas lectivas de una promocion. Las unidades y su desglose
+ * individual pertenecen a Curso dentro de los modulos del plan.
  */
 public class PlanEstudios {
   private String idPlan;

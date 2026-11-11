@@ -2,7 +2,7 @@ package models;
 
 /**
  * Modulo profesional: unidad formativa acumulativa de un plan que agrupa
- * competencias tecnicas para certificaciones modulares intermedias.
+ * competencias tecnicas y el subtotal de creditos de sus unidades didacticas.
  */
 public class ModuloProfesional {
   private String idModulo;
