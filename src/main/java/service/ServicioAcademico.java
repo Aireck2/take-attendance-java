@@ -1,5 +1,8 @@
 package service;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -122,6 +125,45 @@ public class ServicioAcademico {
   }
 
   /**
+   * Calcula la semana lectiva vigente usando el marco temporal del periodo.
+   * Devuelve cero si la fecha no corresponde a una semana programada.
+   */
+  public int calcularSemanaActualCurso(PeriodoAcademico periodo, LocalDate fecha) {
+    if (periodo == null || fecha == null || periodo.getSemanasLectivas() <= 0) {
+      return 0;
+    }
+    if (periodo.getFechaInicio() == null || periodo.getFechaFin() == null
+        || periodo.getFechaInicio().isBlank() || periodo.getFechaFin().isBlank()) {
+      return 0;
+    }
+
+    try {
+      LocalDate inicio = LocalDate.parse(periodo.getFechaInicio());
+      LocalDate fin = LocalDate.parse(periodo.getFechaFin());
+      if (fecha.isBefore(inicio) || fecha.isAfter(fin)) {
+        return 0;
+      }
+
+      long diasDesdeInicio = ChronoUnit.DAYS.between(inicio, fecha);
+      long diasProgramados = (long) periodo.getSemanasLectivas() * 7;
+      if (diasDesdeInicio >= diasProgramados) {
+        return 0;
+      }
+      return (int) (diasDesdeInicio / 7) + 1;
+    } catch (DateTimeParseException e) {
+      return 0;
+    }
+  }
+
+  /**
+   * Compatibilidad con llamadas anteriores: la duracion semanal del curso ya
+   * no determina el calendario lectivo.
+   */
+  public int calcularSemanaActualCurso(Curso curso, PeriodoAcademico periodo, LocalDate fecha) {
+    return calcularSemanaActualCurso(periodo, fecha);
+  }
+
+  /**
    * Lista los bloques de seccion / turno registrados.
    */
   public List<BloqueSeccion> listarBloques() {
@@ -146,6 +188,18 @@ public class ServicioAcademico {
       }
     }
     return secciones;
+  }
+
+  /**
+   * Devuelve el bloque de seccion por su identificador, o null si no existe.
+   */
+  public BloqueSeccion buscarBloque(String idBloque) {
+    for (BloqueSeccion bloque : ArchivoManager.leerBloques()) {
+      if (bloque.getIdBloque().equals(idBloque)) {
+        return bloque;
+      }
+    }
+    return null;
   }
 
   /**
@@ -188,11 +242,61 @@ public class ServicioAcademico {
     return sesiones;
   }
 
+  /** Devuelve las sesiones del curso para una fecha exacta. */
+  public List<SesionClase> listarSesionesCursoEnFecha(Curso curso, String fecha) {
+    List<SesionClase> sesiones = new ArrayList<>();
+    if (curso == null || fecha == null) {
+      return sesiones;
+    }
+    for (SesionClase sesion : ArchivoManager.leerSesiones()) {
+      if (!fecha.equals(sesion.getFecha())) {
+        continue;
+      }
+      SeccionCurso seccion = seccionDeSesion(sesion);
+      if (seccion != null && curso.getIdCurso().equals(seccion.getIdCurso())) {
+        sesiones.add(sesion);
+      }
+    }
+    return sesiones;
+  }
+
+  /** Devuelve los alumnos activos matriculados en el bloque de una sesion. */
+  public List<Estudiante> listarEstudiantesSesion(String idSesion) {
+    List<Estudiante> estudiantes = new ArrayList<>();
+    SesionClase sesion = buscarSesion(idSesion);
+    SeccionCurso seccion = sesion == null ? null : seccionDeSesion(sesion);
+    if (seccion == null) {
+      return estudiantes;
+    }
+    for (Matricula matricula : listarMatriculasBloque(seccion.getIdBloque())) {
+      if (matricula.getEstado() != EstadoMatricula.ACTIVA) {
+        continue;
+      }
+      Estudiante estudiante = buscarEstudiante(matricula.getIdEstudiante());
+      if (estudiante != null) {
+        estudiantes.add(estudiante);
+      }
+    }
+    return estudiantes;
+  }
+
   /**
    * Lista los salones, laboratorios y talleres registrados.
    */
   public List<Salon> listarSalones() {
     return ArchivoManager.leerSalones();
+  }
+
+  /**
+   * Devuelve el salon por su identificador, o null si no existe.
+   */
+  public Salon buscarSalon(String idSalon) {
+    for (Salon salon : ArchivoManager.leerSalones()) {
+      if (salon.getIdSalon().equals(idSalon)) {
+        return salon;
+      }
+    }
+    return null;
   }
 
   /**
@@ -307,6 +411,9 @@ public class ServicioAcademico {
    */
   public RegistroDeAsistencia crearRegistroSesion(SesionClase sesion, Curso curso, Estudiante estudiante,
       int horasAsistidas, String idMatricula) {
+    if (sesion == null || curso == null || estudiante == null) {
+      return null;
+    }
     int horasValidas = Math.max(0, Math.min(horasAsistidas, sesion.getHorasProgramadas()));
     boolean presente = horasValidas > 0;
     return new RegistroDeAsistencia(null, curso.getIdCurso(), estudiante.getId(), sesion.getFecha(), horasValidas,
@@ -684,6 +791,55 @@ public class ServicioAcademico {
   }
 
   /**
+   * Devuelve las secciones de un curso en las que el profesor dicta al menos
+   * una franja horaria. El ciclo, el bloque y el horario que se muestran en el
+   * detalle del curso salen de esta seccion, no del curso suelto.
+   */
+  public List<SeccionCurso> seccionesProfesor(Profesor profesor, Curso curso) {
+    List<SeccionCurso> secciones = new ArrayList<>();
+    if (profesor == null || curso == null) {
+      return secciones;
+    }
+    for (SeccionCurso seccion : ArchivoManager.leerSecciones()) {
+      if (!curso.getIdCurso().equals(seccion.getIdCurso())) {
+        continue;
+      }
+      for (HorarioSeccion horario : listarHorariosSeccion(seccion.getIdSeccion())) {
+        if (profesor.getId().equals(horario.getIdProfesor())) {
+          secciones.add(seccion);
+          break;
+        }
+      }
+    }
+    return secciones;
+  }
+
+  /**
+   * Devuelve los docentes distintos que dictan una seccion, en el orden en que
+   * aparecen sus franjas horarias. Una seccion puede tener teoria y practica
+   * con docentes diferentes.
+   */
+  public List<Profesor> profesoresSeccion(String idSeccion) {
+    List<Profesor> profesores = new ArrayList<>();
+    for (HorarioSeccion horario : listarHorariosSeccion(idSeccion)) {
+      Profesor profesor = buscarProfesor(horario.getIdProfesor());
+      if (profesor != null && !contieneProfesor(profesores, profesor.getId())) {
+        profesores.add(profesor);
+      }
+    }
+    return profesores;
+  }
+
+  private boolean contieneProfesor(List<Profesor> profesores, String idProfesor) {
+    for (Profesor profesor : profesores) {
+      if (profesor.getId().equals(idProfesor)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
    * Devuelve la nomina de un curso, derivada de las secciones que lo dictan y
    * de las matriculas activas del bloque al que pertenecen esas secciones.
    */
@@ -795,17 +951,12 @@ public class ServicioAcademico {
    * Las horas se limitan entre 0 y el maximo de la sesion; 0 significa ausente.
    * El identificador se asigna al guardar el lote.
    */
-  public RegistroDeAsistencia crearRegistro(Curso curso, Estudiante estudiante, String fecha, int horasAsistidas) {
-    int horasValidas = Math.max(0, Math.min(horasAsistidas, curso.getTotalHorasSesion()));
-    boolean presente = horasValidas > 0;
-    return new RegistroDeAsistencia(null, curso.getIdCurso(), estudiante.getId(), fecha, horasValidas, presente);
-  }
-
   /**
    * Horas que el estudiante debia asistir segun la sesion programada.
-   * Las filas legadas, que no enlazan sesion, usan las horas por sesion del curso.
+   * Las filas legadas sin sesion no aportan horas porque no es posible
+   * reconstruir con certeza la duracion de una clase a partir del curso.
    */
-  public int horasProgramadasDe(RegistroDeAsistencia registro, Curso curso) {
+  public int horasProgramadasDe(RegistroDeAsistencia registro) {
     if (registro == null) {
       return 0;
     }
@@ -816,7 +967,7 @@ public class ServicioAcademico {
         return sesion.getHorasProgramadas();
       }
     }
-    return curso == null ? 0 : curso.getTotalHorasSesion();
+    return 0;
   }
 
   /**
