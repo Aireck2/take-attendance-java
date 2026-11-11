@@ -1,7 +1,11 @@
-id_curso,nombre_curso,id_modulo,creditos,horas_teoricas,horas_practicas,total_horas_sesion,duracion_curso
-UD-SEGREDES,Seguridad en Redes,MP-APSTI-01,4,32,32,4,16
-UD-ETHHACK,Ethical Hacking,MP-APSTI-01,3,24,24,3,16
-UD-ROUTING,Routing y Switching,MP-APSTI-01,4,32,32,4,16
-UD-CLOUD,Cloud Computing,MP-APSTI-02,3,24,24,3,16
-UD-BDAVZ,Bases de Datos Avanzadas,MP-APSTI-03,4,32,32,4,16
-UD-REDES1,Fundamentos de Redes y Comunicaciones,MP-01,4,32,32,4,16
+id_curso,nombre_curso,id_modulo,creditos,horas_teoricas,horas_practicas,total_horas_lectivas
+UD-SEGREDES,Seguridad en Redes,MP-APSTI-01,4,32,32,64
+UD-ETHHACK,Ethical Hacking,MP-APSTI-01,3,32,16,48
+UD-ROUTING,Routing y Switching,MP-APSTI-01,4,32,32,64
+UD-CLOUD,Cloud Computing,MP-APSTI-02,3,32,16,48
+UD-BDAVZ,Bases de Datos Avanzadas,MP-APSTI-03,4,32,32,64
+UD-SEG-CLOUD,Seguridad de Servicios Cloud,MP-APSTI-02,4,32,32,64
+UD-REDES1,Fundamentos de Redes y Comunicaciones,MP-01,4,32,32,64
+UD-ADMIN-LINUX,Administracion de Sistemas Linux,MP-APSTI-01,4,40,40,80
+UD-SEG-IR,Seguridad de Infraestructura y Redes,MP-APSTI-01,5,48,48,96
+UD-VIRT-DATACENTER,Virtualizacion de Centros de Datos,MP-APSTI-02,4,40,40,80
