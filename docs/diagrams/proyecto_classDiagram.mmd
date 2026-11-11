@@ -13,6 +13,9 @@ classDiagram
             - leerContrasena(prompt : String) String
             - menuProfesor(profActual : Profesor) void
             - gestionarCursosProfesor(prof : Profesor) void
+            - mostrarDetalleCurso(prof : Profesor, curso : Curso) void
+            - mostrarDocentesDeSeccion(seccion : SeccionCurso) void
+            - mostrarHorarioDeSeccion(seccion : SeccionCurso) void
             - menuEstudiante(estActual : Estudiante) void
             - mostrarResumenAsistenciaEstudiante(est : Estudiante) void
         }
@@ -28,6 +31,10 @@ classDiagram
             + LIMITE_INASISTENCIA : double = 15.0$
             + LIMITE_INASISTENCIA_NORMATIVO : double = 30.0$
             + listarCursosProfesor(profesor : Profesor) List~Curso~
+            + seccionesProfesor(profesor : Profesor, curso : Curso) List~SeccionCurso~
+            + profesoresSeccion(idSeccion : String) List~Profesor~
+            + buscarBloque(idBloque : String) BloqueSeccion
+            + buscarSalon(idSalon : String) Salon
             + listarEstudiantesCurso(curso : Curso) List~Estudiante~
             + listarCursosEstudiante(estudiante : Estudiante) List~Curso~
             + historialEstudiante(estudiante : Estudiante) List~RegistroDeAsistencia~
@@ -36,8 +43,9 @@ classDiagram
             + guardarAsistencias(registros : List~RegistroDeAsistencia~) void
             + calcularHorasFaltadas(sesiones : List~SesionClase~, registros : List~RegistroDeAsistencia~) int
             + horasFaltadasUnidadDidactica(matricula : Matricula, curso : Curso) int
+            + horasProgramadasDe(registro : RegistroDeAsistencia, curso : Curso) int
             + calcularPorcentajeInasistencia(horasFaltadas : int, horasLectivasTotales : int) double
-            + calcularPorcentajeFaltas(horasDictadas : int, horasAsistidas : int, totalHorasCurso : int) double
+            + calcularPorcentajeFaltas(horasDictadas : int, horasAsistidas : int) double
             + estaInhabilitadoPorInasistencia(horasFaltadas : int, horasLectivasTotales : int) boolean
             + puedeRegistrarNotas(matricula : Matricula, curso : Curso) boolean
             + puedeRegistrarNota(matricula : Matricula, curso : Curso, sesiones : List~SesionClase~, registros : List~RegistroDeAsistencia~) boolean

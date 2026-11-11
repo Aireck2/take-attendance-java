@@ -15,7 +15,28 @@ flowchart TB
     PerfilP --> MenuProf
     OpInvalidaP --> MenuProf
     CallCursos --> Listar[["Llamar servicio.listarCursosProfesor(prof)"]]
-    Listar --> ListarAlumnos[["Llamar servicio.listarEstudiantesCurso(cursoSel)"]]
+    Listar --> SinCursos{"misCursos esta vacia?"}
+    SinCursos -- Si --> MsgSinCursos@{ label: "Escribir 'No tiene cursos asignados.'<br>return" }
+    MsgSinCursos --> MenuProf
+    SinCursos -- No --> PrintCursos[/"Escribir la lista numerada de cursos<br>nombre e ID"/]
+    PrintCursos --> LeerCurso@{ label: "leerOpcion('Seleccione un curso para ver detalles / tomar asistencia: ')" }
+    LeerCurso --> CursoValido{"idx fuera de rango?"}
+    CursoValido -- Si --> MsgCursoInvalido@{ label: "Escribir 'Curso no valido.'<br>return" }
+    MsgCursoInvalido --> MenuProf
+    CursoValido -- No --> Detalle[["Llamar mostrarDetalleCurso(prof, cursoSel)"]]
+    Detalle --> Secciones[["Llamar servicio.seccionesProfesor(prof, cursoSel)"]]
+    Secciones --> SinSeccion{"secciones esta vacia?"}
+    SinSeccion -- Si --> PrintFallback[/"Escribir curso y horas por sesion"/]
+    PrintFallback --> ListarAlumnos
+    SinSeccion -- No --> ForSeccion{{"Para cada seccion del curso"}}
+    ForSeccion --> Bloque[["Llamar servicio.buscarBloque(seccion.getIdBloque())"]]
+    Bloque --> Docentes[["Llamar servicio.profesoresSeccion(seccion.getIdSeccion())"]]
+    Docentes --> Horario[["Llamar servicio.listarHorariosSeccion(seccion.getIdSeccion())"]]
+    Horario --> Salones[["Llamar servicio.buscarSalon(horario.getIdSalon())"]]
+    Salones --> PrintDetalle[/"Escribir curso, ciclo, bloque, docentes, correo<br>y horario con dia, horas y ambiente"/]
+    PrintDetalle --> J((" "))
+    J --> ForSeccion
+    ForSeccion -- Fin --> ListarAlumnos[["Llamar servicio.listarEstudiantesCurso(cursoSel)"]]
     ListarAlumnos --> SinAlumnos{"La nomina esta vacia?"}
     SinAlumnos -- Si --> MsgSinAlumnos@{ label: "Escribir 'No hay alumnos inscritos en este curso.'<br>return" }
     SinAlumnos -- No --> PrintAlumnos[/"Escribir los alumnos matriculados<br>nombre completo y codigo"/]
@@ -35,6 +56,9 @@ flowchart TB
 
     LeerOpP@{ shape: lean-r}
     OpInvalidaP@{ shape: lean-r}
+    MsgSinCursos@{ shape: lean-r}
+    LeerCurso@{ shape: lean-r}
+    MsgCursoInvalido@{ shape: lean-r}
     MsgSinAlumnos@{ shape: lean-r}
     Pregunta@{ shape: lean-r}
     CabeceraAsis@{ shape: lean-r}
