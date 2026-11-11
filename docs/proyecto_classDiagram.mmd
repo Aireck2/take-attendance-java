@@ -205,6 +205,13 @@ classDiagram
             <<enumeration>>
             PROFESOR
             ESTUDIANTE
+            + menuSesion() MenuSesion
+        }
+        class MenuSesion {
+            <<enumeration>>
+            PROFESOR
+            ESTUDIANTE
+            NINGUNO
         }
         class EstadoPlan {
             <<enumeration>>
@@ -241,6 +248,7 @@ classDiagram
     ServicioAcademico ..> Matricula : verifica condición activa
     ServicioAcademico ..> RegistroNota : valida y asienta evaluación
     Usuario --> Rol : tipado de permisos
+    Rol --> MenuSesion : redirige al menú
     Curso --> ModuloProfesional : pertenece a
     ModuloProfesional --> PlanEstudios : compone
     PlanEstudios --> Carrera : pertenece a

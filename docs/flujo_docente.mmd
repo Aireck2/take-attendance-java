@@ -1,63 +1,43 @@
-flowchart TD
-    %% ==========================================
-    %% PROCESO 2: FLUJO DEL PROGRAMA COMO PROFESOR
-    %% ==========================================
-
-    E((E)) --> ProfStart([INICIO])
-    ProfStart --> MenuProf["MENU PROFESOR: nombre completo<br>1. Ver mis cursos asignados<br>2. Ver mi perfil<br>3. Cerrar sesion"]
-    MenuProf --> LeerOpP[/"leerOpcion('Elija una opcion: ')"/]
+---
+config:
+  layout: elk
+  theme: default
+---
+flowchart TB
+    P(("P")) --> ProfStart(["INICIO"])
+    ProfStart --> MenuProf["MENU&nbsp;PROFESOR:&nbsp;nombre&nbsp;completo<br>1.&nbsp;Ver&nbsp;mis&nbsp;cursos&nbsp;asignados<br>2. Ver mi perfil<br>3. Cerrar sesion"]
+    MenuProf --> LeerOpP@{ label: "leerOpcion('Elija una opcion: ')" }
     LeerOpP --> SwitchP{{"switch (opcProf)"}}
-
-    SwitchP -- "1" --> CallCursos[["Llamar gestionarCursosProfesor(profActual)"]]
-    SwitchP -- "2" --> PerfilP[["Llamar profActual.mostrarPerfil()"]]
-    SwitchP -- "3" --> CerrarP[/"Cerrar sesion (opcion 3, sin acciones extra)"/]
-    SwitchP -- "default" --> OpInvalidaP[/"Escribir 'Opcion invalida.'"/]
-
+    SwitchP -- 1 --> CallCursos[["Llamar gestionarCursosProfesor(profActual)"]]
+    SwitchP -- 2 --> PerfilP[["Llamar profActual.mostrarPerfil()"]]
+    SwitchP -- 3 --> CerrarP[/"Cerrar sesion (opcion 3, sin acciones extra)"/]
+    SwitchP -- default --> OpInvalidaP@{ label: "Escribir 'Opcion invalida.'" }
     PerfilP --> MenuProf
     OpInvalidaP --> MenuProf
-    CerrarP --> Z((Z))
-
-    SwitchP -.-> NotasNoExpuestas["No expuesto en el menu actual<br>La capa de servicio ya tiene la gestion de notas<br>crearRegistroNota, guardarNotas y puedeRegistrarNota<br>con el limite normativo de inasistencia del 30"]
-
-    %% ==========================================
-    %% PARTE A: gestionarCursosProfesor
-    %% ==========================================
-
-    CallCursos --> A((A))
-    A((A)) --> CursosStart([INICIO])
-    CursosStart --> Listar[["Llamar servicio.listarCursosProfesor(prof)"]]
-    Listar --> DerivarCursos["Deriva los cursos desde horario_seccion.csv<br>luego seccion_curso.csv y curso.csv<br>sin repetir un curso ya agregado"]
-    DerivarCursos --> SinCursos{"La lista de cursos esta vacia?"}
-    SinCursos -- Si --> MsgSinCursos[/"Escribir 'No tiene cursos asignados.'<br>return"/]
-    SinCursos -- No --> ListarCursos[/"Escribir '--- SUS CURSOS ASIGNADOS ---'<br>Lista numerada con nombre y ID del curso"/]
-    ListarCursos --> PedirCurso[/"leerOpcion('Seleccione un curso para ver detalles / tomar asistencia: ') - 1"/]
-    PedirCurso --> RangoValido{"idx < 0 o idx >= cantidad de cursos?"}
-    RangoValido -- Si --> CursoInvalido[/"Escribir 'Curso no valido.'<br>return"/]
-    RangoValido -- No --> Detalles["Escribir '--- DETALLES DEL CURSO ---'<br>Nombre del curso y horas por sesion"]
-    Detalles --> ListarAlumnos[["Llamar servicio.listarEstudiantesCurso(cursoSel)"]]
-    ListarAlumnos --> DerivarAlumnos["Cruza seccion_curso.csv con matricula.csv<br>y toma solo matriculas ACTIVA del bloque"]
-    DerivarAlumnos --> SinAlumnos{"La nomina esta vacia?"}
-    SinAlumnos -- Si --> MsgSinAlumnos[/"Escribir 'No hay alumnos inscritos en este curso.'<br>return"/]
+    CallCursos --> Listar[["Llamar servicio.listarCursosProfesor(prof)"]]
+    Listar --> ListarAlumnos[["Llamar servicio.listarEstudiantesCurso(cursoSel)"]]
+    ListarAlumnos --> SinAlumnos{"La nomina esta vacia?"}
+    SinAlumnos -- Si --> MsgSinAlumnos@{ label: "Escribir 'No hay alumnos inscritos en este curso.'<br>return" }
     SinAlumnos -- No --> PrintAlumnos[/"Escribir los alumnos matriculados<br>nombre completo y codigo"/]
-    PrintAlumnos --> Pregunta[/"leerOpcion('Desea tomar asistencia para este curso hoy? (1. Si / 2. No): ')"/]
+    PrintAlumnos --> Pregunta@{ label: "leerOpcion('Desea tomar asistencia para este curso hoy? (1. Si / 2. No): ')" }
     Pregunta --> Tomar{"tomar == 1?"}
-    Tomar -- No --> FinCursos([FIN])
-    Tomar -- Si --> Preparar["fecha = LocalDate.now().toString()<br>registros = new ArrayList<>()"]
-    Preparar --> CabeceraAsis[/"Escribir '--- REGISTRO DE ASISTENCIA ---'"/]
+    Tomar -- Si --> Preparar["fecha = LocalDate.now().toString()<br>registros = new ArrayList&lt;&gt;()"]
+    Preparar --> CabeceraAsis@{ label: "Escribir '--- REGISTRO DE ASISTENCIA ---'" }
     CabeceraAsis --> ForAlumno{{"Para cada alumno de alumnosCurso"}}
-    ForAlumno --> MostrarAlumno[/"Escribir 'Alumno: ' + nombre + ' (codigo)'"/]
-    MostrarAlumno --> LeerHoras[/"leerOpcion('Horas asistidas (0 = ausente, maximo ' + totalHorasSesion + '): ')"/]
+    ForAlumno --> MostrarAlumno@{ label: "Escribir 'Alumno: ' + nombre + ' (codigo)'" }
+    MostrarAlumno --> LeerHoras@{ label: "leerOpcion('Horas asistidas (0 = ausente, maximo ' + totalHorasSesion + '): ')" }
     LeerHoras --> CrearRegistro[["Llamar servicio.crearRegistro(cursoSel, est, fecha, horasAsistidas)"]]
-    CrearRegistro --> Acotar["horasValidas = max(0, min(horasAsistidas, totalHorasSesion))<br>presente = horasValidas > 0"]
-    Acotar --> Agregar["registros.add(registro)"]
-    Agregar --> K(( ))
+    CrearRegistro --> Agregar["registros.add(registro)"]
+    Agregar --> K((" "))
     K --> ForAlumno
     ForAlumno -- Fin --> Guardar[["Llamar servicio.guardarAsistencias(registros)"]]
-    Guardar --> AsignarIds["maxId = mayor REG-ASI persistido<br>siguienteId = maxId + 1<br>asigna a cada registro un ID con el formato REG-ASI y 4 digitos"]
-    AsignarIds --> AppendCsv[["Llamar ArchivoManager.guardarAsistencia(registros)<br>append en data/registro_de_asistencia.csv"]]
-    AppendCsv --> ErrorCsv{"Ocurrio IOException?"}
-    ErrorCsv -- Si --> MsgErrorCsv[/"Escribir 'Error al guardar asistencias.'"/]
-    ErrorCsv -- No --> MsgExito[/"Escribir 'Asistencia guardada exitosamente en registro_de_asistencia.csv!'"/]
-    MsgErrorCsv --> FinCursos
-    MsgExito --> FinCursos
-    FinCursos --> MenuProf
+    Guardar --> AppendCsv[["Llamar ArchivoManager.guardarAsistencia(registros)<br>append en data/registro_de_asistencia.csv"]]
+
+    LeerOpP@{ shape: lean-r}
+    OpInvalidaP@{ shape: lean-r}
+    MsgSinAlumnos@{ shape: lean-r}
+    Pregunta@{ shape: lean-r}
+    CabeceraAsis@{ shape: lean-r}
+    MostrarAlumno@{ shape: lean-r}
+    LeerHoras@{ shape: lean-r}
+    linkStyle 8 stroke:#2962FF,fill:none
