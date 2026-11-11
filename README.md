@@ -1,228 +1,43 @@
-# Sistema de Control y Monitoreo de Asistencia — IESTP Chincha
+# Control de Asistencia — IESTP Chincha
 
-Aplicación de consola desarrollada en **Java 21 SE** para la gestión, control y monitoreo de asistencias académicas en el Instituto de Educación Superior Tecnológico Público Chincha.
-
-El sistema implementa una arquitectura limpia por capas (Separación de Responsabilidades) sin dependencias externas, persistiendo la información en archivos CSV y proporcionando seguimiento analítico de inasistencias en tiempo real.
+Programa de consola en **Java 21 SE** para el control de asistencia estudiantil del IESTP Chincha. Arquitectura limpia por capas, sin dependencias externas, con persistencia en archivos CSV (`data/`) y autenticación por roles con contraseñas PBKDF2.
 
 > [!NOTE]
-> Para consultar el informe técnico formal de ingeniería de software (objetivos, análisis de requerimientos, hardware, software, diseño y pruebas), revise [INFORME.md](INFORME.md).
+> El informe técnico completo (caso de estudio, objetivos, análisis y diseño) está en [INFORME.md](INFORME.md).
 
----
+## Descarga
 
-## Funcionalidades
-
-### Autenticación y Roles
-- **Inicio de sesión real:** el acceso se valida con correo y contraseña contra `data/usuario.csv`; ya no se elige un usuario de una lista.
-- **Roles:** cada cuenta tiene el rol `PROFESOR` o `ESTUDIANTE`, y el rol determina el menú que se abre.
-- **Redirección explícita:** `Rol.menuSesion()` mapea el rol a su menú (`MenuSesion.PROFESOR`, `MenuSesion.ESTUDIANTE`); un rol sin menú asignado devuelve `MenuSesion.NINGUNO` y la aplicación avisa y cierra la sesión en vez de abrir el menú de otro rol.
-- **Contraseñas protegidas:** se almacenan con PBKDF2-HMAC-SHA256, sal aleatoria de 16 bytes y 210 000 iteraciones. Nunca se guarda texto plano.
-- **Un intento por acceso:** si las credenciales son incorrectas se muestra un mensaje genérico y se vuelve al menú principal; no hay contador de intentos.
-- **Contraseña oculta:** en una terminal interactiva se usa `System.console().readPassword()` para no mostrarla.
-
-### Gestión de Profesores
-- **Consulta de Perfil:** Visualización detallada de datos personales, departamento académico y especialidad.
-- **Cursos Asignados:** Listado de asignaturas a cargo con detalle de carga horaria y lista de alumnos matriculados.
-- **Toma de Asistencia Interactiva:** Registro por sesión con captura automática de fecha actual (`LocalDate`). Solo se piden las horas asistidas: `0` significa ausente y el valor se limita al máximo de horas de la sesión.
-
-### Portal del Estudiante
-- **Consulta de Perfil:** Estado de matrícula (regular, suspendido, reserva, etc.), código institucional y carrera profesional.
-- **Monitoreo de Asistencia:** Balance acumulado por curso indicando sesiones programadas, días asistidos, horas efectivas y porcentaje de inasistencia global.
-- **Alertas Tempranas:** Notificación automática en consola si el estudiante supera el límite permitido de inasistencias.
-
----
-
-## Lógica de Negocio y Reglas de Cálculo
-
-> [!IMPORTANT]
-> **Fórmula de Inasistencia (alerta preventiva del 15%):**  
-> El cálculo se realiza sobre las horas ya dictadas a la fecha:
-> $$\text{Porcentaje de Faltas} = \frac{\text{Horas Dictadas} - \text{Horas Asistidas}}{\text{Horas Dictadas}} \times 100$$
-> **Horas Dictadas** son las horas programadas de las sesiones que ya tienen asistencia registrada: si el registro enlaza una sesión (`id_sesion`) se toman sus horas programadas y, en las filas legadas sin sesión, las horas por sesión del curso. Medir sobre lo ya dictado evita que la alerta se diluya con las horas que todavía no se han dictado.
-
-> [!WARNING]
-> **Límite de Inasistencia (`LIMITE_INASISTENCIA = 15.0%`):**  
-> Si el porcentaje de inasistencias excede el 15%, el sistema emite una alerta visual en el resumen del estudiante.
-
----
-
-## Jerarquía Académica (base institucional)
-
-La base institucional del dominio se persiste en CSV y se expone a través de `ServicioAcademico`:
-
-- **Carrera / Programa de Estudios** → `Carrera` (tipo `Educación Superior`; 1↔N `PlanEstudios`).
-- **Plan de Estudios** → `PlanEstudios` (N↔1 `Carrera`; 1↔N `ModuloProfesional`; 1↔N `PeriodoAcademico`).
-- **Módulo Profesional** → `ModuloProfesional` (N↔1 `PlanEstudios`; 1↔N `Curso`).
-- **Curso / Unidad Didáctica** → `Curso` con `idModulo`, `creditos`, `horasTeoricas` y `horasPracticas`; `getHorasLectivasTotales()` suma las horas lectivas. El docente no pertenece al curso: se resuelve por `HorarioSeccion` y `SesionClase`.
-- **Periodo Académico** → `PeriodoAcademico` (N↔1 `PlanEstudios`; 1↔N `BloqueSeccion`).
-- **Bloque de Sección / Turno** → `BloqueSeccion` (N↔1 `PeriodoAcademico`; 1↔N `SeccionCurso`; turno `MANANA` / `TARDE` / `NOCHE`).
-- **Sección de Curso** → `SeccionCurso` (N↔1 `BloqueSeccion`; N↔1 `Curso`; modalidad `PRESENCIAL` / `VIRTUAL` / `HIBRIDA`; 1↔N `HorarioSeccion`). El docente se deriva de sus franjas.
-- **Horario de Sección / Franja Horaria** → `HorarioSeccion` (N↔1 `SeccionCurso`; N↔1 `Profesor`; N↔1 `Salon`; tipo de clase `TEORIA` / `PRACTICA`; 1↔N `SesionClase`).
-- **Sesión de Clase** → `SesionClase` (N↔1 `HorarioSeccion`; N↔1 `Profesor`; N↔1 `Salon`; fecha exacta y horas programadas).
-- **Salón / Laboratorio / Taller** → `Salon` (tipo `AULA` / `LABORATORIO` / `TALLER`; capacidad).
-- **Matrícula** → `Matricula` (N↔1 `Estudiante`; N↔1 `BloqueSeccion`; estado `ACTIVA` / `RETIRADA` / `COMPLETADA`; 1↔N `RegistroDeAsistencia`).
-- **Registro de Asistencia** → `RegistroDeAsistencia` (N↔1 `SesionClase` vía `idSesion`; N↔1 `Matricula` vía `idMatricula`; N↔1 `Estudiante`; horas asistidas de 0 a N).
-- **Indicador de Logro** → `IndicadorLogro` (N↔1 `SeccionCurso`; peso ponderante dentro de la unidad didáctica).
-- **Registro de Nota** → `RegistroNota` (N↔1 `IndicadorLogro`; N↔1 `Estudiante`; nota vigesimal de 0 a 20).
-- **Derecho de Pago** → `DerechoPago` (concepto normado de cobro, por ejemplo matrícula o carné).
-- **Comprobante de Pago** → `ComprobantePago` (N↔1 `DerechoPago` vía amortización; N↔1 `Estudiante`; estado `PAGADO` / `PENDIENTE` / `ANULADO`).
-
-> [!NOTE]
-> `curso.csv` declara `id_modulo`, `creditos`, `horas_teoricas` y `horas_practicas`, y ya no guarda `id_profesor`. El lector tolera filas legadas de 5 columnas y, en ese caso, deriva las horas lectivas como `duracionCurso × totalHorasSesion`.
-
-> [!IMPORTANT]
-> **Regla normativa de inasistencia (MINEDU):**  
-> `Horas Faltadas = ∑(horas_programadas − horas_asistidas)` sobre las sesiones con asistencia tomada.  
-> `Porcentaje de Inasistencia = (Horas Faltadas / Total Horas Lectivas de la Unidad Didáctica) × 100`.  
-> Si el porcentaje **supera el 30%** (`LIMITE_INASISTENCIA_NORMATIVO`), `puedeRegistrarNotas` devuelve `false` e inhabilita el registro de notas en los Indicadores de Logro.
-
-> [!NOTE]
-> `registro_de_asistencia.csv` agrega `id_sesion` e `id_matricula`. El lector tolera filas legadas de 6 columnas; en ese caso el registro queda sin sesión ni matrícula asociada y no acumula faltas normativas.
-
-> [!IMPORTANT]
-> **Regla de registro de notas (evaluación):**  
-> `ServicioAcademico.puedeRegistrarNota` consume `puedeRegistrarNotas`: la nota solo puede registrarse cuando existe matrícula activa y el porcentaje de inasistencia no supera el 30%. El rango de la nota vigesimal es 0 a 20.
-
----
-
-## Arquitectura y Estructura del Código
-
-El proyecto está organizado siguiendo el principio de separación de responsabilidades (SoC):
-
-```
-src/main/java/
-├── models/         # Entidades del dominio y enumeraciones
-├── security/       # Derivación y verificación de contraseñas (PBKDF2)
-├── storage/        # Capa de persistencia y serialización en archivos planos CSV
-├── service/        # Lógica de negocio, autenticación, cálculos de inasistencias y validaciones
-└── sistema/        # Orquestación de menús, inicio de sesión, interfaz de consola (CLI) e interacción
+```bash
+git clone git@github.com:aireck2/take-attendance-java.git
+cd take-attendance-java
 ```
 
----
+## Ejecución
 
-## Diagramas de Clases UML y Relaciones
+Requisito: **JDK 21** o superior.
 
-El modelado técnico orientado a objetos y la arquitectura por capas se encuentran documentados en formato **Mermaid** dentro de la carpeta `docs/`.
+1. Compilar:
 
-### Diagrama General Integrado
-
-El archivo [`docs/Index.mmd`](docs/Index.mmd) centraliza la arquitectura del sistema y documenta las siguientes relaciones UML:
-
-- **Relaciones de Dominio (`models`):**
-  - **Asociación directa:** `Estudiante --> EstadoEstudiante` (asociación tipada con la enumeración de estados).
-  - **Credenciales y rol:** `Usuario --> Rol` (asociación tipada) y `Usuario ..> Profesor` / `Usuario ..> Estudiante` (referencia desacoplada vía `idReferencia`).
-  - **Rol y menú:** `Rol --> MenuSesion` (asociación tipada). `MenuSesion` enumera los menús que puede abrir una sesión (`PROFESOR`, `ESTUDIANTE`) más `NINGUNO`, que representa un rol sin menú asignado.
-  - **Referencias por clave lógica:** `HorarioSeccion ..> Profesor` (asociación desacoplada vía `idProfesor`); `RegistroDeAsistencia ..> Matricula` (vía `idMatricula`).
-  - **Trazabilidad de asistencia:** `RegistroDeAsistencia ..> Estudiante` (vía `idEstudiante`) y `RegistroDeAsistencia ..> Curso` (vía `idCurso`).
-
-- **Relaciones entre Capas (Arquitectura):**
-  - **Presentación a Servicio:** `SistemaApp --> ServicioAcademico` (composición/delegación de responsabilidades de la UI hacia el servicio) y `SistemaApp --> AutenticacionService` (inicio de sesión).
-  - **Servicio a Persistencia:** `ServicioAcademico ..> ArchivoManager` (dependencia para carga y guardado de datos) y `AutenticacionService ..> ArchivoManager` (lectura de usuarios).
-  - **Seguridad:** `AutenticacionService ..> PasswordHasher` (verificación de contraseñas con PBKDF2).
-
-- **Dependencias de Uso y Persistencia:**
-  - `ServicioAcademico ..>` Entidades del dominio: Orquesta y realiza cálculos sobre `Profesor`, `Estudiante`, `Curso` y `RegistroDeAsistencia`.
-  - `ArchivoManager ..>` Entidades del dominio: Mapea registros entre memoria y archivos CSV (`parsea enum`, `serializa/deserializa CSV`).
-
-### Catálogo de Diagramas
-
-| Directorio | Archivo | Descripción |
-| :--- | :--- | :--- |
-| `docs/` | [`Index.mmd`](docs/Index.mmd) | **Diagrama UML global** con todos los paquetes, clases y relaciones entre capas. |
-| `docs/models/` | [`Models.mmd`](docs/models/Models.mmd) | Diagrama de paquete con entidades del dominio, enumeraciones y relaciones internas. |
-| `docs/models/` | `*.mmd` | Diagramas individuales: [`CursoClass.mmd`](docs/models/CursoClass.mmd), [`Estudiante.mmd`](docs/models/Estudiante.mmd), [`Profesor.mmd`](docs/models/Profesor.mmd), [`Usuario.mmd`](docs/models/Usuario.mmd), [`Rol.mmd`](docs/models/Rol.mmd), [`RegistroDeAsistencia.mmd`](docs/models/RegistroDeAsistencia.mmd), [`EstadoEstudiante.mmd`](docs/models/EstadoEstudiante.mmd), [`EstadoComprobante.mmd`](docs/models/EstadoComprobante.mmd), [`Carrera.mmd`](docs/models/Carrera.mmd), [`PlanEstudios.mmd`](docs/models/PlanEstudios.mmd), [`ModuloProfesional.mmd`](docs/models/ModuloProfesional.mmd), [`PeriodoAcademico.mmd`](docs/models/PeriodoAcademico.mmd), [`BloqueSeccion.mmd`](docs/models/BloqueSeccion.mmd), [`SeccionCurso.mmd`](docs/models/SeccionCurso.mmd), [`HorarioSeccion.mmd`](docs/models/HorarioSeccion.mmd), [`SesionClase.mmd`](docs/models/SesionClase.mmd), [`Salon.mmd`](docs/models/Salon.mmd), [`Matricula.mmd`](docs/models/Matricula.mmd), [`IndicadorLogro.mmd`](docs/models/IndicadorLogro.mmd), [`RegistroNota.mmd`](docs/models/RegistroNota.mmd), [`DerechoPago.mmd`](docs/models/DerechoPago.mmd), [`ComprobantePago.mmd`](docs/models/ComprobantePago.mmd). |
-| `docs/service/` | [`Service.mmd`](docs/service/Service.mmd) | Vista de namespace del paquete `service`. |
-| `docs/service/` | [`ServicioAcademico.mmd`](docs/service/ServicioAcademico.mmd) | Especificación de atributos, constantes y métodos de la lógica de negocio. |
-| `docs/service/` | [`AutenticacionService.mmd`](docs/service/AutenticacionService.mmd) | Validación de credenciales y búsqueda de usuarios por correo. |
-| `docs/security/` | [`Security.mmd`](docs/security/Security.mmd) | Vista de namespace del paquete `security`. |
-| `docs/security/` | [`PasswordHasher.mmd`](docs/security/PasswordHasher.mmd) | Derivación y verificación PBKDF2 de contraseñas. |
-| `docs/storage/` | [`Storage.mmd`](docs/storage/Storage.mmd) | Vista de namespace del paquete `storage`. |
-| `docs/storage/` | [`ArchivoManager.mmd`](docs/storage/ArchivoManager.mmd) | Métodos estáticos de persistencia CSV y colecciones genéricas (`List~T~`). |
-| `docs/sistema/` | [`Sistema.mmd`](docs/sistema/Sistema.mmd) | Vista de namespace del paquete `sistema`. |
-| `docs/sistema/` | [`SistemaApp.mmd`](docs/sistema/SistemaApp.mmd) | Métodos de control de flujo, menús y captura de entradas por terminal. |
-
----
-
-## Persistencia de Datos (CSV)
-
-La capa de almacenamiento gestiona archivos delimitados por comas ubicados en `data/`:
-
-| Archivo | Estructura de Campos | Propósito |
-| :--- | :--- | :--- |
-| `data/profesor.csv` | `id, nombre, apellido, correo, tipo_de_documento, nro_documento, telefono, departamento_academico, especialidad` | Padrón de docentes |
-| `data/estudiante.csv` | `id_estudiante, codigo, nombres, apellidos, dni, correo, escuela_profesional, estado` | Registro de alumnos, DNI y condición académica |
-| `data/usuario.csv` | `id, correo, hash_contrasena, rol, id_referencia, activo` | Credenciales de acceso y rol (`PROFESOR` / `ESTUDIANTE`) |
-| `data/carrera.csv` | `id_carrera, nombre, tipo` | Carreras / programas de estudio (tipo `Educación Superior`) |
-| `data/plan_estudios.csv` | `id_plan, id_carrera, codigo, nombre, creditos_totales, horas_totales, estado` | Planes de estudio vigentes e históricos |
-| `data/modulo_profesional.csv` | `id_modulo, id_plan, nombre, competencia, creditos_modulo` | Módulos profesionales y competencias |
-| `data/periodo_academico.csv` | `id_periodo, id_plan, codigo, fecha_inicio, fecha_fin, estado` | Periodos académicos |
-| `data/bloque_seccion.csv` | `id_bloque, id_periodo, nombre, turno` | Bloques de sección por turno |
-| `data/seccion_curso.csv` | `id_seccion, id_bloque, id_curso, modalidad, cupo_maximo` | Secciones de curso aperturadas |
-| `data/horario_seccion.csv` | `id_horario, id_seccion, dia_semana, hora_inicio, hora_fin, tipo_clase, id_profesor, id_salon` | Franjas horarias recurrentes |
-| `data/sesion_clase.csv` | `id_sesion, id_horario, fecha, horas_programadas, id_profesor, id_salon` | Sesiones de clase con fecha exacta |
-| `data/salon.csv` | `id_salon, nombre, tipo, capacidad` | Aulas, laboratorios y talleres |
-| `data/matricula.csv` | `id_matricula, id_estudiante, id_bloque, fecha_matricula, estado` | Matrícula del estudiante en un bloque de sección |
-| `data/curso.csv` | `id_curso, nombre_curso, id_modulo, creditos, horas_teoricas, horas_practicas, total_horas_sesion, duracion_curso` | Unidades didácticas y carga horaria |
-| `data/registro_de_asistencia.csv` | `id_asistencia, id_curso, id_estudiante, fecha, horas_asistidas, presente, id_sesion, id_matricula` | Bitácora histórica de sesiones tomadas |
-| `data/indicador_logro.csv` | `id_indicador, id_seccion, nombre, peso` | Indicadores de logro y su peso por sección |
-| `data/registro_nota.csv` | `id_nota, id_indicador, id_estudiante, nota, fecha` | Notas vigesimales por indicador y estudiante |
-| `data/derecho_pago.csv` | `id_derecho, codigo, nombre, monto` | Derechos de pago normados (matrícula, carné) |
-| `data/comprobante_pago.csv` | `id_comprobante, id_estudiante, id_derecho, fecha, monto, estado` | Comprobantes de pago emitidos y su estado |
-
----
-
-## Requisitos y Ejecución
-
-### Requisitos
-- **Java Development Kit (JDK) 21** o superior.
-
-### Compilación y Ejecución
-
-1. **Compilar el proyecto:**
    ```bash
    javac -d out $(find src/main/java -name "*.java")
    ```
 
-2. **Ejecutar la aplicación:**
+2. Ejecutar:
+
    ```bash
    java -cp out sistema.SistemaApp
    ```
 
----
+3. Iniciar sesión con una cuenta de demostración:
 
-## Credenciales de Demostración
-
-Los usuarios sembrados en `data/usuario.csv` usan contraseñas de demostración. Cámbialas antes de usar el sistema con datos reales.
-
-| Rol | Correo | Contraseña |
-| :--- | :--- | :--- |
-| Profesor | `carlos.mendoza@iestpchincha.edu.pe` | `Docente2026*` |
-| Profesor | `ana.torres@iestpchincha.edu.pe` | `Docente2026*` |
-| Profesor | `luis.quispe@iestpchincha.edu.pe` | `Docente2026*` |
-| Profesor | `maria.huaman@iestpchincha.edu.pe` | `Docente2026*` |
-| Profesor | `jorge.ramos@iestpchincha.edu.pe` | `Docente2026*` |
-| Estudiante | `erick.escriba@iestpchincha.edu.pe` | `Alumno2026*` |
-| Estudiante | `sofia.gomez@iestpchincha.edu.pe` | `Alumno2026*` |
-| Estudiante | `mateo.silva@iestpchincha.edu.pe` | `Alumno2026*` |
-| Estudiante | `lucia.cardenas@iestpchincha.edu.pe` | `Alumno2026*` |
-| Estudiante | `diego.morales@iestpchincha.edu.pe` | `Alumno2026*` |
-
-> [!NOTE]
-> `data/usuario.csv` guarda únicamente hashes PBKDF2 con sal; las contraseñas de la tabla existen solo como datos de demostración.
-
----
+   | Rol        | Correo                               | Contraseña     |
+   | :--------- | :----------------------------------- | :------------- |
+   | Profesor   | `carlos.mendoza@iestpchincha.edu.pe` | `Docente2026*` |
+   | Estudiante | `erick.escriba@iestpchincha.edu.pe`  | `Alumno2026*`  |
 
 ## Pruebas
 
-El proyecto no usa dependencias externas: la suite es un `main` con aserciones simples.
-
-1. **Compilar main y tests:**
-   ```bash
-   javac -d out $(find src/main/java src/test/java -name "*.java")
-   ```
-
-2. **Ejecutar la suite:**
-   ```bash
-   java -cp out test.TestRunner
-   ```
-
-La suite verifica el hash PBKDF2, la lectura de usuarios, el login por correo/contraseña, la normalización del correo y la resolución de perfiles por rol.
+```bash
+javac -d out $(find src/main/java src/test/java -name "*.java")
+java -cp out test.TestRunner
+```
