@@ -1,5 +1,11 @@
 package test;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.util.List;
 
 import models.BloqueSeccion;
@@ -36,6 +42,7 @@ import models.Usuario;
 import security.PasswordHasher;
 import service.AutenticacionService;
 import service.ServicioAcademico;
+import sistema.SistemaApp;
 import storage.ArchivoManager;
 
 /**
@@ -57,9 +64,15 @@ public class TestRunner {
     probarFundacionesAcademicas();
     probarUnidadDidactica();
     probarOfertaAcademica();
+    probarDistribucionNormativaDeHoras();
     probarMatriculaYReglaNormativa();
     probarEvaluacionYFinanzas();
     probarCursosDeProfesor();
+    probarDetalleDeCursoAsignado();
+    probarOfertaDelPeriodoMasReciente();
+    probarMenuDelCursoDelPeriodoActual();
+    probarSemanaActualDelCurso();
+    probarListadoConDetalleDeCursosYAlumnos();
     probarNominaDesdeMatricula();
     probarDatasetEjemploInstitucional();
 
@@ -142,16 +155,12 @@ public class TestRunner {
     RegistroDeAsistencia conSesion = historial.stream()
         .filter(r -> r.getIdSesion().equals("SES-SEGREDES-20260309")).findFirst().orElse(null);
     afirmar(conSesion != null, "el alumno tiene un registro enlazado a una sesion");
-    afirmar(conSesion != null && servicio.horasProgramadasDe(conSesion, curso) == 2,
+    afirmar(conSesion != null && servicio.horasProgramadasDe(conSesion) == 2,
         "usa las horas programadas de la sesion enlazada");
-    afirmar(conSesion != null && servicio.horasProgramadasDe(conSesion, curso) != curso.getTotalHorasSesion(),
-        "la sesion programada puede durar menos que las horas por sesion del curso");
-
-    RegistroDeAsistencia legado = historial.stream()
-        .filter(r -> r.getIdSesion().isEmpty()).findFirst().orElse(null);
-    afirmar(legado != null, "el alumno tiene una fila legada sin sesion enlazada");
-    afirmar(legado != null && servicio.horasProgramadasDe(legado, curso) == curso.getTotalHorasSesion(),
-        "la fila legada usa las horas por sesion del curso");
+    RegistroDeAsistencia legado = new RegistroDeAsistencia("REG-LEGADO", curso.getIdCurso(), alumno.getId(),
+        "2026-03-08", 2, true);
+    afirmar(servicio.horasProgramadasDe(legado) == 0,
+        "no infiere la duracion de una sesion desde los datos del curso cuando falta el vinculo");
   }
 
   private static void probarPerfilesVinculados() {
@@ -170,22 +179,24 @@ public class TestRunner {
 
   private static void probarRegistroDeAsistencia() {
     ServicioAcademico servicio = new ServicioAcademico();
-    Curso curso = new Curso("C-TEST", "Curso de prueba", 4, 16);
+    Curso curso = new Curso("C-TEST", "Curso de prueba", "M-TEST", 1, 2, 2, 4);
     Estudiante estudiante = new Estudiante("E-TEST", "U-TEST", "Ana", "Prueba", "70000001", "ana@test.pe", "Sistemas",
         EstadoEstudiante.REGULAR);
+    SesionClase sesion = new SesionClase("SES-TEST", "SLOT-TEST", "2026-11-09", 2, "DOC-TEST", "SAL-TEST");
 
-    RegistroDeAsistencia presente = servicio.crearRegistro(curso, estudiante, "2026-11-09", 3);
+    RegistroDeAsistencia presente = servicio.crearRegistroSesion(sesion, curso, estudiante, 2);
     afirmar(presente.isPresente(), "marca presente cuando hay horas asistidas");
-    afirmar(presente.getHorasAsistidas() == 3, "conserva las horas asistidas");
+    afirmar(presente.getHorasAsistidas() == 2, "limita la asistencia a las horas de la sesion");
+    afirmar(presente.getIdSesion().equals(sesion.getIdSesion()), "vincula el registro con su sesion");
 
-    RegistroDeAsistencia ausente = servicio.crearRegistro(curso, estudiante, "2026-11-10", 0);
+    RegistroDeAsistencia ausente = servicio.crearRegistroSesion(sesion, curso, estudiante, 0);
     afirmar(!ausente.isPresente(), "marca ausente cuando las horas son 0");
     afirmar(ausente.getHorasAsistidas() == 0, "guarda 0 horas cuando esta ausente");
 
-    RegistroDeAsistencia tope = servicio.crearRegistro(curso, estudiante, "2026-11-11", 99);
-    afirmar(tope.getHorasAsistidas() == 4, "limita las horas al maximo de la sesion");
+    RegistroDeAsistencia tope = servicio.crearRegistroSesion(sesion, curso, estudiante, 99);
+    afirmar(tope.getHorasAsistidas() == 2, "limita las horas al maximo de la sesion");
 
-    RegistroDeAsistencia negativo = servicio.crearRegistro(curso, estudiante, "2026-11-12", -2);
+    RegistroDeAsistencia negativo = servicio.crearRegistroSesion(sesion, curso, estudiante, -2);
     afirmar(negativo.getHorasAsistidas() == 0 && !negativo.isPresente(),
         "normaliza horas negativas a 0 y marca ausente");
   }
@@ -211,9 +222,9 @@ public class TestRunner {
         "conserva creditos y horas del plan por competencias");
 
     List<ModuloProfesional> modulos = servicio.listarModulosProfesionales();
-    afirmar(modulos.size() == 4, "lee los modulos profesionales");
-    afirmar(modulos.stream().filter(m -> m.getIdPlan().equals("PLAN-APSTI-2026")).count() == 3,
-        "conserva los modulos del plan base");
+    afirmar(modulos.size() == 7, "lee los modulos profesionales");
+    afirmar(modulos.stream().filter(m -> m.getIdPlan().equals("PLAN-APSTI-2026")).count() == 6,
+        "completa los seis modulos del plan APSTI vigente");
     afirmar(modulos.stream().anyMatch(m -> m.getIdModulo().equals("MP-01")
         && m.getIdPlan().equals("PLAN-DSI-2023") && m.getCreditosModulo() == 20),
         "conserva el modulo profesional del plan por competencias");
@@ -222,38 +233,56 @@ public class TestRunner {
     afirmar(periodos.size() == 3, "lee los periodos academicos");
     afirmar(!periodos.isEmpty() && periodos.get(0).getCodigo().equals("APSTI-2026-I"),
         "conserva el codigo del periodo");
-    afirmar(!periodos.isEmpty() && periodos.get(0).getEstado() == EstadoPeriodo.ACTIVO, "marca el periodo activo");
+    afirmar(periodos.stream().anyMatch(p -> p.getIdPeriodo().equals("PER-APSTI-2026-1")
+        && p.getEstado() == EstadoPeriodo.CERRADO), "marca como cerrado el periodo APSTI ya finalizado");
+    afirmar(periodos.stream().anyMatch(p -> p.getIdPeriodo().equals("PER-APSTI-2026-2")
+        && p.getEstado() == EstadoPeriodo.ACTIVO), "marca activo el periodo APSTI que contiene la fecha actual");
+    afirmar(periodos.stream().anyMatch(p -> p.getIdPeriodo().equals("PER-2026-1")
+        && p.getEstado() == EstadoPeriodo.CERRADO), "marca cerrado el periodo DSI que ya finalizo");
+    afirmar(periodos.stream().allMatch(p -> p.getSemanasLectivas() == 16),
+        "las semanas lectivas pertenecen a cada periodo academico");
     afirmar(periodos.stream().map(PeriodoAcademico::getCodigo).distinct().count() == periodos.size(),
         "no duplica codigos de periodo");
   }
 
   private static void probarUnidadDidactica() {
     List<Curso> cursos = ArchivoManager.leerCursos();
-    afirmar(cursos.size() == 6, "lee los 6 cursos sembrados (encontrados: " + cursos.size() + ")");
+    afirmar(cursos.size() == 28, "lee las 28 unidades didacticas (encontradas: " + cursos.size() + ")");
 
     Curso c1 = cursos.stream().filter(c -> c.getIdCurso().equals("UD-SEGREDES")).findFirst().orElse(null);
     afirmar(c1 != null, "encuentra el curso UD-SEGREDES");
     afirmar(c1 != null && c1.getIdModulo().equals("MP-APSTI-01"), "el curso pertenece a un modulo profesional");
     afirmar(c1 != null && c1.getCreditos() == 4, "conserva los creditos del curso");
-    afirmar(c1 != null && c1.getHorasLectivasTotales() == 64, "suma las horas teoricas y practicas");
+    afirmar(c1 != null && c1.getTotalHorasLectivas() == 64,
+        "lee el total_horas_lectivas explicitado en el curso");
+    afirmar(c1 != null && c1.getTotalHorasLectivas() == c1.getHorasTeoricas() + c1.getHorasPracticas(),
+        "el total_horas_lectivas coincide con teoria mas practica");
 
     Curso legado = new Curso("C-OLD", "Curso legado", 4, 16);
     afirmar(legado.getIdModulo().isEmpty(), "un curso legado no declara modulo");
     afirmar(legado.getCreditos() == 0, "un curso legado no declara creditos");
     afirmar(legado.getHorasLectivasTotales() == 64, "deriva las horas lectivas de duracion por horas de sesion");
+
+    boolean rechazoTotalInconsistente = false;
+    try {
+      new Curso("C-INVALIDO", "Curso inconsistente", "MP-TEST", 1, 2, 2, 5);
+    } catch (IllegalArgumentException e) {
+      rechazoTotalInconsistente = true;
+    }
+    afirmar(rechazoTotalInconsistente, "rechaza un total lectivo distinto de teoria mas practica");
   }
 
   private static void probarOfertaAcademica() {
     ServicioAcademico servicio = new ServicioAcademico();
 
     List<BloqueSeccion> bloques = servicio.listarBloques();
-    afirmar(bloques.size() == 3, "lee los bloques de seccion");
+    afirmar(bloques.size() == 4, "lee los bloques de seccion");
     afirmar(!bloques.isEmpty() && bloques.get(0).getIdPeriodo().equals("PER-APSTI-2026-1"),
         "el bloque pertenece al periodo");
     afirmar(!bloques.isEmpty() && bloques.get(0).getTurno() == Turno.NOCHE, "conserva el turno del bloque");
 
     List<SeccionCurso> secciones = servicio.listarSecciones();
-    afirmar(secciones.size() == 6, "lee las secciones de curso");
+    afirmar(secciones.size() == 8, "lee las secciones de curso");
     SeccionCurso sec1 = secciones.stream().filter(s -> s.getIdSeccion().equals("SEC-SEGREDES-3N")).findFirst()
         .orElse(null);
     afirmar(sec1 != null && sec1.getIdCurso().equals("UD-SEGREDES"), "la seccion ejecuta una unidad didactica");
@@ -262,7 +291,7 @@ public class TestRunner {
     afirmar(servicio.listarSeccionesBloque("BLQ-APSTI-3N").size() == 3, "filtra secciones por bloque");
 
     List<HorarioSeccion> horarios = servicio.listarHorarios();
-    afirmar(horarios.size() == 8, "lee las franjas horarias");
+    afirmar(horarios.size() == 16, "lee las franjas de teoria y practica");
     HorarioSeccion h1 = horarios.stream().filter(h -> h.getIdHorario().equals("SLOT-SEGREDES-01")).findFirst()
         .orElse(null);
     afirmar(h1 != null && h1.getDiaSemana() == DiaSemana.LUNES && h1.getTipoClase() == TipoClase.TEORIA,
@@ -273,13 +302,19 @@ public class TestRunner {
     afirmar(servicio.listarHorariosSeccion("SEC-SEGREDES-3N").size() == 2, "filtra franjas por seccion");
 
     List<SesionClase> sesiones = servicio.listarSesiones();
-    afirmar(sesiones.size() == 8, "lee las sesiones de clase");
+    afirmar(sesiones.size() == 17, "lee las sesiones de clase vinculadas a franjas");
     SesionClase ses1 = sesiones.stream().filter(s -> s.getIdSesion().equals("SES-SEGREDES-20260309")).findFirst()
         .orElse(null);
     afirmar(ses1 != null && ses1.getIdHorario().equals("SLOT-SEGREDES-01")
         && ses1.getFecha().equals("2026-03-09"), "la sesion nace de una franja en una fecha");
     afirmar(ses1 != null && ses1.getHorasProgramadas() == 2, "conserva las horas programadas");
-    afirmar(servicio.listarSesionesHorario("SLOT-SEGREDES-01").size() == 2, "filtra sesiones por franja");
+    afirmar(servicio.listarSesionesHorario("SLOT-SEGREDES-01").size() == 4, "filtra sesiones por franja");
+    Curso cursoSeguridad = servicio.listarCursos().stream()
+        .filter(c -> c.getIdCurso().equals("UD-SEGREDES")).findFirst().orElse(null);
+    afirmar(servicio.listarSesionesCursoEnFecha(cursoSeguridad, "2026-11-09").size() == 1,
+        "filtra una sesion de curso por su fecha concreta");
+    afirmar(servicio.listarEstudiantesSesion("SES-SEGREDES-20261109").size() == 5,
+        "resuelve la nomina matriculada en el bloque de la sesion");
 
     List<Salon> salones = servicio.listarSalones();
     afirmar(salones.size() == 5, "lee los ambientes");
@@ -303,11 +338,149 @@ public class TestRunner {
         "toda sesion referencia un ambiente existente");
   }
 
+  private static void probarDistribucionNormativaDeHoras() {
+    ServicioAcademico servicio = new ServicioAcademico();
+    List<Curso> cursos = servicio.listarCursos();
+    List<ModuloProfesional> modulos = servicio.listarModulosProfesionales();
+    List<PeriodoAcademico> periodos = servicio.listarPeriodosAcademicos();
+    List<PlanEstudios> planes = servicio.listarPlanesEstudios();
+
+    for (Curso curso : cursos) {
+      afirmar(curso.getTotalHorasLectivas() == curso.getHorasTeoricas() + curso.getHorasPracticas(),
+          "el total lectivo de " + curso.getIdCurso() + " es teoria mas practica");
+      ModuloProfesional modulo = modulos.stream().filter(m -> m.getIdModulo().equals(curso.getIdModulo()))
+          .findFirst().orElse(null);
+      afirmar(modulo != null && planes.stream().anyMatch(p -> p.getIdPlan().equals(modulo.getIdPlan())),
+          "el curso " + curso.getIdCurso() + " pertenece a un modulo y plan existentes");
+    }
+    for (ModuloProfesional modulo : modulos) {
+      int creditosUnidadesRegistradas = cursos.stream().filter(c -> c.getIdModulo().equals(modulo.getIdModulo()))
+          .mapToInt(Curso::getCreditos).sum();
+      afirmar(creditosUnidadesRegistradas <= modulo.getCreditosModulo(),
+          "los cursos registrados no exceden los creditos del modulo " + modulo.getIdModulo());
+    }
+    for (PlanEstudios plan : planes) {
+      int creditosModulosRegistrados = modulos.stream().filter(m -> m.getIdPlan().equals(plan.getIdPlan()))
+          .mapToInt(ModuloProfesional::getCreditosModulo).sum();
+      int horasUnidadesRegistradas = cursos.stream().filter(c -> modulos.stream()
+          .anyMatch(m -> m.getIdModulo().equals(c.getIdModulo()) && m.getIdPlan().equals(plan.getIdPlan())))
+          .mapToInt(Curso::getTotalHorasLectivas).sum();
+      afirmar(creditosModulosRegistrados <= plan.getCreditosTotales(),
+          "los modulos registrados no exceden los creditos agregados del plan " + plan.getIdPlan());
+      afirmar(horasUnidadesRegistradas <= plan.getHorasTotales(),
+          "las unidades registradas no exceden las horas agregadas del plan " + plan.getIdPlan());
+      if (plan.getIdPlan().equals("PLAN-APSTI-2026")) {
+        afirmar(creditosModulosRegistrados == plan.getCreditosTotales(),
+            "los modulos inventariados completan los creditos del plan APSTI vigente");
+        afirmar(creditosModulosRegistrados == cursos.stream().filter(c -> modulos.stream()
+            .anyMatch(m -> m.getIdModulo().equals(c.getIdModulo()) && m.getIdPlan().equals(plan.getIdPlan())))
+            .mapToInt(Curso::getCreditos).sum(),
+            "las unidades didacticas completan los creditos de APSTI vigente");
+        afirmar(horasUnidadesRegistradas == plan.getHorasTotales(),
+            "las horas lectivas de APSTI vigente completan las horas del plan");
+      }
+    }
+    for (ModuloProfesional modulo : modulos.stream()
+        .filter(m -> m.getIdPlan().equals("PLAN-APSTI-2026")).toList()) {
+      int creditosUnidades = cursos.stream().filter(c -> c.getIdModulo().equals(modulo.getIdModulo()))
+          .mapToInt(Curso::getCreditos).sum();
+      afirmar(creditosUnidades == modulo.getCreditosModulo(),
+          "las unidades completan los creditos del modulo " + modulo.getIdModulo());
+    }
+    for (SeccionCurso seccion : servicio.listarSecciones()) {
+      Curso curso = cursos.stream().filter(c -> c.getIdCurso().equals(seccion.getIdCurso())).findFirst().orElse(null);
+      BloqueSeccion bloque = servicio.buscarBloque(seccion.getIdBloque());
+      PeriodoAcademico periodo = bloque == null ? null : periodos.stream()
+          .filter(p -> p.getIdPeriodo().equals(bloque.getIdPeriodo())).findFirst().orElse(null);
+      ModuloProfesional modulo = curso == null ? null : modulos.stream()
+          .filter(m -> m.getIdModulo().equals(curso.getIdModulo())).findFirst().orElse(null);
+      afirmar(curso != null && periodo != null && modulo != null && modulo.getIdPlan().equals(periodo.getIdPlan()),
+          "la seccion " + seccion.getIdSeccion() + " pertenece al plan de su periodo");
+      if (curso == null || periodo == null) {
+        continue;
+      }
+
+      int minutosSemanales = 0;
+      int minutosTeoria = 0;
+      int minutosPractica = 0;
+      for (HorarioSeccion horario : servicio.listarHorariosSeccion(seccion.getIdSeccion())) {
+        int duracion = horario.getDuracionMinutos();
+        minutosSemanales += duracion;
+        if (horario.getTipoClase() == TipoClase.TEORIA) {
+          minutosTeoria += duracion;
+        } else if (horario.getTipoClase() == TipoClase.PRACTICA) {
+          minutosPractica += duracion;
+        }
+      }
+      afirmar(minutosSemanales == periodo.calcularHorasSemanalesRequeridas(curso) * 60,
+          "los horarios semanales de " + curso.getIdCurso() + " distribuyen sus horas en el periodo");
+      afirmar(minutosTeoria * periodo.getSemanasLectivas() == curso.getHorasTeoricas() * 60,
+          "los bloques de teoria de " + curso.getIdCurso() + " cubren las horas teoricas del curso");
+      afirmar(minutosPractica * periodo.getSemanasLectivas() == curso.getHorasPracticas() * 60,
+          "los bloques practicos de " + curso.getIdCurso() + " cubren las horas practicas del curso");
+    }
+
+    List<SesionClase> sesiones = servicio.listarSesiones();
+    for (SesionClase sesion : sesiones) {
+      HorarioSeccion horario = servicio.listarHorarios().stream()
+          .filter(h -> h.getIdHorario().equals(sesion.getIdHorario())).findFirst().orElse(null);
+      long minutosSesion = horario == null ? -1 : horario.getDuracionMinutos();
+      afirmar(minutosSesion == sesion.getHorasProgramadas() * 60L,
+          "la sesion " + sesion.getIdSesion() + " conserva las horas exactas de su franja");
+    }
+
+    List<RegistroDeAsistencia> registros = ArchivoManager.leerTodasAsistencias();
+    for (RegistroDeAsistencia registro : registros) {
+      SesionClase sesion = sesiones.stream().filter(s -> s.getIdSesion().equals(registro.getIdSesion()))
+          .findFirst().orElse(null);
+      afirmar(sesion != null, "la asistencia " + registro.getIdAsistencia() + " referencia una sesion programada");
+      afirmar(sesion == null || registro.getHorasAsistidas() <= sesion.getHorasProgramadas(),
+          "la asistencia " + registro.getIdAsistencia() + " no supera las horas de la sesion");
+      HorarioSeccion horario = sesion == null ? null : servicio.listarHorarios().stream()
+          .filter(h -> h.getIdHorario().equals(sesion.getIdHorario())).findFirst().orElse(null);
+      SeccionCurso seccion = horario == null ? null : servicio.listarSecciones().stream()
+          .filter(s -> s.getIdSeccion().equals(horario.getIdSeccion())).findFirst().orElse(null);
+      afirmar(seccion != null && seccion.getIdCurso().equals(registro.getIdCurso()),
+          "la asistencia " + registro.getIdAsistencia() + " corresponde al curso de su franja");
+      Matricula matricula = servicio.listarMatriculas().stream()
+          .filter(m -> m.getIdMatricula().equals(registro.getIdMatricula())).findFirst().orElse(null);
+      afirmar(matricula != null && matricula.getIdEstudiante().equals(registro.getIdEstudiante())
+          && seccion != null && matricula.getIdBloque().equals(seccion.getIdBloque()),
+          "la asistencia " + registro.getIdAsistencia() + " corresponde a la matricula de su seccion");
+    }
+
+    boolean rechazoPeriodoSinSemanas = false;
+    try {
+      new PeriodoAcademico("PER-INVALIDO", "PLAN-TEST", "TEST", "2026-01-01", "2026-04-30",
+          EstadoPeriodo.ACTIVO, 0);
+    } catch (IllegalArgumentException e) {
+      rechazoPeriodoSinSemanas = true;
+    }
+    afirmar(rechazoPeriodoSinSemanas, "un periodo requiere una cantidad positiva de semanas lectivas");
+
+    boolean rechazoSesionSinHoras = false;
+    try {
+      new SesionClase("SES-INVALIDA", "SLOT-TEST", "2026-01-01", 0, "DOC-TEST", "SAL-TEST");
+    } catch (IllegalArgumentException e) {
+      rechazoSesionSinHoras = true;
+    }
+    afirmar(rechazoSesionSinHoras, "una sesion requiere horas programadas positivas");
+
+    boolean rechazoHorarioSinDuracion = false;
+    try {
+      new HorarioSeccion("SLOT-INVALIDO", "SEC-TEST", DiaSemana.LUNES, "20:00", "19:00", TipoClase.TEORIA,
+          "DOC-TEST", "SAL-TEST");
+    } catch (IllegalArgumentException e) {
+      rechazoHorarioSinDuracion = true;
+    }
+    afirmar(rechazoHorarioSinDuracion, "una franja recurrente requiere un rango horario positivo");
+  }
+
   private static void probarMatriculaYReglaNormativa() {
     ServicioAcademico servicio = new ServicioAcademico();
 
     List<Matricula> matriculas = servicio.listarMatriculas();
-    afirmar(matriculas.size() == 6, "lee las matriculas sembradas (encontradas: " + matriculas.size() + ")");
+    afirmar(matriculas.size() == 9, "lee las matriculas sembradas (encontradas: " + matriculas.size() + ")");
     Matricula m1 = servicio.buscarMatricula("ALU-2024101", "BLQ-APSTI-3N");
     afirmar(m1 != null && m1.getIdMatricula().equals("MAT-20261-001"),
         "resuelve la matricula activa del estudiante");
@@ -323,8 +496,8 @@ public class TestRunner {
     afirmar(servicio.matricularEstudiante("ALU-2024101", "BLQ-9999", "2026-03-01") == null,
         "rechaza un bloque inexistente");
 
-    afirmar(servicio.listarSesionesBloque("BLQ-APSTI-3N").size() == 5, "resuelve las sesiones del bloque");
-    afirmar(servicio.listarSesionesBloque("BLQ-APSTI-5M").size() == 2, "resuelve las sesiones del otro bloque");
+    afirmar(servicio.listarSesionesBloque("BLQ-APSTI-3N").size() == 10, "resuelve las sesiones del bloque");
+    afirmar(servicio.listarSesionesBloque("BLQ-APSTI-5M").size() == 4, "resuelve las sesiones del otro bloque");
 
     RegistroDeAsistencia sesionReg = servicio.registrarAsistenciaSesion("SES-SEGREDES-20260309", "ALU-2024101", 99);
     afirmar(sesionReg != null && sesionReg.getIdSesion().equals("SES-SEGREDES-20260309"),
@@ -343,8 +516,8 @@ public class TestRunner {
     List<RegistroDeAsistencia> historialE1 = servicio.historialEstudiante(servicio.buscarEstudiante("ALU-2024101"));
     afirmar(historialE1.stream().anyMatch(r -> r.getIdSesion().equals("SES-SEGREDES-20260309")),
         "lee el id_sesion de las filas nuevas");
-    afirmar(historialE1.stream().anyMatch(r -> r.getIdSesion().isEmpty()),
-        "tolera filas legadas sin id_sesion");
+    afirmar(historialE1.stream().allMatch(r -> !r.getIdSesion().isEmpty()),
+        "los datos de asistencia estan vinculados con sus sesiones");
     afirmar(historialE1.stream().allMatch(r -> r.getIdMatricula().equals("MAT-20261-001")),
         "lee el id_matricula de las filas nuevas");
 
@@ -354,7 +527,7 @@ public class TestRunner {
         servicio.buscarMatricula("ALU-2024101", "BLQ-APSTI-3N"), c1) == 0,
         "no acumula faltas en sesiones asistidas completas");
     afirmar(c1 != null && servicio.horasFaltadasUnidadDidactica(
-        servicio.buscarMatricula("ALU-2024102", "BLQ-APSTI-3N"), c1) == 2,
+        servicio.buscarMatricula("ALU-2024102", "BLQ-APSTI-3N"), c1) == 4,
         "acumula las horas no asistidas de la sesion tomada");
 
     Curso curso = new Curso("C-NORM", "Curso normativo", "MP-APSTI-01", 1, 6, 4, 2, 5);
@@ -470,15 +643,218 @@ public class TestRunner {
 
     Profesor docente = servicio.buscarProfesor("DOC-001");
     List<Curso> cursos = servicio.listarCursosProfesor(docente);
-    afirmar(cursos.size() == 3, "deriva los cursos del docente desde sus franjas (encontrados: " + cursos.size() + ")");
+    afirmar(cursos.size() == 4, "deriva los cursos del docente desde sus franjas (encontrados: " + cursos.size() + ")");
     afirmar(cursos.stream().anyMatch(c -> c.getIdCurso().equals("UD-SEGREDES")),
         "incluye la unidad didactica dictada en el bloque");
+    afirmar(cursos.stream().anyMatch(c -> c.getIdCurso().equals("UD-SEG-CLOUD")),
+        "incluye la nueva unidad de seguridad cloud en el periodo vigente");
     afirmar(cursos.stream().anyMatch(c -> c.getIdCurso().equals("UD-REDES1")),
         "incluye la unidad didactica del plan por competencias");
 
     Profesor laboratorio = servicio.buscarProfesor("DOC-002");
     afirmar(servicio.listarCursosProfesor(laboratorio).size() == 1,
         "resuelve el curso del docente que solo dicta practica");
+  }
+
+  private static void probarDetalleDeCursoAsignado() {
+    ServicioAcademico servicio = new ServicioAcademico();
+    Profesor docente = servicio.buscarProfesor("DOC-001");
+    Curso segRedes = servicio.listarCursos().stream()
+        .filter(c -> c.getIdCurso().equals("UD-SEGREDES")).findFirst().orElse(null);
+
+    List<SeccionCurso> secciones = servicio.seccionesProfesor(docente, segRedes);
+    afirmar(secciones.size() == 1, "el docente dicta Seguridad en Redes en una seccion");
+    SeccionCurso seccion = secciones.get(0);
+    afirmar(seccion.getIdSeccion().equals("SEC-SEGREDES-3N"), "la seccion corresponde al bloque del curso");
+
+    BloqueSeccion bloque = servicio.buscarBloque(seccion.getIdBloque());
+    afirmar(bloque != null, "resuelve el bloque de la seccion");
+    afirmar(bloque != null && bloque.getCiclo().equals("3er Ciclo"), "deriva el ciclo del nombre del bloque");
+    afirmar(bloque != null && bloque.getTurno() == Turno.NOCHE, "conserva el turno del bloque");
+
+    List<HorarioSeccion> horarios = servicio.listarHorariosSeccion(seccion.getIdSeccion());
+    afirmar(horarios.size() == 2, "la seccion tiene dos franjas horarias");
+    afirmar(horarios.stream().anyMatch(h -> h.getDiaSemana() == DiaSemana.LUNES), "incluye la franja del lunes");
+    afirmar(horarios.stream().anyMatch(h -> h.getDiaSemana() == DiaSemana.MIERCOLES),
+        "incluye la franja del miercoles");
+    afirmar(horarios.stream().allMatch(h -> h.getHoraInicio().equals("18:00") && h.getHoraFin().equals("20:00")),
+        "las franjas conservan su rango horario");
+    afirmar(horarios.stream().allMatch(h -> servicio.buscarSalon(h.getIdSalon()) != null),
+        "resuelve el ambiente de cada franja");
+    afirmar(servicio.buscarSalon("AMB-AULA301").getNombre().equals("Aula 301"), "el ambiente muestra su nombre");
+    afirmar(DiaSemana.LUNES.getNombre().equals("Lunes"), "el dia se muestra con formato legible");
+
+    List<Profesor> profesores = servicio.profesoresSeccion(seccion.getIdSeccion());
+    afirmar(profesores.size() == 1 && profesores.get(0).getId().equals("DOC-001"),
+        "la seccion de Seguridad en Redes tiene un solo docente");
+
+    Curso redes1 = servicio.listarCursos().stream()
+        .filter(c -> c.getIdCurso().equals("UD-REDES1")).findFirst().orElse(null);
+    List<SeccionCurso> seccionesRedes1 = servicio.seccionesProfesor(docente, redes1);
+    afirmar(seccionesRedes1.size() == 1, "el docente dicta Fundamentos de Redes en una seccion");
+    List<Profesor> profesoresRedes1 = servicio.profesoresSeccion(seccionesRedes1.get(0).getIdSeccion());
+    afirmar(profesoresRedes1.size() == 2, "la seccion de Fundamentos de Redes tiene dos docentes");
+    afirmar(profesoresRedes1.stream().anyMatch(p -> p.getId().equals("DOC-002")),
+        "incluye al docente de practica ademas del de teoria");
+
+    Profesor laboratorio = servicio.buscarProfesor("DOC-002");
+    afirmar(servicio.seccionesProfesor(laboratorio, segRedes).isEmpty(),
+        "un docente que no dicta el curso no recibe la seccion");
+  }
+
+  private static void probarOfertaDelPeriodoMasReciente() {
+    ServicioAcademico servicio = new ServicioAcademico();
+    PeriodoAcademico periodo = servicio.listarPeriodosAcademicos().stream()
+        .filter(p -> p.getIdPeriodo().equals("PER-APSTI-2026-2")).findFirst().orElse(null);
+    BloqueSeccion bloque = servicio.buscarBloque("BLQ-APSTI-4N");
+    afirmar(periodo != null && bloque != null && bloque.getIdPeriodo().equals(periodo.getIdPeriodo()),
+        "la nueva cohorte de noche queda vinculada al periodo APSTI 2026-II");
+
+    SeccionCurso seccion = servicio.listarSeccionesBloque("BLQ-APSTI-4N").stream()
+        .filter(s -> s.getIdCurso().equals("UD-SEG-CLOUD")).findFirst().orElse(null);
+    afirmar(seccion != null && seccion.getIdCurso().equals("UD-SEG-CLOUD"),
+        "el nuevo bloque contiene la unidad de seguridad cloud");
+    List<HorarioSeccion> horarios = servicio.listarHorariosSeccion("SEC-SEG-CLOUD-4N");
+    afirmar(horarios.size() == 2 && horarios.stream().allMatch(h -> h.getIdProfesor().equals("DOC-001")),
+        "la nueva seccion tiene dos franjas nocturnas asignadas al docente de ciberseguridad");
+    Curso curso = servicio.listarCursos().stream()
+        .filter(c -> c.getIdCurso().equals("UD-SEG-CLOUD")).findFirst().orElse(null);
+    List<SesionClase> sesionesManana = servicio.listarSesionesCursoEnFecha(curso, "2026-11-12");
+    afirmar(sesionesManana.size() == 1 && sesionesManana.get(0).getIdProfesor().equals("DOC-001")
+        && sesionesManana.get(0).getHorasProgramadas() == 2,
+        "Carlos tiene una sesion de Seguridad de Servicios Cloud disponible manana para tomar asistencia");
+    afirmar(servicio.listarEstudiantesSesion("SES-SEG-CLOUD-20261112").size() == 3,
+        "la sesion de manana resuelve los alumnos activos matriculados en el bloque de cuarto ciclo");
+    Curso ethicalHacking = servicio.listarCursos().stream()
+        .filter(c -> c.getIdCurso().equals("UD-ETHHACK")).findFirst().orElse(null);
+    afirmar(servicio.listarSesionesCursoEnFecha(ethicalHacking, "2026-11-12").isEmpty(),
+        "Ethical Hacking no habilita asistencia manana porque no tiene sesion fechada ese dia");
+    List<SesionClase> sesionesEthicalHacking = servicio.listarSesionesCursoEnFecha(ethicalHacking, "2026-11-17");
+    afirmar(sesionesEthicalHacking.size() == 1 && sesionesEthicalHacking.get(0).getIdProfesor().equals("DOC-001"),
+        "Ethical Hacking tiene una sesion habilitada en martes, correspondiente a su horario");
+    SeccionCurso seccionDemo = servicio.listarSeccionesBloque("BLQ-APSTI-4N").stream()
+        .filter(s -> s.getIdSeccion().equals("SEC-ETHHACK-4N")).findFirst().orElse(null);
+    afirmar(seccionDemo != null && seccionDemo.getIdBloque().equals(bloque.getIdBloque())
+        && servicio.buscarBloque(seccionDemo.getIdBloque()).getIdPeriodo().equals(periodo.getIdPeriodo()),
+        "el segundo caso de demo pertenece al mismo periodo APSTI-II en otra seccion y curso");
+
+    afirmar(periodo != null && periodo.getSemanasLectivas() == 16,
+        "APSTI-II define 16 semanas lectivas aunque el rango calendario sea mayor");
+    afirmar(curso != null && servicio.calcularSemanaActualCurso(periodo, LocalDate.parse("2026-11-10")) == 15,
+        "el curso nuevo muestra la semana vigente 15 de 16 en noviembre");
+    List<Estudiante> alumnos = servicio.listarEstudiantesCurso(curso);
+    afirmar(alumnos.size() == 3, "la nueva seccion tiene una nomina de ejemplo propia");
+  }
+
+  private static void probarMenuDelCursoDelPeriodoActual() {
+    InputStream entradaOriginal = System.in;
+    PrintStream salidaOriginal = System.out;
+    ByteArrayOutputStream salidaCapturada = new ByteArrayOutputStream();
+    String entradas = "1\ncarlos.mendoza@iestpchincha.edu.pe\nDocente2026*\n1\n2\n2\n3\n2\n";
+
+    try {
+      System.setIn(new ByteArrayInputStream(entradas.getBytes(StandardCharsets.UTF_8)));
+      System.setOut(new PrintStream(salidaCapturada, true, StandardCharsets.UTF_8));
+      new SistemaApp().iniciar();
+    } finally {
+      System.setIn(entradaOriginal);
+      System.setOut(salidaOriginal);
+    }
+
+    String salida = salidaCapturada.toString(StandardCharsets.UTF_8);
+    afirmar(salida.contains(" - Semana actual:"),
+        "el detalle del curso actual muestra el indicador de semana del periodo");
+    afirmar(salida.contains("Horas lectivas totales: 64 hrs"),
+        "el detalle del curso actual muestra sus horas lectivas totales");
+    afirmar(salida.contains(" - Ciclo correspondiente: 4to Ciclo")
+        && salida.contains(" - Bloque de curso: BLQ-APSTI-4N"),
+        "el detalle vincula la oferta vigente con su ciclo y bloque nuevos");
+    afirmar(salida.contains("Lucía Castañeda") && salida.contains("Código: U2026101")
+        && salida.contains("Correo: lucia.castaneda@sample.invalid"),
+        "el detalle muestra los datos de contacto de un alumno de la nueva cohorte");
+  }
+
+  private static void probarSemanaActualDelCurso() {
+    ServicioAcademico servicio = new ServicioAcademico();
+    PeriodoAcademico periodo = servicio.listarPeriodosAcademicos().stream()
+        .filter(p -> p.getIdPeriodo().equals("PER-APSTI-2026-1")).findFirst().orElse(null);
+
+    afirmar(servicio.calcularSemanaActualCurso(periodo, LocalDate.parse("2026-03-01")) == 1,
+        "la fecha de inicio del periodo corresponde a la semana 1");
+    afirmar(servicio.calcularSemanaActualCurso(periodo, LocalDate.parse("2026-03-08")) == 2,
+        "la semana avanza cada siete dias desde el inicio del periodo");
+    afirmar(servicio.calcularSemanaActualCurso(periodo, LocalDate.parse("2026-06-20")) == 16,
+        "la ultima semana programada se muestra dentro del total del curso");
+    afirmar(servicio.calcularSemanaActualCurso(periodo, LocalDate.parse("2026-06-21")) == 0,
+        "no muestra una semana actual despues de completar las semanas del curso");
+    afirmar(servicio.calcularSemanaActualCurso(periodo, LocalDate.parse("2026-02-28")) == 0,
+        "no muestra una semana actual antes del inicio del periodo");
+    afirmar(servicio.calcularSemanaActualCurso(periodo, LocalDate.parse("2026-07-15")) == 0,
+        "no muestra semanas lectivas durante el margen posterior a las 16 semanas del periodo");
+    PeriodoAcademico periodoVeinteSemanas = new PeriodoAcademico("PER-TEST-20", "PLAN-TEST", "TEST-20",
+        "2026-08-01", "2026-12-15", EstadoPeriodo.ACTIVO, 20);
+    afirmar(servicio.calcularSemanaActualCurso(periodoVeinteSemanas, LocalDate.parse("2026-11-22")) == 17,
+        "usa las semanas lectivas del periodo y no una duracion fija del curso");
+    Curso cursoConDuracionLegada = new Curso("C-LEGADO", "Curso heredado", 2, 16);
+    afirmar(servicio.calcularSemanaActualCurso(cursoConDuracionLegada, periodoVeinteSemanas,
+        LocalDate.parse("2026-11-22")) == 17,
+        "la llamada compatible ignora la antigua duracion semanal guardada en Curso");
+    PeriodoAcademico sinFechas = new PeriodoAcademico("PER-SIN-FECHAS", "PLAN-TEST", "TEST", null, null,
+        EstadoPeriodo.ACTIVO, 16);
+    afirmar(servicio.calcularSemanaActualCurso(sinFechas, LocalDate.parse("2026-03-01")) == 0,
+        "no falla cuando el periodo no tiene fechas registradas");
+  }
+
+  private static void probarListadoConDetalleDeCursosYAlumnos() {
+    InputStream entradaOriginal = System.in;
+    PrintStream salidaOriginal = System.out;
+    ByteArrayOutputStream salidaCapturada = new ByteArrayOutputStream();
+    String entradas = "1\ncarlos.mendoza@iestpchincha.edu.pe\nDocente2026*\n1\n4\n2\n3\n2\n";
+
+    try {
+      System.setIn(new ByteArrayInputStream(entradas.getBytes(StandardCharsets.UTF_8)));
+      System.setOut(new PrintStream(salidaCapturada, true, StandardCharsets.UTF_8));
+      new SistemaApp().iniciar();
+    } finally {
+      System.setIn(entradaOriginal);
+      System.setOut(salidaOriginal);
+    }
+
+    String salida = salidaCapturada.toString(StandardCharsets.UTF_8);
+    int inicioListado = salida.indexOf("--- SUS CURSOS ASIGNADOS ---");
+    int finListado = salida.indexOf("Seleccione un curso para ver detalles / tomar asistencia:", inicioListado);
+    afirmar(inicioListado >= 0 && finListado > inicioListado, "el menú presenta el listado antes de seleccionar curso");
+    String listadoCursos = salida.substring(inicioListado, finListado);
+    String periodoVigente = "APSTI-2026-II (01/08/2026 - 15/12/2026)";
+    String periodoMasReciente = "2026-I (16/03/2026 - 17/07/2026)";
+    String periodoAnterior = "APSTI-2026-I (01/03/2026 - 15/07/2026)";
+    int indicePeriodoVigente = listadoCursos.indexOf(periodoVigente);
+    int indicePeriodoReciente = listadoCursos.indexOf(periodoMasReciente);
+    int indicePeriodoAnterior = listadoCursos.indexOf(periodoAnterior);
+    afirmar(indicePeriodoVigente >= 0 && indicePeriodoVigente < indicePeriodoReciente
+        && indicePeriodoReciente < indicePeriodoAnterior,
+        "el listado muestra primero el periodo con fecha de inicio mas reciente y sus rangos");
+    afirmar(listadoCursos.contains("Seguridad de Servicios Cloud [ID: UD-SEG-CLOUD]"),
+        "el listado muestra la nueva oferta del periodo mas reciente");
+    afirmar(listadoCursos.contains(" - Ciclo correspondiente: 3er Ciclo"),
+        "el listado muestra el ciclo de cada curso asignado");
+    afirmar(listadoCursos.contains(" - Bloque de curso: BLQ-APSTI-3N"),
+        "el listado muestra el bloque de la seccion");
+    afirmar(listadoCursos.contains("Lunes 18:00 - 20:00 hrs (Aula 301)"),
+        "el listado muestra el dia, horario y ambiente de clase");
+    afirmar(listadoCursos.contains("Miércoles 18:00 - 20:00 hrs (Laboratorio de Redes)"),
+        "el listado muestra cada franja del horario semanal");
+
+    ServicioAcademico servicio = new ServicioAcademico();
+    Curso curso = servicio.listarCursos().stream()
+        .filter(c -> c.getIdCurso().equals("UD-SEGREDES")).findFirst().orElse(null);
+    List<Estudiante> alumnos = servicio.listarEstudiantesCurso(curso);
+    for (Estudiante alumno : alumnos) {
+      afirmar(salida.contains(alumno.getNombreCompleto())
+          && salida.contains("Código: " + alumno.getCodigo())
+          && salida.contains("Correo: " + alumno.getCorreo()),
+          "el listado de matriculados muestra nombre, codigo y correo de " + alumno.getCodigo());
+    }
   }
 
   private static void probarNominaDesdeMatricula() {
