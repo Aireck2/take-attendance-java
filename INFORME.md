@@ -94,8 +94,8 @@ A continuación se detalla la especificación formal de requerimientos funcional
 | :-------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------: |
 | **RF-01** | **Autenticación Segura y Control de Acceso (RBAC):** Validar identidades de usuarios a partir de correo y contraseña contrastados contra `data/usuario.csv`. El sistema debe instanciar el perfil correspondiente (`PROFESOR` o `ESTUDIANTE`) restringiendo el menú interactivo bajo el principio de menor privilegio.                                                                                                                                                                                    |   Alta    |
 | **RF-02** | **Gestión del Padrón y Estado de Estudiantes:** Administrar el catálogo de alumnos (`Estudiante`), identificando código institucional, nombres, apellidos, correo institucional y condición académica (`EstadoEstudiante: REGULAR, SUSPENDIDO, RESERVA`). El sistema debe verificar que el alumno posea una matrícula activa para ser incluido en la nómina de asistencia.                                                                                                                                |   Alta    |
-| **RF-03** | **Modelado de Cursos y Malla Curricular:** Estructurar las Unidades Didácticas (`Curso`) registrando su identificador, denominación, duración en sesiones, créditos, horas teóricas, horas prácticas y el total de horas lectivas acumuladas (`getHorasLectivasTotales()`), integradas en la jerarquía: Carrera → Plan de Estudios → Módulo Profesional → Unidad Didáctica.                                                                                                                               |   Media   |
-| **RF-04** | **Programación y Gestión de Sesiones de Clase:** Modelar las instancias de clase (`SesionClase`) vinculadas a un horario semanal (`HorarioSeccion`), docente asignado, salón físico (`Salon`) y fecha de calendario (`LocalDate`), fijando la cuota horaria de la sesión (`horasProgramadas`).                                                                                                                                                                                                            |   Alta    |
+| **RF-03** | **Modelado de Cursos y Malla Curricular:** Estructurar las Unidades Didácticas (`Curso`) registrando su identificador, denominación, créditos, horas teóricas, horas prácticas y el total de horas lectivas (`total_horas_lectivas = horas_teoricas + horas_practicas`), integradas en la jerarquía: Carrera → Plan de Estudios → Módulo Profesional → Unidad Didáctica. La cantidad de semanas lectivas del dictado corresponde al `PeriodoAcademico`. |   Media   |
+| **RF-04** | **Programación y Habilitación de Sesiones de Clase:** Modelar cada instancia (`SesionClase`) vinculada a una franja recurrente (`HorarioSeccion`), sección, docente, salón y fecha exacta. La duración debe coincidir con la franja. La toma de asistencia solo se habilita si existe una sesión para la fecha actual vinculada a una franja y sección del curso seleccionado; el horario recurrente por sí solo no habilita la captura.                                                                                                                                                                                                            |   Alta    |
 | **RF-05** | **Gestión de Matrículas en Bloques Académicos:** Vincular a cada estudiante con un bloque de sección mediante la entidad `Matricula`, validando el estado `ACTIVA` como precondición obligatoria para la toma de asistencia y asentamiento de evaluaciones en sus cursos correspondientes.                                                                                                                                                                                                                |   Alta    |
 | **RF-06** | **Registro Transaccional de Horas Asistidas por Sesión:** Permitir al docente registrar la asistencia estudiante por estudiante para una sesión horaria específica. El docente ingresa la cantidad exacta de horas presenciales efectivas ($horasAsistidas \in \mathbb{Z}$), forzando defensivamente que $0 \leq horasAsistidas \leq horasProgramadas$. Si $horasAsistidas = 0$, se computa inasistencia (`presente = false`); si $horasAsistidas > 0$, se valida presencia efectiva (`presente = true`). |   Alta    |
 | **RF-07** | **Cómputo Acumulado de Horas Faltadas por Curso:** Calcular de manera continua las horas no asistidas por el alumno como la sumatoria de $(horasProgramadas_s - horasAsistidas_s)$ sobre el universo de sesiones dictadas. Las sesiones aún no registradas se consideran no impartidas y no acumulan faltas.                                                                                                                                                                                              |   Alta    |
@@ -187,6 +187,8 @@ Los datos de entrada provienen de dos fuentes principales: la interacción diná
 | **Contexto de Sesión**     | `idSesion`               | `String`                               | Objeto `SesionClase` programado                    | Clave foránea válida referenciada en `data/sesion_clase.csv`.                             | Vinculación relacional de la asistencia con la instancia de clase correspondiente.       |
 | **Catálogo Maestro (CSV)** | Registros de 19 archivos | Texto delimitado por comas (CSV UTF-8) | Almacenamiento secundario en `data/`               | Esquemas relacionales normalizados, cabeceras estrictas y tolerancia a campos históricos. | Hidratación inicial del grafo de entidades en memoria (alumnos, cursos, horarios, etc.). |
 
+**Oferta demostrativa APSTI-2026-II:** se incorporó el bloque nocturno `BLQ-APSTI-4N` (4to Ciclo) con la unidad `UD-SEG-CLOUD` y dos franjas semanales de dos horas, vinculadas al docente `DOC-001`. La oferta tiene tres matrículas ficticias; sus correos usan el dominio reservado `.invalid`. El periodo APSTI-I y el periodo DSI-I figuran cerrados; APSTI-II está activo.
+
 ##### B. Procesamiento Interno (Transformación)
 
 El núcleo computacional del sistema ejecuta transformaciones deterministas sobre los datos de entrada aplicando principios de programación orientada a objetos, criptografía y lógica de negocio normada:
@@ -203,34 +205,49 @@ El núcleo computacional del sistema ejecuta transformaciones deterministas sobr
      $$presente = \begin{cases} \text{true} & \text{si } horasValidas > 0 \\ \text{false} & \text{si } horasValidas = 0 \end{cases}$$
    - Se verifica la precondición relacional de que el estudiante cuente con una `Matricula` en estado `ACTIVA` vinculada al bloque de la sección lectiva.
 
-3. **Cómputo Acumulativo de Inasistencias y Horas Faltadas:**
+3. **Habilitación de la Toma de Asistencia por Sesión:**
+   - El docente consulta sus cursos asignados y elige uno; la asignación docente se deriva de las franjas de `HorarioSeccion`.
+   - `ServicioAcademico.listarSesionesCursoEnFecha(curso, fecha)` busca una `SesionClase` cuya fecha sea la fecha actual (`LocalDate.now()`) y sigue la relación `SesionClase → HorarioSeccion → SeccionCurso → Curso`. Si no encuentra una sesión fechada y relacionada con el curso, la aplicación informa que no hay sesión programada y no permite registrar asistencia. Un horario semanal existente o una matrícula, sin sesión fechada, no bastan para habilitarla.
+   - Encontrada la sesión, el sistema resuelve los estudiantes activos mediante `SesionClase → HorarioSeccion → SeccionCurso → BloqueSeccion → Matricula`. Si el bloque no tiene matrículas activas con estudiantes válidos, tampoco se abre la captura. En otro caso, la sesión y su duración delimitan la lista y el máximo de horas registrables por estudiante.
+   - **Ejemplo de los datos demostrativos:** `UD-SEG-CLOUD` tiene una sesión el jueves 12/11/2026 de 14:00 a 16:00, por lo que queda habilitada para esa fecha. `UD-ETHHACK`, en otra sección del mismo periodo APSTI-2026-II, tiene horario martes 20:00–22:00 y sesión fechada el martes 17/11/2026: aunque existe horario y sesión para esa fecha posterior, no habilita la toma de asistencia el 12/11/2026.
+
+4. **Cómputo Acumulativo de Inasistencias y Horas Faltadas:**
    - Para cada sesión impartida con registro tomado, se calculan las horas no asistidas:
      $$horasFaltadas_s = horasProgramadas_s - horasAsistidas_s$$
    - Se realiza la sumatoria continua de horas faltadas sobre el universo de sesiones dictadas del curso:
      $$HorasFaltadasTotales = \sum_{s \in SesionesDictadas} (horasProgramadas_s - horasAsistidas_s)$$
    - Se calcula el porcentaje acumulado de faltas respecto a la carga horaria programada de la Unidad Didáctica:
-     $$\% \text{ Faltas} = \left( \frac{\text{Horas Dictadas} - \text{Horas Asistidas Totales}}{\text{Duración en Días} \times \text{Horas por Sesión}} \right) \times 100$$
-     o en términos del total de horas lectivas de la asignatura ($horasLectivasTotales = horasTeoricas + horasPracticas$):
-     $$\% \text{ Inasistencia Normativa} = \left( \frac{HorasFaltadasTotales}{HorasLectivasTotales} \right) \times 100$$
+     $$\% \text{ Faltas Preventivas} = \left( \frac{HorasDictadas - HorasAsistidas}{HorasDictadas} \right) \times 100$$
+     Para la inhabilitación normativa, el denominador es el total curricular fijo de la unidad ($totalHorasLectivas = horasTeoricas + horasPracticas$):
+     $$\% \text{ Inasistencia Normativa} = \left( \frac{HorasFaltadasTotales}{totalHorasLectivas} \right) \times 100$$
 
-4. **Evaluación de Reglas de Negocio Normativas y Auditoría de Permanencia:**
+5. **Evaluación de Reglas de Negocio Normativas y Auditoría de Permanencia:**
    - **Regla Preventiva de Alerta Temprana (15%):** Si $\% \text{ Faltas} > 15.0\%$, se activa una bandera de advertencia para notificar preventivamente al alumno sobre el riesgo de desaprobación.
    - **Regla Ministerial de Inhabilitación (MINEDU 30% / Ley N.° 30512):** Si $\% \text{ Inasistencia Normativa} > 30.0\%$, el método `estaInhabilitadoPorInasistencia(...)` retorna `true`. Como consecuencia, `puedeRegistrarNotas(...)` evalúa estrictamente a `false`, bloqueando de manera automática el registro de calificaciones en los `IndicadorLogro` de la sección.
+
+6. **Cálculo de la Semana Lectiva Actual del Curso:**
+   - `PeriodoAcademico` define tanto el rango calendario (`fechaInicio` y `fechaFin`) como el total de semanas lectivas (`semanasLectivas`). La cantidad de semanas lectivas no se deduce del número de días calendario ni se almacena en `Curso`: el calendario puede incluir recesos o márgenes sin dictado.
+   - `ServicioAcademico` calcula la semana vigente desde la fecha oficial de inicio del periodo asociado al bloque. La primera semana comprende los siete días desde el inicio inclusive y cada bloque consecutivo de siete días incrementa el número. Solo devuelve una semana si la fecha está dentro del rango calendario y de las semanas lectivas configuradas; terminado ese marco lectivo, la interfaz informa que no hay una semana de dictado vigente.
+
+7. **Distribución de Horas Lectivas:**
+   - El plan conserva los totales curriculares agregados. Cada unidad didáctica registra sus créditos, horas teóricas, prácticas y `total_horas_lectivas`, que debe ser la suma de ambas.
+   - `PeriodoAcademico.calcularHorasSemanalesRequeridas(curso)` divide el total lectivo entre sus semanas. Las franjas de tipo `TEORIA` y `PRACTICA` deben cubrir por separado las horas semanales teóricas y prácticas.
+   - `HorarioSeccion` deriva la duración de su rango horario; `SesionClase.horasProgramadas` debe coincidir con la duración de la franja asociada. El registro de asistencia se vincula a una sesión y limita las horas asistidas a su duración exacta.
 
 ##### C. Datos de Salida (Outputs)
 
 La información resultante se proyecta en dos medios: visualización textual estructurada en terminal para la toma de decisiones del usuario y persistencia atómica en almacenamiento secundario:
 
-| Medio de Salida              | Componente / Archivo              | Dato o Estructura Producida         | Formato / Representación                                                                                 | Propósito Pedagógico y Operativo                                                               |
-| :--------------------------- | :-------------------------------- | :---------------------------------- | :------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------- |
-| **Consola (CLI)**            | `SistemaApp`                      | Menú adaptativo por rol             | Interfaz textual interactiva                                                                             | Provee navegación contextual según privilegios RBAC (`PROFESOR` o `ESTUDIANTE`).               |
-| **Consola (CLI)**            | `SistemaApp`                      | Carga lectiva docente               | Listado tabular (`ID`, nombre, horas/sesión)                                                             | Permite al docente seleccionar la asignatura y visualizar la lista nominal de estudiantes.     |
-| **Consola (CLI)**            | `SistemaApp`                      | Resumen analítico de asistencia     | Métricas consolidadas por curso: días asistidos/dictados, horas asistidas/dictadas y $\% \text{ Faltas}$ | Proporciona al estudiante retroalimentación inmediata sobre su asistencia en tiempo real.      |
-| **Consola (CLI)**            | `SistemaApp`                      | Alerta visual preventiva            | `[ALERTA: Límite de inasistencia superado]`                                                              | Notificación pedagógica de alerta temprana cuando las inasistencias superan el 15%.            |
-| **Consola (CLI)**            | `SistemaApp`                      | Dictamen de habilitación evaluativa | Estado de habilitación (Habilitado / Inhabilitado)                                                       | Comunica formalmente la restricción de evaluación al superar el 30% normativo del MINEDU.      |
-| **Almacenamiento CSV**       | `data/registro_de_asistencia.csv` | Nuevos registros de asistencia      | `id_asistencia, id_curso, id_estudiante, fecha, horas_asistidas, presente, id_sesion, id_matricula`      | Persistencia histórica y trazable de cada toma de asistencia por sesión horaria.               |
-| **Almacenamiento CSV**       | `data/registro_nota.csv`          | Nuevos registros de evaluación      | `id_nota, id_indicador, id_estudiante, nota, fecha`                                                      | Persistencia de calificaciones vigesimales ($0.0 \leq nota \leq 20.0$) por indicador de logro. |
-| **Canal de Error / Control** | `System.out` / Terminal           | Mensajes defensivos de validación   | Mensajes contextuales ("Opción inválida", "Curso no válido", etc.)                                       | Notifica al usuario sobre entradas fuera de rango sin interrumpir la ejecución del sistema.    |
+| Medio de Salida              | Componente / Archivo              | Dato o Estructura Producida           | Formato / Representación                                                                                                                                 | Propósito Pedagógico y Operativo                                                                       |
+| :--------------------------- | :-------------------------------- | :------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------- |
+| **Consola (CLI)**            | `SistemaApp`                      | Menú adaptativo por rol               | Interfaz textual interactiva                                                                                                                             | Provee navegación contextual según privilegios RBAC (`PROFESOR` o `ESTUDIANTE`).                       |
+| **Consola (CLI)**            | `SistemaApp`                      | Listado y detalle de cursos asignados | Periodos ordenados por fecha de inicio descendente, rango de fechas, cursos, ciclo, bloque, semana actual, docentes, horarios y nómina con código/correo | Permite al docente ubicar sus cursos cronológicamente y consultar la programación y datos de contacto. |
+| **Consola (CLI)**            | `SistemaApp`                      | Resumen analítico de asistencia       | Métricas consolidadas por curso: días asistidos/dictados, horas asistidas/dictadas y $\% \text{ Faltas}$                                                 | Proporciona al estudiante retroalimentación inmediata sobre su asistencia en tiempo real.              |
+| **Consola (CLI)**            | `SistemaApp`                      | Alerta visual preventiva              | `[ALERTA: Límite de inasistencia superado]`                                                                                                              | Notificación pedagógica de alerta temprana cuando las inasistencias superan el 15%.                    |
+| **Consola (CLI)**            | `SistemaApp`                      | Dictamen de habilitación evaluativa   | Estado de habilitación (Habilitado / Inhabilitado)                                                                                                       | Comunica formalmente la restricción de evaluación al superar el 30% normativo del MINEDU.              |
+| **Almacenamiento CSV**       | `data/registro_de_asistencia.csv` | Nuevos registros de asistencia        | `id_asistencia, id_curso, id_estudiante, fecha, horas_asistidas, presente, id_sesion, id_matricula`                                                      | Persistencia histórica y trazable de cada toma de asistencia por sesión horaria.                       |
+| **Almacenamiento CSV**       | `data/registro_nota.csv`          | Nuevos registros de evaluación        | `id_nota, id_indicador, id_estudiante, nota, fecha`                                                                                                      | Persistencia de calificaciones vigesimales ($0.0 \leq nota \leq 20.0$) por indicador de logro.         |
+| **Canal de Error / Control** | `System.out` / Terminal           | Mensajes defensivos de validación     | Mensajes contextuales ("Opción inválida", "Curso no válido", etc.)                                                                                       | Notifica al usuario sobre entradas fuera de rango sin interrumpir la ejecución del sistema.            |
 
 #### 2. Diseño
 
@@ -255,24 +272,52 @@ El sistema implementa una **Arquitectura en Capas (Layered Architecture)** sigui
 5. **Capa de Dominio y Modelos (`models`):**  
    Contiene las 18 entidades y 10 enumeraciones fuertemente tipadas que modelan con exactitud el ecosistema del IESTP Chincha: `Carrera`, `PlanEstudios`, `ModuloProfesional`, `PeriodoAcademico`, `BloqueSeccion`, `Curso`, `SeccionCurso`, `HorarioSeccion`, `SesionClase`, `Salon`, `Profesor`, `Estudiante`, `Matricula`, `RegistroDeAsistencia`, `IndicadorLogro`, `RegistroNota`, `DerechoPago`, `ComprobantePago`, `Usuario`, y enumeraciones como `Rol`, `EstadoEstudiante`, `EstadoMatricula`, `Turno`, `ModalidadDictado`, etc.
 
-![Diagrama de flujo de la arquitectura por capas](./docs/arquitectura_proyecto_flowchart.svg)
+**Figura 1**
+*Diagrama de flujo de la arquitectura por capas del sistema*
+
+![Diagrama de flujo de la arquitectura por capas](./docs/assets/arquitectura_proyecto_flowchart.svg)
+
+*Nota.* Elaboración propia basada en la metodología de diseño modular por capas y representación de flujos descrita en Joyanes Aguilar (2013).
 
 ##### B. Diagrama de Clases UML del Sistema
 
 El siguiente diagrama formaliza las clases principales de cada capa, sus miembros y las relaciones de asociación, dependencia y composición observadas en el repositorio:
 
-![Diagrama de clase de todo el proyecto](./docs/proyecto_classDiagram.svg)
+**Figura 2**
+*Diagrama de clases UML del sistema de control de asistencia*
+
+![Diagrama de clase de todo el proyecto](./docs/assets/proyecto_classDiagram.svg)
+
+*Nota.* Elaboración propia siguiendo las convenciones de modelado orientado a objetos y notación UML descritas en Joyanes Aguilar (2013).
 
 ##### C. Diagrama de flujo de la aplicacion
 
 - Diagrama de flujo general de la aplicación de terminal (Inicio de sesion)
-  ![Diagrama de flujo general de la aplicación](./docs/flujo_inicio_sesion.svg)
+
+  **Figura 3**
+  *Diagrama de flujo general — Inicio de sesión y autenticación*
+
+  ![Diagrama de flujo general de la aplicación](./docs/assets/flujo_inicio_sesion.svg)
+
+  *Nota.* Elaboración propia basada en la simbología y notación estándar de diagramas de flujo de Joyanes Aguilar (2013) y García-Bermejo Giner (2008).
 
 - Diagrama de flujo de la aplicación de terminal (Docente)
-  ![Diagrama de flujo docente](./docs/flujo_docente.svg)
+
+  **Figura 4**
+  *Diagrama de flujo del perfil Docente — Toma de asistencia y registro de notas*
+
+  ![Diagrama de flujo docente](./docs/assets/flujo_docente.svg)
+
+  *Nota.* Elaboración propia basada en Joyanes Aguilar (2013) y Petersen (2001).
 
 - Diagrama de flujo de la aplicación de terminal (Alumno)
-  ![Diagrama de flujo docente](./docs/flujo_alumno.svg)
+
+  **Figura 5**
+  *Diagrama de flujo del perfil Estudiante — Consulta de asistencia*
+
+  ![Diagrama de flujo docente](./docs/assets/flujo_alumno.svg)
+
+  *Nota.* Elaboración propia basada en Joyanes Aguilar (2013) y García-Bermejo Giner (2008).
 
 ##### D. Principios de Diseño, SOLID y Seguridad por Diseño
 
@@ -312,18 +357,76 @@ src/main/java/
 
 ### Pruebas (evidencias de ejecución)
 
+A continuación se describe cada captura de pantalla esperada como evidencia de ejecución, organizada por flujo de la aplicación:
+
+#### Flujo 1 — Inicio de Sesión y Autenticación (RF-01)
+
+|  #  | Screenshot                               | Descripción                                                                                                                                                                                              |
+| :-: | :--------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|  1  | `ss_01_login_prompt.png`                 | Pantalla inicial del sistema: el programa solicita correo institucional y contraseña (oculta con `readPassword()`).                                                                                      |
+|  2  | `ss_02_login_credenciales_invalidas.png` | Intento de acceso con credenciales incorrectas: el sistema muestra mensaje de error y vuelve a solicitar login sin revelar si el correo o la contraseña fallaron (mitigación de enumeración de cuentas). |
+|  3  | `ss_03_login_exitoso_profesor.png`       | Autenticación exitosa con rol `PROFESOR`: se muestra el menú principal del docente con las opciones disponibles.                                                                                         |
+|  4  | `ss_04_login_exitoso_estudiante.png`     | Autenticación exitosa con rol `ESTUDIANTE`: se muestra el menú principal del alumno con sus opciones restringidas (RBAC).                                                                                |
+
+#### Flujo 2 — Menú y Perfil del Docente (RF-03, RF-04)
+
+|  #  | Screenshot                     | Descripción                                                                                                                                                                              |
+| :-: | :----------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|  5  | `ss_05_menu_profesor.png`      | Vista del menú interactivo del docente con las opciones: ver cursos, tomar asistencia, registrar notas y cerrar sesión.                                                                  |
+|  6  | `ss_06_ver_cursos_docente.png` | Listado de cursos asignados al docente: ciclo, bloque académico, semana lectiva actual, horarios, ambiente (salón/laboratorio) y nómina de estudiantes matriculados con código y correo. |
+
+#### Flujo 3 — Toma de Asistencia por Sesión (RF-04, RF-05, RF-06)
+
+|  #  | Screenshot                               | Descripción                                                                                                                                                                                    |
+| :-: | :--------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|  7  | `ss_07_seleccionar_curso_asistencia.png` | El docente elige uno de sus cursos asignados; después de la selección el sistema busca una sesión vinculada al curso para la fecha actual. Si no existe, informa que la asistencia no está habilitada para ese día.                                                     |
+|  8  | `ss_08_confirmacion_sesion.png`          | Confirmación para tomar asistencia del curso; la aplicación consulta la fecha determinista `LocalDate.now()` y utiliza las horas programadas de la sesión encontrada.                                                 |
+|  9  | `ss_09_registro_horas_por_alumno.png`    | Captura de horas asistidas alumno por alumno; se muestra el nombre y código de cada estudiante y se valida que el valor ingresado esté en $[0, \text{horasProgramadas}]$.                      |
+| 10  | `ss_10_entrada_invalida_horas.png`       | Intento de ingreso de un valor fuera de rango (p.ej. negativo o superior a las horas programadas): el sistema descarta la entrada y repite la solicitud sin lanzar excepción (RNF-02, RNF-03). |
+| 11  | `ss_11_asistencia_guardada.png`          | Confirmación de persistencia: mensaje de éxito tras guardar los registros de asistencia en `data/registro_de_asistencia.csv`.                                                                  |
+
+#### Flujo 4 — Registro de Notas (RF-10)
+
+|  #  | Screenshot                              | Descripción                                                                                                                                                                       |
+| :-: | :-------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 12  | `ss_12_menu_registrar_notas.png`        | Selección de indicador de logro y alumno para el ingreso de calificaciones vigesimales ($0.0$–$20.0$).                                                                            |
+| 13  | `ss_13_nota_bloqueada_inhabilitado.png` | Intento de registrar nota para un alumno con más del 30% de inasistencias: el sistema muestra el bloqueo normativo MINEDU y rechaza la operación (`puedeRegistrarNotas = false`). |
+| 14  | `ss_14_nota_registrada_exitosa.png`     | Registro exitoso de calificación para un alumno habilitado: confirmación con nombre del alumno, indicador, nota ingresada y fecha.                                                |
+
+#### Flujo 5 — Menú y Resumen de Asistencia del Estudiante (RF-08, RF-09, RF-11)
+
+|  #  | Screenshot                            | Descripción                                                                                                                                                         |
+| :-: | :------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 15  | `ss_15_menu_estudiante.png`           | Vista del menú interactivo del estudiante con las opciones disponibles según el rol (RBAC).                                                                         |
+| 16  | `ss_16_resumen_asistencia_normal.png` | Reporte analítico de asistencia por curso: sesiones dictadas, días asistidos, horas efectivas, horas faltadas y porcentaje de inasistencia. Estado: **Habilitado**. |
+| 17  | `ss_17_alerta_15_porciento.png`       | Reporte con alerta preventiva activa `[ALERTA: Límite de inasistencia superado]` al superar el 15% de inasistencias, sin llegar aún al umbral de inhabilitación.    |
+| 18  | `ss_18_inhabilitado_30_porciento.png` | Reporte con dictamen de inhabilitación normativa al superar el 30% de inasistencias: estado **Inhabilitado** y bloqueo de registro de notas confirmado.             |
+
+#### Flujo 6 — Suite de Pruebas Unitarias (RNF-10)
+
+|  #  | Screenshot                              | Descripción                                                                                                                   |
+| :-: | :-------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------- |
+| 19  | `ss_19_test_runner_ejecucion.png`       | Ejecución completa de `test.TestRunner`: salida en consola mostrando el avance de las 129 pruebas unitarias de caja blanca.   |
+| 20  | `ss_20_test_runner_resultado_final.png` | Resultado final de la suite: `129/129 pruebas pasadas` (tasa de aprobación del 100%) sin dependencias de frameworks externos. |
+
 ## Referencias
 
-- Connolly, T., & Begg, C. (2015). Database systems: A practical approach to design, implementation, and management (6th ed.). Pearson.
+- Connolly, T., & Begg, C. (2015). *Database systems: A practical approach to design, implementation, and management* (6th ed.). Pearson.
 
-- Elmasri, R., & Navathe, S. B. (2016). Fundamentals of database systems (7th ed.). Pearson.
+- Elmasri, R., & Navathe, S. B. (2016). *Fundamentals of database systems* (7th ed.). Pearson.
 
-- Ley N.° 30512. (2016, 2 de noviembre). Ley de institutos y escuelas de educación superior y de la carrera pública de sus docentes. Diario Oficial El Peruano. https://www.gob.pe/institucion/minedu/normas-legales/122557-30512
+- García-Bermejo Giner, J. R. (2008). *Programación estructurada en C*. Pearson Prentice Hall.
 
-- Ministerio de Educación [MINEDU]. (2021). Lineamientos académicos generales para los institutos de educación superior y escuelas de educación superior tecnológica. MINEDU.
+- Joyanes Aguilar, L. (2013). *Fundamentos generales de programación*. McGraw-Hill.
 
-- Pressman, R. S., & Maxim, B. R. (2025). Software engineering: A practitioner's approach (10th ed.). McGraw-Hill Education.
+- Ley N.° 30512. (2016, 2 de noviembre). Ley de institutos y escuelas de educación superior y de la carrera pública de sus docentes. *Diario Oficial El Peruano*. https://www.gob.pe/institucion/minedu/normas-legales/122557-30512
 
-- Stallings, W., & Brown, L. (2018). Computer security: Principles and practice (4th ed.). Pearson.
+- Ministerio de Educación [MINEDU]. (2021). *Lineamientos académicos generales para los institutos de educación superior y escuelas de educación superior tecnológica*. MINEDU.
 
-- Sommerville, I. (2019). Software engineering (10th ed.). Pearson.
+- Petersen, R. (2001). *Fundamentos de programación en Linux*. McGraw-Hill.
+
+- Pressman, R. S., & Maxim, B. R. (2025). *Software engineering: A practitioner's approach* (10th ed.). McGraw-Hill Education.
+
+- Stallings, W., & Brown, L. (2018). *Computer security: Principles and practice* (4th ed.). Pearson.
+
+- Sommerville, I. (2019). *Software engineering* (10th ed.). Pearson.
