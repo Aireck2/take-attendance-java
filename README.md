@@ -14,6 +14,7 @@ El sistema implementa una arquitectura limpia por capas (Separación de Responsa
 ### Autenticación y Roles
 - **Inicio de sesión real:** el acceso se valida con correo y contraseña contra `data/usuario.csv`; ya no se elige un usuario de una lista.
 - **Roles:** cada cuenta tiene el rol `PROFESOR` o `ESTUDIANTE`, y el rol determina el menú que se abre.
+- **Redirección explícita:** `Rol.menuSesion()` mapea el rol a su menú (`MenuSesion.PROFESOR`, `MenuSesion.ESTUDIANTE`); un rol sin menú asignado devuelve `MenuSesion.NINGUNO` y la aplicación avisa y cierra la sesión en vez de abrir el menú de otro rol.
 - **Contraseñas protegidas:** se almacenan con PBKDF2-HMAC-SHA256, sal aleatoria de 16 bytes y 210 000 iteraciones. Nunca se guarda texto plano.
 - **Un intento por acceso:** si las credenciales son incorrectas se muestra un mensaje genérico y se vuelve al menú principal; no hay contador de intentos.
 - **Contraseña oculta:** en una terminal interactiva se usa `System.console().readPassword()` para no mostrarla.
@@ -33,9 +34,10 @@ El sistema implementa una arquitectura limpia por capas (Separación de Responsa
 ## Lógica de Negocio y Reglas de Cálculo
 
 > [!IMPORTANT]
-> **Fórmula de Inasistencia:**  
-> El cálculo se realiza sobre la duración total del curso:
-> $$\text{Porcentaje de Faltas} = \frac{\text{Horas Dictadas} - \text{Horas Asistidas}}{\text{Duración en Días} \times \text{Horas por Sesión}} \times 100$$
+> **Fórmula de Inasistencia (alerta preventiva del 15%):**  
+> El cálculo se realiza sobre las horas ya dictadas a la fecha:
+> $$\text{Porcentaje de Faltas} = \frac{\text{Horas Dictadas} - \text{Horas Asistidas}}{\text{Horas Dictadas}} \times 100$$
+> **Horas Dictadas** son las horas programadas de las sesiones que ya tienen asistencia registrada: si el registro enlaza una sesión (`id_sesion`) se toman sus horas programadas y, en las filas legadas sin sesión, las horas por sesión del curso. Medir sobre lo ya dictado evita que la alerta se diluya con las horas que todavía no se han dictado.
 
 > [!WARNING]
 > **Límite de Inasistencia (`LIMITE_INASISTENCIA = 15.0%`):**  
@@ -108,6 +110,7 @@ El archivo [`docs/Index.mmd`](docs/Index.mmd) centraliza la arquitectura del sis
 - **Relaciones de Dominio (`models`):**
   - **Asociación directa:** `Estudiante --> EstadoEstudiante` (asociación tipada con la enumeración de estados).
   - **Credenciales y rol:** `Usuario --> Rol` (asociación tipada) y `Usuario ..> Profesor` / `Usuario ..> Estudiante` (referencia desacoplada vía `idReferencia`).
+  - **Rol y menú:** `Rol --> MenuSesion` (asociación tipada). `MenuSesion` enumera los menús que puede abrir una sesión (`PROFESOR`, `ESTUDIANTE`) más `NINGUNO`, que representa un rol sin menú asignado.
   - **Referencias por clave lógica:** `HorarioSeccion ..> Profesor` (asociación desacoplada vía `idProfesor`); `RegistroDeAsistencia ..> Matricula` (vía `idMatricula`).
   - **Trazabilidad de asistencia:** `RegistroDeAsistencia ..> Estudiante` (vía `idEstudiante`) y `RegistroDeAsistencia ..> Curso` (vía `idCurso`).
 

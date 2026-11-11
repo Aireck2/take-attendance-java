@@ -802,18 +802,43 @@ public class ServicioAcademico {
   }
 
   /**
-   * Calcula el porcentaje de inasistencia global con base en el total del curso:
-   * (horas dictadas hasta la fecha - horas asistidas) / (horas totales del curso) * 100.
+   * Horas que el estudiante debia asistir segun la sesion programada.
+   * Las filas legadas, que no enlazan sesion, usan las horas por sesion del curso.
    */
-  public double calcularPorcentajeFaltas(int horasDictadas, int horasAsistidas, int totalHorasCurso) {
-    if (totalHorasCurso <= 0) {
+  public int horasProgramadasDe(RegistroDeAsistencia registro, Curso curso) {
+    if (registro == null) {
+      return 0;
+    }
+    String idSesion = registro.getIdSesion();
+    if (idSesion != null && !idSesion.isEmpty()) {
+      SesionClase sesion = buscarSesion(idSesion);
+      if (sesion != null) {
+        return sesion.getHorasProgramadas();
+      }
+    }
+    return curso == null ? 0 : curso.getTotalHorasSesion();
+  }
+
+  /**
+   * Calcula el porcentaje de inasistencia preventiva sobre las horas ya dictadas:
+   * (horas dictadas - horas asistidas) / horas dictadas * 100.
+   *
+   * El denominador son las horas ya lectured a la fecha y no la duracion total
+   * del curso: medir sobre el curso completo diluye la alerta con las horas que
+   * aun no se han dictado y deja pasar inasistencias reales.
+   *
+   * La regla normativa del 30% no cambia: sigue usando las horas lectivas
+   * totales de la unidad didactica, en calcularPorcentajeInasistencia.
+   */
+  public double calcularPorcentajeFaltas(int horasDictadas, int horasAsistidas) {
+    if (horasDictadas <= 0) {
       return 0.0;
     }
     int horasNoAsistidas = horasDictadas - horasAsistidas;
     if (horasNoAsistidas < 0) {
       horasNoAsistidas = 0;
     }
-    return ((double) horasNoAsistidas / totalHorasCurso) * 100;
+    return ((double) horasNoAsistidas / horasDictadas) * 100;
   }
 
   /**

@@ -17,6 +17,7 @@ import models.EstadoPlan;
 import models.HorarioSeccion;
 import models.IndicadorLogro;
 import models.Matricula;
+import models.MenuSesion;
 import models.ModalidadDictado;
 import models.ModuloProfesional;
 import models.PeriodoAcademico;
@@ -49,6 +50,8 @@ public class TestRunner {
     probarHashDeContrasenas();
     probarLecturaDeUsuarios();
     probarInicioDeSesion();
+    probarRedireccionPorRol();
+    probarPorcentajeDeInasistencia();
     probarPerfilesVinculados();
     probarRegistroDeAsistencia();
     probarFundacionesAcademicas();
@@ -105,6 +108,50 @@ public class TestRunner {
     afirmar(auth.autenticar("carlos.mendoza@iestpchincha.edu.pe", "incorrecta") == null, "rechaza una contrasena incorrecta");
     afirmar(auth.autenticar("no.existe@iestpchincha.edu.pe", "Docente2026*") == null, "rechaza un correo desconocido");
     afirmar(auth.autenticar("", "") == null, "rechaza credenciales vacias");
+  }
+
+  private static void probarRedireccionPorRol() {
+    for (Rol rol : Rol.values()) {
+      afirmar(rol.menuSesion() != MenuSesion.NINGUNO,
+          "todo rol del enum tiene un menu asignado (rol " + rol + ")");
+    }
+    afirmar(Rol.PROFESOR.menuSesion() == MenuSesion.PROFESOR, "el rol PROFESOR abre el menu de profesor");
+    afirmar(Rol.ESTUDIANTE.menuSesion() == MenuSesion.ESTUDIANTE, "el rol ESTUDIANTE abre el menu de estudiante");
+
+    Usuario docente = new Usuario("USR-T1", "docente@test.pe", "hash", Rol.PROFESOR, "DOC-001", true);
+    Usuario alumno = new Usuario("USR-T2", "alumno@test.pe", "hash", Rol.ESTUDIANTE, "ALU-2024101", true);
+    afirmar(docente.getRol().menuSesion() == MenuSesion.PROFESOR, "el docente se redirige a su propio menu");
+    afirmar(alumno.getRol().menuSesion() == MenuSesion.ESTUDIANTE, "el alumno se redirige a su propio menu");
+  }
+
+  private static void probarPorcentajeDeInasistencia() {
+    ServicioAcademico servicio = new ServicioAcademico();
+
+    afirmar(servicio.calcularPorcentajeFaltas(10, 8) == 20.0,
+        "el porcentaje preventivo se mide sobre las horas ya dictadas");
+    afirmar(servicio.calcularPorcentajeFaltas(16, 16) == 0.0, "sin faltas no hay inasistencia que medir");
+    afirmar(servicio.calcularPorcentajeFaltas(0, 0) == 0.0, "sin horas dictadas el porcentaje es 0");
+    afirmar(servicio.calcularPorcentajeFaltas(10, 12) == 0.0,
+        "no reporta inasistencia negativa cuando se asiste mas de lo dictado");
+
+    Curso curso = servicio.listarCursos().stream()
+        .filter(c -> c.getIdCurso().equals("UD-SEGREDES")).findFirst().orElse(null);
+    Estudiante alumno = servicio.buscarEstudiante("ALU-2024101");
+    List<RegistroDeAsistencia> historial = servicio.historialEstudiante(alumno);
+
+    RegistroDeAsistencia conSesion = historial.stream()
+        .filter(r -> r.getIdSesion().equals("SES-SEGREDES-20260309")).findFirst().orElse(null);
+    afirmar(conSesion != null, "el alumno tiene un registro enlazado a una sesion");
+    afirmar(conSesion != null && servicio.horasProgramadasDe(conSesion, curso) == 2,
+        "usa las horas programadas de la sesion enlazada");
+    afirmar(conSesion != null && servicio.horasProgramadasDe(conSesion, curso) != curso.getTotalHorasSesion(),
+        "la sesion programada puede durar menos que las horas por sesion del curso");
+
+    RegistroDeAsistencia legado = historial.stream()
+        .filter(r -> r.getIdSesion().isEmpty()).findFirst().orElse(null);
+    afirmar(legado != null, "el alumno tiene una fila legada sin sesion enlazada");
+    afirmar(legado != null && servicio.horasProgramadasDe(legado, curso) == curso.getTotalHorasSesion(),
+        "la fila legada usa las horas por sesion del curso");
   }
 
   private static void probarPerfilesVinculados() {

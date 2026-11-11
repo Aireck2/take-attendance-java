@@ -10,7 +10,6 @@ import models.Curso;
 import models.Estudiante;
 import models.Profesor;
 import models.RegistroDeAsistencia;
-import models.Rol;
 import models.Usuario;
 import service.AutenticacionService;
 import service.ServicioAcademico;
@@ -23,11 +22,19 @@ import service.ServicioAcademico;
  * de negocio a la capa de servicio.
  */
 public class SistemaApp {
-  private static final Scanner scanner = new Scanner(System.in);
-  private static final ServicioAcademico servicio = new ServicioAcademico();
-  private static final AutenticacionService autenticacion = new AutenticacionService();
+  private final Scanner scanner = new Scanner(System.in);
+  private final ServicioAcademico servicio = new ServicioAcademico();
+  private final AutenticacionService autenticacion = new AutenticacionService();
 
   public static void main(String[] args) {
+    new SistemaApp().iniciar();
+  }
+
+  /**
+   * Bucle principal del menu. Solo main es estatico: la clase se instancia y
+   * sus atributos y metodos auxiliares pertenecen a la instancia.
+   */
+  public void iniciar() {
     int opcion = 0;
     do {
       System.out.println("\n======================================");
@@ -48,7 +55,7 @@ public class SistemaApp {
    * Solicita un número al usuario y devuelve la opción elegida.
    * Si la entrada no es numérica, descarta el token y vuelve a pedir.
    */
-  private static int leerOpcion(String mensaje) {
+  private int leerOpcion(String mensaje) {
     System.out.print(mensaje);
     while (!scanner.hasNextInt()) {
       scanner.next();
@@ -63,7 +70,7 @@ public class SistemaApp {
    * Pide correo y contraseña, valida las credenciales y abre el menú del rol.
    * Si las credenciales son incorrectas, vuelve al menú principal.
    */
-  private static void iniciarSesion() {
+  private void iniciarSesion() {
     System.out.println("\n--- INICIO DE SESIÓN ---");
     System.out.print("Correo: ");
     String correo = scanner.nextLine().trim();
@@ -76,22 +83,29 @@ public class SistemaApp {
     }
 
     System.out.println("Sesión iniciada como " + usuario.getRol() + ".");
-    if (usuario.getRol() == Rol.PROFESOR) {
-      Profesor profesor = servicio.buscarProfesor(usuario.getIdReferencia());
-      if (profesor == null) {
-        System.out.println("No se encontró el perfil del profesor asociado a la cuenta.");
+    switch (usuario.getRol().menuSesion()) {
+      case PROFESOR -> {
+        Profesor profesor = servicio.buscarProfesor(usuario.getIdReferencia());
+        if (profesor == null) {
+          System.out.println("No se encontró el perfil del profesor asociado a la cuenta.");
+          return;
+        }
+        System.out.println("Bienvenido, " + profesor.getNombreCompleto() + ".");
+        menuProfesor(profesor);
+      }
+      case ESTUDIANTE -> {
+        Estudiante estudiante = servicio.buscarEstudiante(usuario.getIdReferencia());
+        if (estudiante == null) {
+          System.out.println("No se encontró el perfil del estudiante asociado a la cuenta.");
+          return;
+        }
+        System.out.println("Bienvenido, " + estudiante.getNombreCompleto() + ".");
+        menuEstudiante(estudiante);
+      }
+      case NINGUNO -> {
+        System.out.println("El rol '" + usuario.getRol() + "' no tiene un menú asignado. Sesión cerrada.");
         return;
       }
-      System.out.println("Bienvenido, " + profesor.getNombreCompleto() + ".");
-      menuProfesor(profesor);
-    } else {
-      Estudiante estudiante = servicio.buscarEstudiante(usuario.getIdReferencia());
-      if (estudiante == null) {
-        System.out.println("No se encontró el perfil del estudiante asociado a la cuenta.");
-        return;
-      }
-      System.out.println("Bienvenido, " + estudiante.getNombreCompleto() + ".");
-      menuEstudiante(estudiante);
     }
     System.out.println("Sesión cerrada.");
   }
@@ -100,7 +114,7 @@ public class SistemaApp {
    * Lee la contraseña sin mostrarla cuando la terminal lo permite.
    * Si no hay consola interactiva (por ejemplo, entrada redirigida), usa el scanner.
    */
-  private static String leerContrasena(String mensaje) {
+  private String leerContrasena(String mensaje) {
     System.out.print(mensaje);
     Console console = System.console();
     if (console != null) {
@@ -113,7 +127,7 @@ public class SistemaApp {
   /**
    * Menu del profesor: ver cursos, ver perfil o cerrar sesión.
    */
-  private static void menuProfesor(Profesor profActual) {
+  private void menuProfesor(Profesor profActual) {
     int opcProf = 0;
     do {
       System.out.println("\n--- MENÚ PROFESOR: " + profActual.getNombreCompleto() + " ---");
@@ -134,7 +148,7 @@ public class SistemaApp {
   /**
    * Muestra los cursos del profesor, su detalle y permite tomar asistencia.
    */
-  private static void gestionarCursosProfesor(Profesor prof) {
+  private void gestionarCursosProfesor(Profesor prof) {
     List<Curso> misCursos = servicio.listarCursosProfesor(prof);
     if (misCursos.isEmpty()) {
       System.out.println("No tiene cursos asignados.");
@@ -187,7 +201,7 @@ public class SistemaApp {
   /**
    * Menu del estudiante: ver resumen de asistencia, ver perfil o cerrar sesión.
    */
-  private static void menuEstudiante(Estudiante estActual) {
+  private void menuEstudiante(Estudiante estActual) {
     int opcEst = 0;
     do {
       System.out.println("\n--- MENÚ ESTUDIANTE: " + estActual.getNombreCompleto() + " ---");
@@ -209,7 +223,7 @@ public class SistemaApp {
    * Muestra el resumen de asistencia del estudiante: dias, horas, porcentaje de
    * faltas y alerta.
    */
-  private static void mostrarResumenAsistenciaEstudiante(Estudiante est) {
+  private void mostrarResumenAsistenciaEstudiante(Estudiante est) {
     List<Curso> cursos = servicio.listarCursosEstudiante(est);
     List<RegistroDeAsistencia> misAsistencias = servicio.historialEstudiante(est);
 
@@ -226,7 +240,7 @@ public class SistemaApp {
       for (RegistroDeAsistencia reg : misAsistencias) {
         if (reg.getIdCurso().equals(curso.getIdCurso())) {
           clasesDictadas++;
-          horasDictadas += curso.getTotalHorasSesion();
+          horasDictadas += servicio.horasProgramadasDe(reg, curso);
           if (reg.isPresente()) {
             clasesAsistidas++;
             horasAsistidas += reg.getHorasAsistidas();
@@ -234,14 +248,14 @@ public class SistemaApp {
         }
       }
 
-      // Total de horas del curso: duracion del curso (dias) * horas por sesion
-      int totalHorasCurso = curso.getDuracionCurso() * curso.getTotalHorasSesion();
-
-      double porcentajeFaltas = servicio.calcularPorcentajeFaltas(horasDictadas, horasAsistidas, totalHorasCurso);
+      // El porcentaje se mide sobre las horas ya dictadas: usar la duracion
+      // total del curso diluiria la alerta con las horas que aun no se dictan.
+      double porcentajeFaltas = servicio.calcularPorcentajeFaltas(horasDictadas, horasAsistidas);
       System.out.println("Curso: " + curso.getNombreCurso());
       System.out.println(" - Dias asistidos: " + clasesAsistidas + " / " + clasesDictadas + " (de "
           + curso.getDuracionCurso() + " dias totales)");
-      System.out.println(" - Horas asistidas: " + horasAsistidas + " / " + horasDictadas + " hrs");
+      System.out.println(" - Horas asistidas: " + horasAsistidas + " / " + horasDictadas + " hrs (de "
+          + curso.getHorasLectivasTotales() + " hrs de la unidad)");
       System.out.printf(" - Porcentaje de inasistencia (Faltas): %.2f%%\n", porcentajeFaltas);
 
       if (porcentajeFaltas > ServicioAcademico.LIMITE_INASISTENCIA) {
