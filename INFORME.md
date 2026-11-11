@@ -126,43 +126,42 @@ A continuación se establecen las restricciones arquitectónicas, de validación
 
 ### ii. Análisis de Hardware
 
-Para el diseño, desarrollo, compilación y pruebas del sistema se utilizó como estación de trabajo principal una **MacBook Pro 13" (2020)** equipada con puertos de conectividad de alta velocidad **Thunderbolt 3 (USB-C)**. Gracias a su capacidad de procesamiento y bus de comunicación síncrona, este entorno permite ejecutar de forma determinista la suite de pruebas unitarias y soportar el cómputo intensivo requerido por las derivaciones criptográficas.
+Para el diseño, desarrollo, compilación y pruebas del sistema se utilizaron como estaciones de trabajo principales una **MacBook Pro 13" (2020)** y una laptop **HP ENVY 14**, esta última ejecutando **Windows 10 Pro (x64)**. Gracias a su capacidad de procesamiento multi-núcleo y soporte de memoria RAM de hasta 16 GB, ambos entornos permiten ejecutar de forma determinista la suite de pruebas unitarias y soportar el cómputo intensivo requerido por las derivaciones criptográficas.
 
-A nivel operativo, el aplicativo fue concebido bajo una arquitectura liviana y portable, permitiendo su despliegue tanto en la estación de desarrollo de referencia como en equipos institucionales con especificaciones estándar:
+A nivel operativo, el aplicativo fue concebido bajo una arquitectura liviana y portable, permitiendo su despliegue tanto en las estaciones de desarrollo y ejecución de referencia como en equipos institucionales con especificaciones estándar:
 
-| Recurso Físico                     | Estación de Desarrollo (MacBook Pro 13", 2020)                                      | Requisito Mínimo del Sistema                             |
-| :--------------------------------- | :---------------------------------------------------------------------------------- | :------------------------------------------------------- |
-| **Procesador (CPU)**               | Intel Core multi-núcleo / Apple Silicon a 2.0 GHz o superior (x86-64 / ARM64)       | 1 núcleo físico x86-64 o ARM64 a 1.5 GHz                 |
-| **Memoria Principal (RAM)**        | 8 GB / 16 GB LPDDR4X unificada                                                      | 512 MB dedicados a la JVM (Heap Memory)                  |
-| **Almacenamiento Secundario**      | Unidad de Estado Sólido (SSD NVMe) de alta velocidad conectada por bus interno PCIe | 100 MB libres en disco                                   |
-| **Puertos y Conectividad**         | Puertos Thunderbolt 3 (USB-C de hasta 40 Gbps)                                      | Puertos de comunicación estándar                         |
-| **Dispositivos de Entrada/Salida** | Teclado físico Magic Keyboard, trackpad Force Touch y pantalla Retina               | Teclado estándar y terminal interactiva con soporte ANSI |
-
----
+| Recurso Físico                     | Estación de Desarrollo / Ejecución 1 (MacBook Pro 13", 2020)                        | Estación de Desarrollo / Ejecución 2 (HP ENVY 14 Notebook PC) | Requisito Mínimo del Sistema                             |
+| ---------------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------- | -------------------------------------------------------- |
+| **Sistema Operativo**              | macOS (Apple)                                                                       | Windows 10 Pro 64-bit (v10.0.19045)                           | OS compatible con JVM / x86-64 o ARM64                   |
+| **Procesador (CPU)**               | Intel Core multi-núcleo / Apple Silicon a 2.0 GHz o superior (x86-64 / ARM64)       | Intel Core Family 6 Model 69 (x86-64) a ~1.70 GHz             | 1 núcleo físico x86-64 o ARM64 a 1.5 GHz                 |
+| **Memoria Principal (RAM)**        | 8 GB / 16 GB LPDDR4X unificada                                                      | 16 GB DDR3/DDR4 (16,314 MB)                                   | 512 MB dedicados a la JVM (Heap Memory)                  |
+| **Almacenamiento Secundario**      | Unidad de Estado Sólido (SSD NVMe) de alta velocidad conectada por bus interno PCIe | Unidad de Almacenamiento Secundario (HDD/SSD)                 | 100 MB libres en disco                                   |
+| **Puertos y Conectividad**         | Puertos Thunderbolt 3 (USB-C de hasta 40 Gbps)                                      | Adaptador Ethernet GbE Realtek, Wi-Fi 802.11n Broadcom        | Puertos de comunicación estándar                         |
+| **Dispositivos de Entrada/Salida** | Teclado físico Magic Keyboard, trackpad Force Touch y pantalla Retina               | Teclado físico estándar, touchpad integrado y pantalla HD     | Teclado estándar y terminal interactiva con soporte ANSI |
 
 ### iii. Análisis de Software
 
 #### 1. Stack Tecnológico, Runtime y Herramientas del Ecosistema
 
-El entorno de desarrollo, gestión de dependencias y ejecución del sistema se configuró íntegramente sobre herramientas especializadas bajo el sistema operativo **macOS Tahoe versión 26.7.3**, garantizando un entorno POSIX confiable y determinista:
+El entorno de desarrollo, gestión de dependencias y ejecución del sistema se estructuró de manera flexible para operar de forma multiplataforma, soportando tanto entornos UNIX avanzados (**macOS**) como estaciones basadas en **Windows 10 Pro**, garantizando en ambos casos un comportamiento determinista y robusto:
 
 A continuación se detalla el conjunto de herramientas y especificaciones técnicas que integran la cadena de ingeniería del software:
 
-| Componente                           | Especificación / Versión                                                                          |
-| :----------------------------------- | :------------------------------------------------------------------------------------------------ |
-| **Sistema Operativo**                | macOS Tahoe versión 26.7.3                                                                        |
-| **Lenguaje de Programación**         | Java Platform, Standard Edition 21 (Java SE 21 LTS)                                               |
-| **Entorno de Ejecución (JRE / JDK)** | Oracle GraalVM 21.0.9+7.1 (build 21.0.9+7-LTS-jvmci-23.1-b79)                                     |
-| **Gestor de SDKs y Versiones**       | SDKMAN! (_Software Development Kit Manager_)                                                      |
-| **Emulador de Terminal**             | Kitty (0.50.0)                                                                                    |
-| **Entorno de Desarrollo (IDE)**      | Visual Studio Code (VS Code 1.145.2)                                                              |
-| **Control de Versiones Local**       | Git (2.50.1)                                                                                      |
-| **Repositorio Remoto**               | GitHub                                                                                            |
-| **Paradigmas de Programación**       | Orientado a Objetos (POO), Procedimental, Estructurado, Imperativo-Modular y Seguridad por Diseño |
-| **Persistencia de Datos**            | Archivos planos CSV codificados en UTF-8                                                          |
-| **Criptografía de Credenciales**     | PBKDF2WithHmacSHA256 (`javax.crypto`, `SecureRandom`)                                             |
-| **Política de Dependencias**         | _Zero External Dependencies_                                                                      |
-| **Documentación y Modelado**         | Markdown (GFM) y diagramas Mermaid.js                                                             |
+| Componente                           | Especificación / Versión (Estación 1: macOS)                                                      | Especificación / Versión (Estación 2: HP ENVY / Windows)                                          |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| **Sistema Operativo**                | macOS Tahoe versión 26.7.3                                                                        | Windows 10 Pro 64-bit (Compilación 19045)                                                         |
+| **Lenguaje de Programación**         | Java Platform, Standard Edition 21 (Java SE 21 LTS)                                               | Java Platform, Standard Edition 17 (Java SE 17.0.8 LTS)                                           |
+| **Entorno de Ejecución (JRE / JDK)** | Oracle GraalVM 21.0.9+7.1 (build 21.0.9+7-LTS-jvmci-23.1-b79)                                     | Java HotSpot(TM) 64-Bit Server VM (build 17.0.8+9-LTS-211)                                        |
+| **Gestor de SDKs y Versiones**       | SDKMAN! (_Software Development Kit Manager_)                                                      | Entorno nativo / Variables de entorno del sistema                                                 |
+| **Emulador de Terminal**             | Kitty (0.50.0)                                                                                    | Símbolo del sistema (cmd.exe) / PowerShell                                                        |
+| **Entorno de Desarrollo (IDE)**      | Visual Studio Code (VS Code 1.145.2)                                                              | Visual Studio Code / Terminal Interactiva                                                         |
+| **Control de Versiones Local**       | Git (2.50.1)                                                                                      | Git para Windows                                                                                  |
+| **Repositorio Remoto**               | GitHub                                                                                            | GitHub                                                                                            |
+| **Paradigmas de Programación**       | Orientado a Objetos (POO), Procedimental, Estructurado, Imperativo-Modular y Seguridad por Diseño | Orientado a Objetos (POO), Procedimental, Estructurado, Imperativo-Modular y Seguridad por Diseño |
+| **Persistencia de Datos**            | Archivos planos CSV codificados en UTF-8                                                          | Archivos planos CSV codificados en UTF-8                                                          |
+| **Criptografía de Credenciales**     | PBKDF2WithHmacSHA256 (`javax.crypto`, `SecureRandom`)                                             | PBKDF2WithHmacSHA256 (`javax.crypto`, `SecureRandom`)                                             |
+| **Política de Dependencias**         | _Zero External Dependencies_                                                                      | _Zero External Dependencies_                                                                      |
+| **Documentación y Modelado**         | Markdown (GFM) y diagramas Mermaid.js                                                             | Markdown (GFM) y diagramas Mermaid.js                                                             |
 
 ---
 
@@ -256,289 +255,24 @@ El sistema implementa una **Arquitectura en Capas (Layered Architecture)** sigui
 5. **Capa de Dominio y Modelos (`models`):**  
    Contiene las 18 entidades y 10 enumeraciones fuertemente tipadas que modelan con exactitud el ecosistema del IESTP Chincha: `Carrera`, `PlanEstudios`, `ModuloProfesional`, `PeriodoAcademico`, `BloqueSeccion`, `Curso`, `SeccionCurso`, `HorarioSeccion`, `SesionClase`, `Salon`, `Profesor`, `Estudiante`, `Matricula`, `RegistroDeAsistencia`, `IndicadorLogro`, `RegistroNota`, `DerechoPago`, `ComprobantePago`, `Usuario`, y enumeraciones como `Rol`, `EstadoEstudiante`, `EstadoMatricula`, `Turno`, `ModalidadDictado`, etc.
 
-```mermaid
-graph TD
-    subgraph Pres["Capa de Presentación (CLI)"]
-        App["sistema.SistemaApp"]
-    end
-
-    subgraph Negocio["Capa de Servicios y Negocio"]
-        ServAca["service.ServicioAcademico"]
-        ServAuth["service.AutenticacionService"]
-    end
-
-    subgraph IO["Capa de Persistencia (I/O)"]
-        Manager["storage.ArchivoManager"]
-    end
-
-    subgraph Sec["Capa de Seguridad"]
-        Hasher["security.PasswordHasher"]
-    end
-
-    subgraph Dominio["Capa de Dominio (Modelos)"]
-        Models["Carrera, PlanEstudios, ModuloProfesional, Curso, SesionClase,<br/>RegistroDeAsistencia, Matricula, IndicadorLogro, RegistroNota, ..."]
-    end
-
-    App -->|delega operaciones de asistencia y notas| ServAca
-    App -->|autentica credenciales por consola| ServAuth
-    ServAuth -->|verifica hash PBKDF2| Hasher
-    ServAuth -->|lee catálogo de usuarios| Manager
-    ServAca -->|persiste y consulta 19 archivos CSV| Manager
-    ServAca -->|aplica reglas sobre| Dominio
-    Manager -->|hidrata y serializa entidades| Dominio
-```
+![Diagrama de flujo de la arquitectura por capas](./docs/arquitectura_proyecto_flowchart.svg)
 
 ##### B. Diagrama de Clases UML del Sistema
 
 El siguiente diagrama formaliza las clases principales de cada capa, sus miembros y las relaciones de asociación, dependencia y composición observadas en el repositorio:
 
-```mermaid
-classDiagram
-    direction TB
-
-    namespace sistema {
-        class SistemaApp {
-            -Scanner scanner$
-            -ServicioAcademico servicio$
-            -AutenticacionService autenticacion$
-            +main(args: String[])$ void
-            -leerOpcion(mensaje: String)$ int
-            -iniciarSesion()$ void
-            -leerContrasena(prompt: String)$ String
-            -menuProfesor(profActual: Profesor)$ void
-            -gestionarCursosProfesor(prof: Profesor)$ void
-            -menuEstudiante(estActual: Estudiante)$ void
-            -mostrarResumenAsistenciaEstudiante(est: Estudiante)$ void
-        }
-    }
-
-    namespace service {
-        class AutenticacionService {
-            -String HASH_FICTICIO$
-            +autenticar(correo: String, contrasena: String) Usuario
-            -buscarPorCorreo(correoNormalizado: String) Usuario
-        }
-        class ServicioAcademico {
-            +LIMITE_INASISTENCIA: double$ = 15.0
-            +LIMITE_INASISTENCIA_NORMATIVO: double$ = 30.0
-            +listarCursosProfesor(profesor: Profesor) List~Curso~
-            +listarEstudiantesCurso(curso: Curso) List~Estudiante~
-            +listarCursosEstudiante(estudiante: Estudiante) List~Curso~
-            +historialEstudiante(estudiante: Estudiante) List~RegistroDeAsistencia~
-            +crearRegistroSesion(sesion: SesionClase, curso: Curso, estudiante: Estudiante, horasAsistidas: int, idMatricula: String) RegistroDeAsistencia
-            +registrarAsistenciaSesion(idSesion: String, idEstudiante: String, horasAsistidas: int) RegistroDeAsistencia
-            +guardarAsistencias(registros: List~RegistroDeAsistencia~) void
-            +calcularHorasFaltadas(sesiones: List~SesionClase~, registros: List~RegistroDeAsistencia~) int
-            +horasFaltadasUnidadDidactica(matricula: Matricula, curso: Curso) int
-            +calcularPorcentajeInasistencia(horasFaltadas: int, horasLectivasTotales: int) double
-            +calcularPorcentajeFaltas(horasDictadas: int, horasAsistidas: int, totalHorasCurso: int) double
-            +estaInhabilitadoPorInasistencia(horasFaltadas: int, horasLectivasTotales: int) boolean
-            +puedeRegistrarNotas(matricula: Matricula, curso: Curso) boolean
-            +puedeRegistrarNota(matricula: Matricula, curso: Curso, sesiones: List~SesionClase~, registros: List~RegistroDeAsistencia~) boolean
-            +registrarNota(nota: RegistroNota) void
-        }
-    }
-
-    namespace security {
-        class PasswordHasher {
-            -ALGORITMO: String$ = "PBKDF2WithHmacSHA256"
-            -PREFIJO: String$ = "pbkdf2_sha256"
-            -ITERACIONES: int$ = 210000
-            -LONGITUD_CLAVE_BITS: int$ = 256
-            -LONGITUD_SAL_BYTES: int$ = 16
-            +hash(contrasena: String)$ String
-            +verificar(contrasena: String, almacenado: String)$ boolean
-            -derivar(contrasena: String, sal: byte[], iteraciones: int)$ byte[]
-        }
-    }
-
-    namespace storage {
-        class ArchivoManager {
-            -CARPETA_DATOS: String$ = "data"
-            +leerProfesores()$ List~Profesor~
-            +leerEstudiantes()$ List~Estudiante~
-            +leerUsuarios()$ List~Usuario~
-            +leerCursos()$ List~Curso~
-            +leerSesiones()$ List~SesionClase~
-            +leerMatriculas()$ List~Matricula~
-            +guardarMatriculas(matriculas: List~Matricula~)$ void
-            +leerAsistencias()$ List~RegistroDeAsistencia~
-            +guardarAsistencias(asistencias: List~RegistroDeAsistencia~)$ void
-            +leerIndicadores()$ List~IndicadorLogro~
-            +leerNotas()$ List~RegistroNota~
-            +guardarNotas(notas: List~RegistroNota~)$ void
-        }
-    }
-
-    namespace models {
-        class Carrera {
-            -String idCarrera
-            -String nombre
-            -String tipo
-            +getIdCarrera() String
-            +getNombre() String
-        }
-        class PlanEstudios {
-            -String idPlan
-            -String idCarrera
-            -String codigo
-            -EstadoPlan estado
-        }
-        class ModuloProfesional {
-            -String idModulo
-            -String idPlan
-            -String nombre
-        }
-        class Curso {
-            -String idCurso
-            -String nombreCurso
-            -int totalHorasSesion
-            -int duracionCurso
-            -int creditos
-            -int horasTeoricas
-            -int horasPracticas
-            +getHorasLectivasTotales() int
-            +getTotalHorasSesion() int
-            +getDuracionCurso() int
-        }
-        class SeccionCurso {
-            -String idSeccion
-            -String idBloque
-            -String idCurso
-            -ModalidadDictado modalidad
-        }
-        class SesionClase {
-            -String idSesion
-            -String idHorario
-            -String fecha
-            -int horasProgramadas
-            -String idProfesor
-            -String idSalon
-            +getIdSesion() String
-            +getHorasProgramadas() int
-            +getFecha() String
-        }
-        class RegistroDeAsistencia {
-            -String idAsistencia
-            -String idCurso
-            -String idEstudiante
-            -String fecha
-            -int horasAsistidas
-            -boolean presente
-            -String idSesion
-            -String idMatricula
-            +getHorasAsistidas() int
-            +isPresente() boolean
-            +getIdSesion() String
-            +getIdMatricula() String
-        }
-        class Matricula {
-            -String idMatricula
-            -String idEstudiante
-            -String idBloque
-            -String fechaMatricula
-            -EstadoMatricula estado
-            +getIdMatricula() String
-            +getIdEstudiante() String
-            +getIdBloque() String
-            +getEstado() EstadoMatricula
-        }
-        class IndicadorLogro {
-            -String idIndicador
-            -String idSeccion
-            -String nombre
-            -int peso
-            +getIdIndicador() String
-            +getNombre() String
-        }
-        class RegistroNota {
-            -String idRegistroNota
-            -String idIndicador
-            -String idEstudiante
-            -int nota
-            -String fecha
-            +getNota() int
-            +getIdIndicador() String
-        }
-        class Profesor {
-            -String id
-            -String nombre
-            -String apellido
-            -String correo
-            -String especialidad
-            +getNombreCompleto() String
-            +mostrarPerfil() void
-        }
-        class Estudiante {
-            -String id
-            -String codigo
-            -String nombre
-            -String apellido
-            -String correo
-            -String escuelaProfesional
-            -EstadoEstudiante estado
-            +getNombreCompleto() String
-            +getCodigo() String
-            +mostrarPerfil() void
-        }
-        class Usuario {
-            -String id
-            -String correo
-            -String hashContrasena
-            -Rol rol
-            -String idReferencia
-            -boolean activo
-            +getRol() Rol
-            +isActivo() boolean
-            +getIdReferencia() String
-        }
-        class Rol {
-            <<enumeration>>
-            PROFESOR
-            ESTUDIANTE
-        }
-        class EstadoMatricula {
-            <<enumeration>>
-            ACTIVA
-            RETIRADA
-            COMPLETADA
-        }
-        class EstadoEstudiante {
-            <<enumeration>>
-            REGULAR
-            SUSPENDIDO
-            RESERVA_MATRICULA
-        }
-    }
-
-    SistemaApp --> ServicioAcademico : delega operaciones
-    SistemaApp --> AutenticacionService : delega inicio de sesión
-    AutenticacionService ..> PasswordHasher : verifica derivación criptográfica
-    AutenticacionService ..> ArchivoManager : lee usuarios
-    ServicioAcademico ..> ArchivoManager : persiste y consulta registros
-    ServicioAcademico ..> Curso : valida carga lectiva
-    ServicioAcademico ..> RegistroDeAsistencia : procesa inasistencias
-    ServicioAcademico ..> Matricula : verifica condición activa
-    ServicioAcademico ..> RegistroNota : valida y asienta evaluación
-    Usuario --> Rol : tipado de permisos
-    Curso --> ModuloProfesional : pertenece a
-    ModuloProfesional --> PlanEstudios : compone
-    PlanEstudios --> Carrera : pertenece a
-    SeccionCurso --> Curso : apertura de
-    SesionClase ..> RegistroDeAsistencia : referencia horaria
-    Matricula --> RegistroDeAsistencia : vincula por idMatricula
-    Matricula ..> Estudiante : asocia
-    RegistroNota --> IndicadorLogro : evalúa
-    RegistroNota ..> Estudiante : califica
-```
+![Diagrama de clase de todo el proyecto](./docs/proyecto_classDiagram.svg)
 
 ##### C. Diagrama de flujo de la aplicacion
 
 - Diagrama de flujo general de la aplicación de terminal (Inicio de sesion)
+  ![Diagrama de flujo general de la aplicación](./docs/flujo_inicio_sesion.svg)
 
 - Diagrama de flujo de la aplicación de terminal (Docente)
+  ![Diagrama de flujo docente](./docs/flujo_docente.svg)
 
 - Diagrama de flujo de la aplicación de terminal (Alumno)
+  ![Diagrama de flujo docente](./docs/flujo_alumno.svg)
 
 ##### D. Principios de Diseño, SOLID y Seguridad por Diseño
 
