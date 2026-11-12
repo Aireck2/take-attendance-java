@@ -66,6 +66,7 @@ public class TestRunner {
     probarOfertaAcademica();
     probarDistribucionNormativaDeHoras();
     probarMatriculaYReglaNormativa();
+    probarProgramacionDelPeriodoActual();
     probarEvaluacionYFinanzas();
     probarCursosDeProfesor();
     probarDetalleDeCursoAsignado();
@@ -302,7 +303,7 @@ public class TestRunner {
     afirmar(servicio.listarHorariosSeccion("SEC-SEGREDES-3N").size() == 2, "filtra franjas por seccion");
 
     List<SesionClase> sesiones = servicio.listarSesiones();
-    afirmar(sesiones.size() == 17, "lee las sesiones de clase vinculadas a franjas");
+    afirmar(sesiones.size() == 79, "lee las sesiones de clase vinculadas a franjas");
     SesionClase ses1 = sesiones.stream().filter(s -> s.getIdSesion().equals("SES-SEGREDES-20260309")).findFirst()
         .orElse(null);
     afirmar(ses1 != null && ses1.getIdHorario().equals("SLOT-SEGREDES-01")
@@ -336,6 +337,28 @@ public class TestRunner {
         "toda franja referencia un ambiente existente");
     afirmar(sesiones.stream().allMatch(s -> idsSalon.contains(s.getIdSalon())),
         "toda sesion referencia un ambiente existente");
+  }
+
+  private static void probarProgramacionDelPeriodoActual() {
+    ServicioAcademico servicio = new ServicioAcademico();
+    List<String> idsHorarios = List.of("SLOT-ETHHACK-4N-01", "SLOT-ETHHACK-4N-02",
+        "SLOT-SEG-CLOUD-01", "SLOT-SEG-CLOUD-02");
+    List<SesionClase> sesionesPeriodo = servicio.listarSesiones().stream()
+        .filter(s -> idsHorarios.contains(s.getIdHorario())).toList();
+    afirmar(sesionesPeriodo.size() == 64, "cada franja solicitada tiene 16 sesiones lectivas");
+
+    List<RegistroDeAsistencia> registros = ArchivoManager.leerTodasAsistencias().stream()
+        .filter(r -> sesionesPeriodo.stream().anyMatch(s -> s.getIdSesion().equals(r.getIdSesion())))
+        .toList();
+    afirmar(registros.size() == 177, "hay asistencia para los alumnos en cada sesion ya ocurrida");
+    afirmar(registros.stream().map(r -> r.getIdSesion() + ":" + r.getIdEstudiante()).distinct().count()
+        == registros.size(), "no duplica la asistencia de un alumno en una misma sesion");
+    afirmar(registros.stream().allMatch(r -> !r.getIdAsistencia().isBlank()
+        && !r.getIdEstudiante().isBlank() && !r.getFecha().isBlank()
+        && (!r.isPresente() || r.getHorasAsistidas() > 0)),
+        "los registros ficticios de asistencia tienen datos completos y validos");
+    afirmar(registros.stream().allMatch(r -> LocalDate.parse(r.getFecha()).compareTo(LocalDate.now()) <= 0),
+        "no se registra asistencia para sesiones futuras");
   }
 
   private static void probarDistribucionNormativaDeHoras() {
@@ -480,7 +503,7 @@ public class TestRunner {
     ServicioAcademico servicio = new ServicioAcademico();
 
     List<Matricula> matriculas = servicio.listarMatriculas();
-    afirmar(matriculas.size() == 9, "lee las matriculas sembradas (encontradas: " + matriculas.size() + ")");
+    afirmar(matriculas.size() == 10, "lee las matriculas sembradas (encontradas: " + matriculas.size() + ")");
     Matricula m1 = servicio.buscarMatricula("ALU-2024101", "BLQ-APSTI-3N");
     afirmar(m1 != null && m1.getIdMatricula().equals("MAT-20261-001"),
         "resuelve la matricula activa del estudiante");
@@ -723,7 +746,7 @@ public class TestRunner {
     afirmar(sesionesManana.size() == 1 && sesionesManana.get(0).getIdProfesor().equals("DOC-001")
         && sesionesManana.get(0).getHorasProgramadas() == 2,
         "Carlos tiene una sesion de Seguridad de Servicios Cloud disponible manana para tomar asistencia");
-    afirmar(servicio.listarEstudiantesSesion("SES-SEG-CLOUD-20261112").size() == 3,
+    afirmar(servicio.listarEstudiantesSesion("SES-SEG-CLOUD-20261112").size() == 4,
         "la sesion de manana resuelve los alumnos activos matriculados en el bloque de cuarto ciclo");
     Curso ethicalHacking = servicio.listarCursos().stream()
         .filter(c -> c.getIdCurso().equals("UD-ETHHACK")).findFirst().orElse(null);
@@ -743,7 +766,7 @@ public class TestRunner {
     afirmar(curso != null && servicio.calcularSemanaActualCurso(periodo, LocalDate.parse("2026-11-10")) == 15,
         "el curso nuevo muestra la semana vigente 15 de 16 en noviembre");
     List<Estudiante> alumnos = servicio.listarEstudiantesCurso(curso);
-    afirmar(alumnos.size() == 3, "la nueva seccion tiene una nomina de ejemplo propia");
+    afirmar(alumnos.size() == 4, "la nueva seccion incluye los cuatro alumnos matriculados");
   }
 
   private static void probarMenuDelCursoDelPeriodoActual() {
@@ -762,6 +785,7 @@ public class TestRunner {
     }
 
     String salida = salidaCapturada.toString(StandardCharsets.UTF_8);
+    String correoAlumnaDemo = new ServicioAcademico().buscarEstudiante("ALU-2026101").getCorreo();
     afirmar(salida.contains(" - Semana actual:"),
         "el detalle del curso actual muestra el indicador de semana del periodo");
     afirmar(salida.contains("Horas lectivas totales: 64 hrs"),
@@ -770,7 +794,7 @@ public class TestRunner {
         && salida.contains(" - Bloque de curso: BLQ-APSTI-4N"),
         "el detalle vincula la oferta vigente con su ciclo y bloque nuevos");
     afirmar(salida.contains("Lucía Castañeda") && salida.contains("Código: U2026101")
-        && salida.contains("Correo: lucia.castaneda@sample.invalid"),
+        && salida.contains("Correo: " + correoAlumnaDemo),
         "el detalle muestra los datos de contacto de un alumno de la nueva cohorte");
   }
 
@@ -887,13 +911,14 @@ public class TestRunner {
 
     Estudiante erick = servicio.buscarEstudiante("ALU-2024101");
     List<Curso> cursosErick = servicio.listarCursosEstudiante(erick);
-    afirmar(cursosErick.size() == 3, "el bloque BLQ-APSTI-3N aporta sus tres secciones");
+    afirmar(cursosErick.size() == 4, "las matriculas de Erick aportan cursos de ambos periodos");
     afirmar(cursosErick.stream().map(Curso::getIdCurso).distinct().count() == cursosErick.size(),
         "no duplica cursos del alumno");
     afirmar(cursosErick.stream().anyMatch(c -> c.getIdCurso().equals("UD-SEGREDES"))
         && cursosErick.stream().anyMatch(c -> c.getIdCurso().equals("UD-ETHHACK"))
-        && cursosErick.stream().anyMatch(c -> c.getIdCurso().equals("UD-ROUTING")),
-        "incluye las unidades didacticas del bloque");
+        && cursosErick.stream().anyMatch(c -> c.getIdCurso().equals("UD-ROUTING"))
+        && cursosErick.stream().anyMatch(c -> c.getIdCurso().equals("UD-SEG-CLOUD")),
+        "incluye las unidades didacticas de sus bloques matriculados");
 
     Estudiante sinMatricula = new Estudiante("ALU-9999", "U9999", "Sin", "Matricula", "70009999",
         "sin.matricula@iestpchincha.edu.pe", "Sistemas", EstadoEstudiante.REGULAR);
