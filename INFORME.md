@@ -335,25 +335,161 @@ La concepción arquitectónica del software responde a principios y patrones con
 
 #### Implementación
 
-##### Estructura de Paquetes del Repositorio
+Esta sección presenta los componentes principales y fragmentos representativos del código. La implementación real se encuentra en [`src/main/java/`](src/main/java/); los ejemplos se han abreviado para concentrarse en las responsabilidades y los puntos de integración, sin reproducir archivos completos.
 
-El código fuente del sistema está estructurado bajo [`src/main/java/`](src/main/java/):
+##### Organización y flujo entre capas
 
+El sistema es una aplicación de consola Java organizada por paquetes. `SistemaApp` recibe las acciones del usuario y coordina los casos de uso; los servicios resuelven autenticación y reglas académicas; `ArchivoManager` carga y guarda los datos; `models` define las entidades y enumeraciones compartidas. `PasswordHasher` encapsula la derivación y verificación de contraseñas.
+
+| Paquete / componente | Responsabilidad | Integración principal |
+| --- | --- | --- |
+| `models` | Entidades como `Usuario`, `Curso`, `SesionClase`, `Matricula` y `RegistroDeAsistencia`, más enumeraciones del dominio. | Son entradas y resultados de los servicios y de la persistencia. |
+| `security.PasswordHasher` | Generación y verificación de hashes PBKDF2-HMAC-SHA256. | Lo utiliza `AutenticacionService`; no accede a archivos ni presenta menús. |
+| `storage.ArchivoManager` | Lectura y escritura de los catálogos y registros CSV en `data/`. | Lo invocan los servicios para obtener o persistir entidades. |
+| `service.AutenticacionService` | Normaliza el correo y autentica cuentas activas. | Consulta usuarios en `ArchivoManager` y verifica credenciales mediante `PasswordHasher`. |
+| `service.ServicioAcademico` | Consultas académicas y reglas de asistencia, matrícula e inhabilitación. | La interfaz solicita operaciones; el servicio coordina modelos y persistencia. |
+| `sistema.SistemaApp` | Inicio, menús por rol, lectura de entradas y presentación de resultados. | Delega las operaciones a `AutenticacionService` y `ServicioAcademico`. |
+
+El recorrido típico es: entrada por consola → servicio de aplicación → modelos y persistencia → resultado presentado por consola. Así, la interfaz no contiene las reglas centrales del dominio.
+
+##### Interfaz de consola y orquestación
+
+`SistemaApp` crea los servicios, presenta el menú inicial y delega el inicio de sesión. La contraseña se lee sin eco cuando existe una consola interactiva; la lógica de autenticación queda fuera de esta clase.
+
+```java
+public class SistemaApp {
+  private final Scanner scanner = new Scanner(System.in);
+  private final ServicioAcademico servicio = new ServicioAcademico();
+  private final AutenticacionService autenticacion = new AutenticacionService();
+
+  public static void main(String[] args) {
+    new SistemaApp().iniciar();
+  }
+
+  private String leerContrasena(String mensaje) {
+    System.out.print(mensaje);
+    Console console = System.console();
+    if (console != null) {
+      char[] caracteres = console.readPassword();
+      return caracteres == null ? "" : new String(caracteres);
+    }
+    // Alternativa para ejecución sin TTY, por ejemplo, pruebas o entrada redirigida.
+    return scanner.nextLine();
+  }
+}
 ```
-src/main/java/
-├── models/         # Entidades del dominio, enumeraciones y relaciones jerárquicas
-│   ├── BloqueSeccion.java, Carrera.java, ComprobantePago.java, Curso.java, ...
-│   └── Rol.java, EstadoEstudiante.java, ModalidadDictado.java, Turno.java, ...
-├── security/       # Derivación y validación de credenciales criptográficas
-│   └── PasswordHasher.java
-├── storage/        # Capa de serialización, deserialización y resiliencia CSV
-│   └── ArchivoManager.java
-├── service/        # Lógica de negocio, reglas normativas y autenticación
-│   ├── AutenticacionService.java
-│   └── ServicioAcademico.java
-└── sistema/        # Orquestación de menús, captura de entradas y presentación CLI
-    └── SistemaApp.java
+
+Una vez autenticado el usuario, la aplicación determina el menú según su rol y obtiene el perfil asociado. Se omiten los métodos completos de menús y reportes, que contienen principalmente presentación y navegación.
+
+##### Seguridad y autenticación
+
+`PasswordHasher` genera una sal aleatoria por contraseña y guarda el resultado en un formato compuesto por algoritmo, iteraciones, sal y hash. Al verificar, deriva nuevamente la clave y compara los bytes con `MessageDigest.isEqual`.
+
+```java
+private static final String ALGORITMO = "PBKDF2WithHmacSHA256";
+private static final int ITERACIONES = 210_000;
+private static final int LONGITUD_CLAVE_BITS = 256;
+private static final int LONGITUD_SAL_BYTES = 16;
+
+public static String hash(String contrasena) {
+  byte[] sal = new byte[LONGITUD_SAL_BYTES];
+  RANDOM.nextBytes(sal);
+  byte[] derivada = derivar(contrasena, sal, ITERACIONES);
+  return PREFIJO + "$" + ITERACIONES + "$"
+      + Base64.getEncoder().encodeToString(sal) + "$"
+      + Base64.getEncoder().encodeToString(derivada);
+}
+
+public static boolean verificar(String contrasena, String almacenado) {
+  // El método también valida el formato y maneja entradas nulas o inválidas.
+  String[] partes = almacenado.split("\\$");
+  int iteraciones = Integer.parseInt(partes[1]);
+  byte[] sal = Base64.getDecoder().decode(partes[2]);
+  byte[] esperada = Base64.getDecoder().decode(partes[3]);
+  byte[] calculada = derivar(contrasena, sal, iteraciones);
+  return MessageDigest.isEqual(esperada, calculada);
+}
 ```
+
+El fragmento de verificación se ha reducido: el archivo real valida `null`, el prefijo y la cantidad de campos, captura formatos Base64/números inválidos y limpia el `PBEKeySpec` en un bloque `finally`. `AutenticacionService` normaliza el correo con `Locale.ROOT`, rechaza cuentas inactivas y ejecuta una verificación ficticia cuando no encuentra la cuenta para reducir diferencias observables entre ambos casos.
+
+##### Servicios y reglas académicas
+
+`ServicioAcademico` es el punto de coordinación para registrar asistencia. Primero resuelve la sesión, la sección, el curso y al estudiante; exige una matrícula para el bloque de esa sesión y luego crea el registro con las horas acotadas a la duración programada.
+
+```java
+public RegistroDeAsistencia crearRegistroSesion(
+    SesionClase sesion, Curso curso, Estudiante estudiante,
+    int horasAsistidas, String idMatricula) {
+  if (sesion == null || curso == null || estudiante == null) {
+    return null;
+  }
+  int horasValidas = Math.max(0,
+      Math.min(horasAsistidas, sesion.getHorasProgramadas()));
+  boolean presente = horasValidas > 0;
+  return new RegistroDeAsistencia(null, curso.getIdCurso(), estudiante.getId(),
+      sesion.getFecha(), horasValidas, presente, sesion.getIdSesion(), idMatricula);
+}
+```
+
+La selección de sesión y la validación de matrícula se realizan en otros métodos del mismo servicio. Para los resúmenes, el servicio suma faltas de sesiones que ya tienen registro; las sesiones sin asistencia registrada no se contabilizan como dictadas. También centraliza el cálculo del porcentaje y la regla que determina si una matrícula puede registrar notas.
+
+##### Modelos del dominio
+
+Los modelos representan los conceptos académicos con campos tipados y relaciones mediante identificadores. Por ejemplo, `RegistroDeAsistencia` conserva curso, estudiante, fecha, horas, sesión y matrícula. El método `toCsv()` ofrece la representación utilizada por la persistencia.
+
+```java
+public RegistroDeAsistencia(String idAsistencia, String idCurso,
+    String idEstudiante, String fecha, int horasAsistidas,
+    boolean presente, String idSesion, String idMatricula) {
+  this.idAsistencia = idAsistencia;
+  this.idCurso = idCurso;
+  this.idEstudiante = idEstudiante;
+  this.fecha = fecha;
+  this.horasAsistidas = horasAsistidas;
+  this.presente = presente;
+  this.idSesion = idSesion == null ? "" : idSesion;
+  this.idMatricula = idMatricula == null ? "" : idMatricula;
+}
+
+public String toCsv() {
+  return idAsistencia + "," + idCurso + "," + idEstudiante + "," + fecha
+      + "," + horasAsistidas + "," + (presente ? 1 : 0)
+      + "," + idSesion + "," + idMatricula;
+}
+```
+
+Se omiten getters, constructores compatibles con registros anteriores y el resto de modelos por ser repetitivos; el árbol de paquetes y los archivos fuente enlazados permiten consultar las definiciones completas.
+
+##### Persistencia en archivos CSV
+
+`ArchivoManager` concentra el acceso a los archivos en `data/`. Los lectores reconstruyen objetos a partir de las filas y contemplan versiones históricas de algunos esquemas. Para asistencia, las columnas opcionales de sesión y matrícula permiten leer registros antiguos que solo contienen las columnas originales.
+
+```java
+public static List<RegistroDeAsistencia> leerTodasAsistencias() {
+  List<RegistroDeAsistencia> lista = new ArrayList<>();
+  try (BufferedReader br = new BufferedReader(
+      new FileReader(CARPETA_DATOS + "/registro_de_asistencia.csv"))) {
+    String linea = br.readLine(); // encabezado
+    while ((linea = br.readLine()) != null) {
+      if (linea.isBlank()) continue;
+      String[] p = linea.split(",", -1);
+      if (p.length >= 6) {
+        String idSesion = p.length >= 7 ? p[6].trim() : "";
+        String idMatricula = p.length >= 8 ? p[7].trim() : "";
+        lista.add(new RegistroDeAsistencia(p[0].trim(), p[1].trim(), p[2].trim(),
+            p[3].trim(), Integer.parseInt(p[4].trim()), esPresente(p[5].trim()),
+            idSesion, idMatricula));
+      }
+    }
+  } catch (IOException e) {
+    e.printStackTrace();
+  }
+  return lista;
+}
+```
+
+El ejemplo se limita al lector de asistencia; el archivo completo también implementa lectores y escritores para usuarios, cursos, matrículas, notas y otros catálogos. La escritura de asistencias añade las filas serializadas mediante `RegistroDeAsistencia.toCsv()`.
 
 ### Pruebas (evidencias de ejecución)
 
