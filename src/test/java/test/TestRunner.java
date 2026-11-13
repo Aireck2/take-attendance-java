@@ -67,6 +67,7 @@ public class TestRunner {
     probarDistribucionNormativaDeHoras();
     probarMatriculaYReglaNormativa();
     probarProgramacionDelPeriodoActual();
+    probarSesionDemoParaViernes();
     probarEvaluacionYFinanzas();
     probarCursosDeProfesor();
     probarDetalleDeCursoAsignado();
@@ -74,6 +75,7 @@ public class TestRunner {
     probarMenuDelCursoDelPeriodoActual();
     probarSemanaActualDelCurso();
     probarListadoConDetalleDeCursosYAlumnos();
+    probarResumenEstudianteSoloPeriodoActivo();
     probarNominaDesdeMatricula();
     probarDatasetEjemploInstitucional();
 
@@ -303,7 +305,7 @@ public class TestRunner {
     afirmar(servicio.listarHorariosSeccion("SEC-SEGREDES-3N").size() == 2, "filtra franjas por seccion");
 
     List<SesionClase> sesiones = servicio.listarSesiones();
-    afirmar(sesiones.size() == 79, "lee las sesiones de clase vinculadas a franjas");
+    afirmar(sesiones.size() == 80, "lee las sesiones de clase vinculadas a franjas");
     SesionClase ses1 = sesiones.stream().filter(s -> s.getIdSesion().equals("SES-SEGREDES-20260309")).findFirst()
         .orElse(null);
     afirmar(ses1 != null && ses1.getIdHorario().equals("SLOT-SEGREDES-01")
@@ -344,7 +346,8 @@ public class TestRunner {
     List<String> idsHorarios = List.of("SLOT-ETHHACK-4N-01", "SLOT-ETHHACK-4N-02",
         "SLOT-SEG-CLOUD-01", "SLOT-SEG-CLOUD-02");
     List<SesionClase> sesionesPeriodo = servicio.listarSesiones().stream()
-        .filter(s -> idsHorarios.contains(s.getIdHorario())).toList();
+        .filter(s -> idsHorarios.contains(s.getIdHorario()))
+        .filter(s -> !s.getIdSesion().equals("SES-SEG-CLOUD-DEMO-20261113")).toList();
     afirmar(sesionesPeriodo.size() == 64, "cada franja solicitada tiene 16 sesiones lectivas");
 
     List<RegistroDeAsistencia> registros = ArchivoManager.leerTodasAsistencias().stream()
@@ -359,6 +362,27 @@ public class TestRunner {
         "los registros ficticios de asistencia tienen datos completos y validos");
     afirmar(registros.stream().allMatch(r -> LocalDate.parse(r.getFecha()).compareTo(LocalDate.now()) <= 0),
         "no se registra asistencia para sesiones futuras");
+  }
+
+  private static void probarSesionDemoParaViernes() {
+    ServicioAcademico servicio = new ServicioAcademico();
+    Curso cloud = servicio.listarCursos().stream()
+        .filter(curso -> curso.getIdCurso().equals("UD-SEG-CLOUD")).findFirst().orElse(null);
+    List<SesionClase> sesiones = servicio.listarSesionesCursoEnFecha(cloud, "2026-11-13");
+    afirmar(sesiones.size() == 1, "la demo habilita una sesión cloud para el viernes");
+    if (sesiones.size() != 1) {
+      return;
+    }
+
+    SesionClase sesion = sesiones.get(0);
+    HorarioSeccion horario = servicio.listarHorarios().stream()
+        .filter(actual -> actual.getIdHorario().equals(sesion.getIdHorario())).findFirst().orElse(null);
+    afirmar(horario != null && horario.getIdHorario().equals("SLOT-SEG-CLOUD-01")
+        && horario.getIdSeccion().equals("SEC-SEG-CLOUD-4N")
+        && horario.getHoraInicio().equals("14:00") && horario.getHoraFin().equals("16:00"),
+        "la sesión de demo se vincula a la sección cloud en el horario solicitado");
+    afirmar(sesion.getHorasProgramadas() == 2 && sesion.getIdProfesor().equals("DOC-001"),
+        "la sesión de demo conserva dos horas y el docente asignado");
   }
 
   private static void probarDistribucionNormativaDeHoras() {
@@ -773,7 +797,7 @@ public class TestRunner {
     InputStream entradaOriginal = System.in;
     PrintStream salidaOriginal = System.out;
     ByteArrayOutputStream salidaCapturada = new ByteArrayOutputStream();
-    String entradas = "1\ncarlos.mendoza@iestpchincha.edu.pe\nDocente2026*\n1\n2\n2\n3\n2\n";
+    String entradas = "1\ncarlos.mendoza@iestpchincha.edu.pe\nDocente2026*\n1\n1\n0\n3\n2\n";
 
     try {
       System.setIn(new ByteArrayInputStream(entradas.getBytes(StandardCharsets.UTF_8)));
@@ -788,7 +812,12 @@ public class TestRunner {
     String correoAlumnaDemo = new ServicioAcademico().buscarEstudiante("ALU-2026101").getCorreo();
     afirmar(salida.contains(" - Semana actual:"),
         "el detalle del curso actual muestra el indicador de semana del periodo");
-    afirmar(salida.contains("Horas lectivas totales: 64 hrs"),
+    afirmar(tieneTituloEnmarcado(salida, "DETALLE DEL CURSO"),
+        "la ficha de la sección usa un titulo enmarcado");
+    afirmar(salida.contains("Curso: Ethical Hacking")
+        && salida.split("Curso: Ethical Hacking", -1).length - 1 == 1,
+        "el detalle muestra Ethical Hacking una sola vez para la sección elegida");
+    afirmar(salida.contains("Horas lectivas totales: 48 hrs"),
         "el detalle del curso actual muestra sus horas lectivas totales");
     afirmar(salida.contains(" - Ciclo correspondiente: 4to Ciclo")
         && salida.contains(" - Bloque de curso: BLQ-APSTI-4N"),
@@ -796,6 +825,11 @@ public class TestRunner {
     afirmar(salida.contains("Lucía Castañeda") && salida.contains("Código: U2026101")
         && salida.contains("Correo: " + correoAlumnaDemo),
         "el detalle muestra los datos de contacto de un alumno de la nueva cohorte");
+    afirmar(salida.contains("No hay una sesión programada para este curso en la fecha de hoy.")
+        && salida.contains("0. Regresar al menú anterior"),
+        "sin sesión hoy ofrece regresar al menú");
+    afirmar(!salida.contains("¿Desea tomar asistencia para este curso hoy?"),
+        "sin sesión hoy no pregunta si desea tomar asistencia");
   }
 
   private static void probarSemanaActualDelCurso() {
@@ -833,7 +867,7 @@ public class TestRunner {
     InputStream entradaOriginal = System.in;
     PrintStream salidaOriginal = System.out;
     ByteArrayOutputStream salidaCapturada = new ByteArrayOutputStream();
-    String entradas = "1\ncarlos.mendoza@iestpchincha.edu.pe\nDocente2026*\n1\n4\n2\n3\n2\n";
+    String entradas = "1\ncarlos.mendoza@iestpchincha.edu.pe\nDocente2026*\n1\n0\n3\n2\n";
 
     try {
       System.setIn(new ByteArrayInputStream(entradas.getBytes(StandardCharsets.UTF_8)));
@@ -845,40 +879,71 @@ public class TestRunner {
     }
 
     String salida = salidaCapturada.toString(StandardCharsets.UTF_8);
-    int inicioListado = salida.indexOf("--- SUS CURSOS ASIGNADOS ---");
-    int finListado = salida.indexOf("Seleccione un curso para ver detalles / tomar asistencia:", inicioListado);
-    afirmar(inicioListado >= 0 && finListado > inicioListado, "el menú presenta el listado antes de seleccionar curso");
-    String listadoCursos = salida.substring(inicioListado, finListado);
-    String periodoVigente = "APSTI-2026-II (01/08/2026 - 15/12/2026)";
-    String periodoMasReciente = "2026-I (16/03/2026 - 17/07/2026)";
-    String periodoAnterior = "APSTI-2026-I (01/03/2026 - 15/07/2026)";
-    int indicePeriodoVigente = listadoCursos.indexOf(periodoVigente);
-    int indicePeriodoReciente = listadoCursos.indexOf(periodoMasReciente);
-    int indicePeriodoAnterior = listadoCursos.indexOf(periodoAnterior);
-    afirmar(indicePeriodoVigente >= 0 && indicePeriodoVigente < indicePeriodoReciente
-        && indicePeriodoReciente < indicePeriodoAnterior,
-        "el listado muestra primero el periodo con fecha de inicio mas reciente y sus rangos");
-    afirmar(listadoCursos.contains("Seguridad de Servicios Cloud [ID: UD-SEG-CLOUD]"),
-        "el listado muestra la nueva oferta del periodo mas reciente");
-    afirmar(listadoCursos.contains(" - Ciclo correspondiente: 3er Ciclo"),
-        "el listado muestra el ciclo de cada curso asignado");
-    afirmar(listadoCursos.contains(" - Bloque de curso: BLQ-APSTI-3N"),
-        "el listado muestra el bloque de la seccion");
-    afirmar(listadoCursos.contains("Lunes 18:00 - 20:00 hrs (Aula 301)"),
-        "el listado muestra el dia, horario y ambiente de clase");
-    afirmar(listadoCursos.contains("Miércoles 18:00 - 20:00 hrs (Laboratorio de Redes)"),
-        "el listado muestra cada franja del horario semanal");
+    afirmar(tieneTituloEnmarcado(salida, "CURSOS ASIGNADOS"),
+        "la lista docente usa un titulo enmarcado");
+    afirmar(salida.contains("Periodo activo: APSTI-2026-II"),
+        "la lista docente identifica el periodo activo");
+    afirmar(salida.contains("Ethical Hacking [Sección: SEC-ETHHACK-4N]")
+        && salida.contains("Seguridad de Servicios Cloud [Sección: SEC-SEG-CLOUD-4N]"),
+        "la lista docente presenta secciones directamente");
+    afirmar(!salida.contains("Periodo activo: APSTI-2026-I\n")
+        && !salida.contains("SEC-SEGREDES-3N") && !salida.contains("SEC-ROUTING-3N"),
+        "la lista docente omite periodos no activos");
+    afirmar(salida.contains("Seleccione una sección para ver detalles:"),
+        "la selección docente solicita una sección y no un curso");
+    afirmar(salida.contains("Sesión programada hoy: 14:00 - 16:00 hrs (Aula 301)"),
+        "el listado docente hace visible la sesión extraordinaria de hoy");
+    afirmar(!salida.contains("--- SUS CURSOS ASIGNADOS ---")
+        && !salida.contains("Seleccione un curso para ver detalles / tomar asistencia:"),
+        "la interfaz no conserva los títulos ni el selector anteriores");
+    boolean hoyTieneHorario = LocalDate.now().getDayOfWeek() == java.time.DayOfWeek.TUESDAY
+        || LocalDate.now().getDayOfWeek() == java.time.DayOfWeek.WEDNESDAY
+        || LocalDate.now().getDayOfWeek() == java.time.DayOfWeek.THURSDAY;
+    afirmar(salida.contains(" <-- ¡HOY!") == hoyTieneHorario,
+        "marca como hoy las franjas actuales y no las de otro día");
+  }
 
-    ServicioAcademico servicio = new ServicioAcademico();
-    Curso curso = servicio.listarCursos().stream()
-        .filter(c -> c.getIdCurso().equals("UD-SEGREDES")).findFirst().orElse(null);
-    List<Estudiante> alumnos = servicio.listarEstudiantesCurso(curso);
-    for (Estudiante alumno : alumnos) {
-      afirmar(salida.contains(alumno.getNombreCompleto())
-          && salida.contains("Código: " + alumno.getCodigo())
-          && salida.contains("Correo: " + alumno.getCorreo()),
-          "el listado de matriculados muestra nombre, codigo y correo de " + alumno.getCodigo());
+  private static void probarResumenEstudianteSoloPeriodoActivo() {
+    InputStream entradaOriginal = System.in;
+    PrintStream salidaOriginal = System.out;
+    ByteArrayOutputStream salidaCapturada = new ByteArrayOutputStream();
+    String entradas = "1\nerick.escriba@iestpchincha.edu.pe\nAlumno2026*\n1\n3\n2\n";
+
+    try {
+      System.setIn(new ByteArrayInputStream(entradas.getBytes(StandardCharsets.UTF_8)));
+      System.setOut(new PrintStream(salidaCapturada, true, StandardCharsets.UTF_8));
+      new SistemaApp().iniciar();
+    } finally {
+      System.setIn(entradaOriginal);
+      System.setOut(salidaOriginal);
     }
+
+    String salida = salidaCapturada.toString(StandardCharsets.UTF_8);
+    afirmar(tieneTituloEnmarcado(salida, "RESUMEN DE ASISTENCIA Y CURSOS"),
+        "el resumen del estudiante usa un titulo enmarcado");
+    afirmar(salida.contains("Periodo: APSTI-2026-II")
+        && salida.contains("Curso: Ethical Hacking")
+        && salida.contains("Curso: Seguridad de Servicios Cloud"),
+        "el resumen incluye cursos del periodo activo");
+    afirmar(!salida.contains("Curso: Seguridad en Redes") && !salida.contains("Periodo: APSTI-2026-I\n"),
+        "el resumen omite cursos de periodos cerrados");
+    afirmar(salida.contains("Bloque: 4to Ciclo - Turno Noche [BLQ-APSTI-4N]")
+        && salida.contains("Profesor: Carlos Mendoza")
+        && salida.contains("Correo: carlos.mendoza@iestpchincha.edu.pe")
+        && salida.contains("Horario de clases:")
+        && salida.contains("Porcentaje de inasistencia (Faltas): 0.00%"),
+        "la ficha muestra bloque, profesor, correo, horario e inasistencia");
+  }
+
+  private static boolean tieneTituloEnmarcado(String salida, String titulo) {
+    String[] lineas = salida.split("\\R");
+    for (int i = 0; i + 2 < lineas.length; i++) {
+      if (lineas[i].matches("=+") && lineas[i].equals(lineas[i + 2])
+          && lineas[i + 1].trim().equals(titulo)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static void probarNominaDesdeMatricula() {

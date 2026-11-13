@@ -56,8 +56,7 @@ public class Estudiante {
   }
 
   public void mostrarPerfil() {
-    System.out.println();
-    System.out.println("--- PERFIL DEL ESTUDIANTE ---");
+    imprimirTitulo("PERFIL DEL ESTUDIANTE");
     System.out.println("ID: " + id);
     System.out.println("Codigo: " + codigo);
     System.out.println("Nombres: " + nombres);
@@ -66,5 +65,14 @@ public class Estudiante {
     System.out.println("Correo: " + correo);
     System.out.println("Escuela profesional: " + escuelaProfesional);
     System.out.println("Estado: " + estado);
+  }
+
+  private void imprimirTitulo(String titulo) {
+    int ancho = Math.max(46, titulo.length() + 4);
+    int espaciosIniciales = (ancho - titulo.length()) / 2;
+    String borde = "=".repeat(ancho);
+    System.out.println("\n" + borde);
+    System.out.println(" ".repeat(espaciosIniciales) + titulo);
+    System.out.println(borde);
   }
 }

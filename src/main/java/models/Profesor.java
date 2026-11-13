@@ -69,8 +69,7 @@ public class Profesor {
   }
 
   public void mostrarPerfil() {
-    System.out.println();
-    System.out.println("--- PERFIL DEL PROFESOR ---");
+    imprimirTitulo("PERFIL DEL PROFESOR");
     System.out.println("ID: " + id);
     System.out.println("Nombre: " + nombre);
     System.out.println("Apellido: " + apellido);
@@ -80,5 +79,14 @@ public class Profesor {
     System.out.println("Nro de documento: " + nroDocumento);
     System.out.println("Departamento academico: " + departamentoAcademico);
     System.out.println("Especialidad: " + especialidad);
+  }
+
+  private void imprimirTitulo(String titulo) {
+    int ancho = Math.max(46, titulo.length() + 4);
+    int espaciosIniciales = (ancho - titulo.length()) / 2;
+    String borde = "=".repeat(ancho);
+    System.out.println("\n" + borde);
+    System.out.println(" ".repeat(espaciosIniciales) + titulo);
+    System.out.println(borde);
   }
 }
