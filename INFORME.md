@@ -93,7 +93,7 @@ A continuación se detalla la especificación formal de requerimientos funcional
 | Código    | Descripción del Requisito                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Prioridad |
 | :-------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------: |
 | **RF-01** | **Autenticación Segura y Control de Acceso (RBAC):** Validar identidades de usuarios a partir de correo y contraseña contrastados contra `data/usuario.csv`. El sistema debe instanciar el perfil correspondiente (`PROFESOR` o `ESTUDIANTE`) restringiendo el menú interactivo bajo el principio de menor privilegio.                                                                                                                                                                                    |   Alta    |
-| **RF-02** | **Gestión del Padrón y Estado de Estudiantes:** Administrar el catálogo de alumnos (`Estudiante`), identificando código institucional, nombres, apellidos, correo institucional y condición académica (`EstadoEstudiante: REGULAR, SUSPENDIDO, RESERVA`). El sistema debe verificar que el alumno posea una matrícula activa para ser incluido en la nómina de asistencia.                                                                                                                                |   Alta    |
+| **RF-02** | **Gestión del Padrón y Estado de Estudiantes:** Administrar el catálogo de alumnos (`Estudiante`), identificando código institucional, nombres, apellidos, correo institucional y condición académica (`EstadoEstudiante: REGULAR, SUSPENDIDO, RESERVA`). El sistema debe verificar que el alumno posea una matrícula activa para ser incluido en la nómina de asistencia. En el detalle del curso, cada alumno también muestra la carrera asociada al plan curricular del curso; este dato se deriva de la relación Curso → Módulo Profesional → Plan de Estudios → Carrera y no se duplica en el registro del estudiante. |   Alta    |
 | **RF-03** | **Modelado de Cursos y Malla Curricular:** Estructurar las Unidades Didácticas (`Curso`) registrando su identificador, denominación, créditos, horas teóricas, horas prácticas y el total de horas lectivas (`total_horas_lectivas = horas_teoricas + horas_practicas`), integradas en la jerarquía: Carrera → Plan de Estudios → Módulo Profesional → Unidad Didáctica. La cantidad de semanas lectivas del dictado corresponde al `PeriodoAcademico`. |   Media   |
 | **RF-04** | **Programación y Habilitación de Sesiones de Clase:** Modelar cada instancia (`SesionClase`) vinculada a una franja recurrente (`HorarioSeccion`), sección, docente, salón y fecha exacta. La duración debe coincidir con la franja. La toma de asistencia solo se habilita si existe una sesión para la fecha actual vinculada a una franja y sección del curso seleccionado; el horario recurrente por sí solo no habilita la captura.                                                                                                                                                                                                            |   Alta    |
 | **RF-05** | **Gestión de Matrículas en Bloques Académicos:** Vincular a cada estudiante con un bloque de sección mediante la entidad `Matricula`, validando el estado `ACTIVA` como precondición obligatoria para la toma de asistencia y asentamiento de evaluaciones en sus cursos correspondientes.                                                                                                                                                                                                                |   Alta    |
@@ -113,13 +113,13 @@ A continuación se establecen las restricciones arquitectónicas, de validación
 
 | Código     | Requisito No Funcional                                  |        Categoría         | Métrica / Criterio Técnico de Aceptación                                                                                                                                                                                                                                                                                                                                        |
 | :--------- | :------------------------------------------------------ | :----------------------: | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **RNF-01** | Arquitectura Limpia por Capas (SoC)                     |      Mantenibilidad      | Desacoplamiento estricto en cinco capas independientes: `models` (entidades puras), `security` (criptografía), `storage` (acceso a archivos planos), `service` (reglas de negocio y orquestación) y `sistema` (interfaz CLI). Queda prohibido acoplar lógica de presentación o persistencia directa dentro de las entidades de dominio.                                         |
+| **RNF-01** | Arquitectura por capas y separación de responsabilidades | Mantenibilidad | Separar presentación (`app`), servicios (`servicio`), contratos (`repositorio`), adaptadores CSV (`almacenamiento.csv`), dominio (`modelo`) y seguridad (`security`). Los servicios no deben acceder directamente al sistema de archivos. |
 | **RNF-02** | Validación Defensiva de Entradas Numéricas (Horas)      |         Robustez         | El sistema debe implementar control de fronteras estricto para las horas asistidas: deben ser números enteros acotados al intervalo cerrado $[0, \text{horasProgramadas}]$. En la capa de servicios se forzará la delimitación mediante `Math.max(0, Math.min(horas, horasMaximas))` o lanzando `IllegalArgumentException` ante parámetros que vulneren invariantes de negocio. |
-| **RNF-03** | Resiliencia de Entrada por Terminal (Manejo de Errores) |         Robustez         | La captura de selecciones numéricas por consola en `SistemaApp` debe validar el stream de entrada con buffers seguros (`scanner.hasNextInt()`), descartando caracteres alfanuméricos anómalos y repitiendo la solicitud sin arrojar excepciones no controladas (`InputMismatchException`) ni terminar la aplicación.                                                            |
+| **RNF-03** | Resiliencia de Entrada por Terminal (Manejo de Errores) |         Robustez         | La captura de selecciones numéricas por consola en `app.App` valida el stream con `scanner.hasNextInt()`, descarta tokens no numéricos y vuelve a solicitar la opción sin propagar `InputMismatchException`.                                                            |
 | **RNF-04** | Seguridad Criptográfica de Credenciales                 |        Seguridad         | El almacenamiento y cotejo de contraseñas se implementará mediante PBKDF2 con HMAC-SHA256, empleando sal criptográfica de 16 bytes (128 bits) generada por `SecureRandom` y un factor de costo de 210,000 iteraciones. Queda terminantemente prohibido almacenar contraseñas en texto claro.                                                                                    |
 | **RNF-05** | Ocultamiento de Secretos en E/S en Tiempo de Ejecución  |        Seguridad         | En entornos interactivos de terminal se utilizará `System.console().readPassword()` para la captura de contraseñas, previniendo el eco en pantalla y evitando la retención de secretos en memoria no administrada, buffers de salida o historiales de shell.                                                                                                                    |
 | **RNF-06** | Arquitectura "Zero Dependencies"                        | Portabilidad / Seguridad | El software debe compilar y ejecutarse apoyándose exclusivamente en la biblioteca estándar de Java Platform, Standard Edition 21 (Java SE 21 LTS), mitigando cualquier vector de vulnerabilidad vinculado a la cadena de suministro de librerías externas.                                                                                                                      |
-| **RNF-07** | Estructuración Lógica e Integridad Referencial CSV      |      Confiabilidad       | El motor de almacenamiento `ArchivoManager` debe mantener la integridad referencial lógica entre los 19 archivos planos en `data/`, verificando la existencia previa de identificadores foráneos (`id_estudiante`, `id_curso`, `id_sesion`, `id_matricula`) antes de persistir vínculos en disco con codificación estándar UTF-8.                                               |
+| **RNF-07** | Persistencia CSV separada por responsabilidad | Confiabilidad | Los repositorios CSV consultan los componentes de almacenamiento específicos; el guardado de asistencia asigna identificadores y agrega registros mediante `PersistenciaAsistenciaCsv` y `AlmacenamientoAsistenciaCsv`. |
 | **RNF-08** | Tolerancia a Esquemas Legados (Retrocompatibilidad)     |         Robustez         | Los analizadores sintácticos de persistencia deben manejar variaciones estructurales históricas en los archivos CSV (e.g., registros de cursos con 5 columnas en lugar de 9, o asistencias sin campo `id_sesion`) sin interrumpir la inicialización ni fallar en tiempo de ejecución.                                                                                           |
 | **RNF-09** | Eficiencia y Tiempos de Respuesta en Consola            |       Rendimiento        | La inicialización del aplicativo, incluyendo la lectura completa e hidratación en memoria de los 19 archivos CSV, debe completarse en un tiempo $t < 1.0\text{ s}$. La verificación criptográfica de contraseña por inicio de sesión no debe exceder los 100 ms.                                                                                                                |
 | **RNF-10** | Verificabilidad y Calidad de Código (Testing)           |      Confiabilidad       | Validación exhaustiva mediante una suite automatizada de pruebas unitarias de caja blanca (`test.TestRunner`), garantizando una tasa de aprobación del 100% (129/129 pruebas pasadas) sin requerir frameworks de pruebas de terceros.                                                                                                                                           |
@@ -199,7 +199,7 @@ El núcleo computacional del sistema ejecuta transformaciones deterministas sobr
    - Se realiza una comparación de cadenas en tiempo constante entre el hash recién derivado y el hash almacenado, autenticando la identidad y resolviendo el perfil polimórfico del actor (`Profesor` o `Estudiante`) según el `Rol` asociado.
 
 2. **Validación Defensiva y Normalización de Horas Asistidas:**
-   - Cada valor numérico de horas ingresado por el docente es evaluado mediante control de fronteras en `ServicioAcademico`:
+   - Cada valor numérico ingresado por el docente se normaliza en `RegistroAsistenciaFactory`:
      $$horasValidas = \max(0, \min(horasAsistidas, sesion.getHorasProgramadas()))$$
    - A partir de este valor se deriva automáticamente la condición booleana de presencia:
      $$presente = \begin{cases} \text{true} & \text{si } horasValidas > 0 \\ \text{false} & \text{si } horasValidas = 0 \end{cases}$$
@@ -207,7 +207,7 @@ El núcleo computacional del sistema ejecuta transformaciones deterministas sobr
 
 3. **Habilitación de la Toma de Asistencia por Sesión:**
    - El docente consulta sus cursos asignados y elige uno; la asignación docente se deriva de las franjas de `HorarioSeccion`.
-   - `ServicioAcademico.listarSesionesCursoEnFecha(curso, fecha)` busca una `SesionClase` cuya fecha sea la fecha actual (`LocalDate.now()`) y sigue la relación `SesionClase → HorarioSeccion → SeccionCurso → Curso`. Si no encuentra una sesión fechada y relacionada con el curso, la aplicación informa que no hay sesión programada y no permite registrar asistencia. Un horario semanal existente o una matrícula, sin sesión fechada, no bastan para habilitarla.
+   - `ServicioAsistencia.listarSesionesDeCursoEnFecha(curso, fecha)` busca sesiones fechadas para el curso seleccionado. La aplicación filtra el resultado a la sección seleccionada; sin sesión para la fecha actual (`LocalDate.now()`), no habilita la captura.
    - Encontrada la sesión, el sistema resuelve los estudiantes activos mediante `SesionClase → HorarioSeccion → SeccionCurso → BloqueSeccion → Matricula`. Si el bloque no tiene matrículas activas con estudiantes válidos, tampoco se abre la captura. En otro caso, la sesión y su duración delimitan la lista y el máximo de horas registrables por estudiante.
    - **Ejemplo de los datos demostrativos:** `UD-SEG-CLOUD` tiene una sesión el jueves 12/11/2026 de 14:00 a 16:00, por lo que queda habilitada para esa fecha. `UD-ETHHACK`, en otra sección del mismo periodo APSTI-2026-II, tiene horario martes 20:00–22:00 y sesión fechada el martes 17/11/2026: aunque existe horario y sesión para esa fecha posterior, no habilita la toma de asistencia el 12/11/2026.
 
@@ -227,7 +227,7 @@ El núcleo computacional del sistema ejecuta transformaciones deterministas sobr
 
 6. **Cálculo de la Semana Lectiva Actual del Curso:**
    - `PeriodoAcademico` define tanto el rango calendario (`fechaInicio` y `fechaFin`) como el total de semanas lectivas (`semanasLectivas`). La cantidad de semanas lectivas no se deduce del número de días calendario ni se almacena en `Curso`: el calendario puede incluir recesos o márgenes sin dictado.
-   - `ServicioAcademico` calcula la semana vigente desde la fecha oficial de inicio del periodo asociado al bloque. La primera semana comprende los siete días desde el inicio inclusive y cada bloque consecutivo de siete días incrementa el número. Solo devuelve una semana si la fecha está dentro del rango calendario y de las semanas lectivas configuradas; terminado ese marco lectivo, la interfaz informa que no hay una semana de dictado vigente.
+   - `ServicioAsistencia.calcularSemanaLectiva(periodo, fecha)` calcula la semana lectiva desde el calendario del periodo activo; la interfaz muestra la semana dentro del rango lectivo configurado.
 
 7. **Distribución de Horas Lectivas:**
    - El plan conserva los totales curriculares agregados. Cada unidad didáctica registra sus créditos, horas teóricas, prácticas y `total_horas_lectivas`, que debe ser la suma de ambas.
@@ -240,11 +240,9 @@ La información resultante se proyecta en dos medios: visualización textual est
 
 | Medio de Salida              | Componente / Archivo              | Dato o Estructura Producida           | Formato / Representación                                                                                                                                 | Propósito Pedagógico y Operativo                                                                       |
 | :--------------------------- | :-------------------------------- | :------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------- |
-| **Consola (CLI)**            | `SistemaApp`                      | Menú adaptativo por rol               | Interfaz textual interactiva                                                                                                                             | Provee navegación contextual según privilegios RBAC (`PROFESOR` o `ESTUDIANTE`).                       |
-| **Consola (CLI)**            | `SistemaApp`                      | Listado y detalle de cursos asignados | Periodos ordenados por fecha de inicio descendente, rango de fechas, cursos, ciclo, bloque, semana actual, docentes, horarios y nómina con código/correo | Permite al docente ubicar sus cursos cronológicamente y consultar la programación y datos de contacto. |
-| **Consola (CLI)**            | `SistemaApp`                      | Resumen analítico de asistencia       | Métricas consolidadas por curso: días asistidos/dictados, horas asistidas/dictadas y $\% \text{ Faltas}$                                                 | Proporciona al estudiante retroalimentación inmediata sobre su asistencia en tiempo real.              |
-| **Consola (CLI)**            | `SistemaApp`                      | Alerta visual preventiva              | `[ALERTA: Límite de inasistencia superado]`                                                                                                              | Notificación pedagógica de alerta temprana cuando las inasistencias superan el 15%.                    |
-| **Consola (CLI)**            | `SistemaApp`                      | Dictamen de habilitación evaluativa   | Estado de habilitación (Habilitado / Inhabilitado)                                                                                                       | Comunica formalmente la restricción de evaluación al superar el 30% normativo del MINEDU.              |
+| **Consola (CLI)**            | `app.App`                          | Menú adaptativo por rol               | Interfaz textual interactiva                                                                                                                             | Provee navegación contextual según privilegios RBAC (`PROFESOR` o `ESTUDIANTE`).                       |
+| **Consola (CLI)**            | `app.App`                          | Listado y detalle de cursos asignados | Cursos y secciones del docente, ciclo, bloque, semana actual, carrera del plan, docentes, horarios y nómina con nombre, código, correo y carrera | Permite consultar la programación y los datos académicos asociados al curso y a su nómina. |
+| **Consola (CLI)**            | `app.App`                          | Resumen de asistencia                 | Período vigente, curso, bloque, docentes, horario y porcentaje de inasistencia calculado a partir de las horas registradas                                | Permite al estudiante consultar el estado de asistencia de sus cursos matriculados.                    |
 | **Almacenamiento CSV**       | `data/registro_de_asistencia.csv` | Nuevos registros de asistencia        | `id_asistencia, id_curso, id_estudiante, fecha, horas_asistidas, presente, id_sesion, id_matricula`                                                      | Persistencia histórica y trazable de cada toma de asistencia por sesión horaria.                       |
 | **Almacenamiento CSV**       | `data/registro_nota.csv`          | Nuevos registros de evaluación        | `id_nota, id_indicador, id_estudiante, nota, fecha`                                                                                                      | Persistencia de calificaciones vigesimales ($0.0 \leq nota \leq 20.0$) por indicador de logro.         |
 | **Canal de Error / Control** | `System.out` / Terminal           | Mensajes defensivos de validación     | Mensajes contextuales ("Opción inválida", "Curso no válido", etc.)                                                                                       | Notifica al usuario sobre entradas fuera de rango sin interrumpir la ejecución del sistema.            |
@@ -253,29 +251,25 @@ La información resultante se proyecta en dos medios: visualización textual est
 
 ##### A. Arquitectura por Capas y Principios de Diseño (SoC & Clean Architecture)
 
-El sistema implementa una **Arquitectura en Capas (Layered Architecture)** siguiendo el principio de Separación de Responsabilidades (_Separation of Concerns_ - SoC) y directrices de diseño limpio (_Clean Architecture_), estructurado en cinco paquetes desacoplados bajo [`src/main/java/`](src/main/java/):
+La implementación actual organiza el flujo en paquetes con responsabilidades diferenciadas:
 
-1. **Capa de Presentación (`sistema`):**  
-   Encapsulada en [`sistema.SistemaApp`](src/main/java/sistema/SistemaApp.java). Es responsable exclusivo de la interacción textual en terminal de comandos (CLI / TTY), gestión de ciclos de menús interactivos por rol (`menuProfesor`, `menuEstudiante`), captura de entradas numéricas mediante buffers defensivos (`scanner.hasNextInt()`), lectura oculta de credenciales con `System.console().readPassword()` y despliegue visual de reportes analíticos y alertas preventivas. No contiene reglas de negocio ni interactúa directamente con el sistema de archivos.
+1. **Presentación (`app`):** [`app.App`](src/main/java/app/App.java) administra la interacción de consola, el inicio de sesión, los menús por rol y la presentación del detalle del curso y los resúmenes de asistencia.
+2. **Servicios (`servicio`):** [`servicio.AutenticacionService`](src/main/java/servicio/AutenticacionService.java) normaliza el correo, valida cuentas activas y verifica credenciales. [`servicio.ServicioAsistencia`](src/main/java/servicio/ServicioAsistencia.java) coordina consultas de asistencia, resolución curricular de la carrera del curso, validación de sesiones y matrículas, creación de registros y cálculos de inasistencia.
+3. **Contratos de persistencia (`repositorio`):** [`RepositorioUsuario`](src/main/java/repositorio/RepositorioUsuario.java) y [`RepositorioAsistencia`](src/main/java/repositorio/RepositorioAsistencia.java) definen las operaciones que necesitan los servicios, sin acoplarlos a la lectura de archivos.
+4. **Adaptadores CSV (`almacenamiento.csv`):** las implementaciones `RepositorioUsuarioCsv` y `RepositorioAsistenciaCsv` consultan los componentes `Almacenamiento*Csv`; `PersistenciaAsistenciaCsv` asigna identificadores y delega el agregado de registros al almacenamiento de asistencia.
+5. **Seguridad (`security`):** [`security.PasswordHasher`](src/main/java/security/PasswordHasher.java) deriva y verifica contraseñas con PBKDF2-HMAC-SHA256. `AutenticacionService` utiliza una verificación ficticia cuando la cuenta no existe o está inactiva.
+6. **Dominio (`modelo`):** contiene las entidades y enumeraciones académicas. La carrera se obtiene siguiendo `Curso → ModuloProfesional → PlanEstudios → Carrera`; no forma parte del registro CSV ni del modelo `Estudiante`.
 
-2. **Capa de Servicios de Aplicación y Lógica de Negocio (`service`):**  
-   Orquesta las operaciones del dominio e implementa la totalidad de las reglas normativas:
-   - [`service.AutenticacionService`](src/main/java/service/AutenticacionService.java): Controla el flujo de autenticación de identidades, normalización canónica de correos institucionales (`trim().toLowerCase()`) y verificación contra hashes ficticios en tiempo constante para neutralizar ataques de temporización por enumeración de cuentas.
-   - [`service.ServicioAcademico`](src/main/java/service/ServicioAcademico.java): Centraliza la lógica de asistencia y evaluación. Gestiona la búsqueda de entidades, validación relacional de matrículas activas, acotamiento defensivo de horas asistidas ($0 \leq h \leq horasProgramadas$), cálculo continuo de horas faltadas, activación de la alerta preventiva temprana del 15% (`LIMITE_INASISTENCIA = 15.0`) y aplicación estricta de la regla de inhabilitación ministerial del 30% (`LIMITE_INASISTENCIA_NORMATIVO = 30.0` según Ley N.° 30512 / MINEDU), la cual gobierna la condición booleana de `puedeRegistrarNotas(...)`.
+Los diagramas fuente editables están en [`docs/diagrams/`](docs/diagrams/). La vista de arquitectura refleja las dependencias entre presentación, servicios, contratos de repositorio y adaptadores CSV.
 
-3. **Capa de Seguridad Criptográfica (`security`):**  
-   Implementada en [`security.PasswordHasher`](src/main/java/security/PasswordHasher.java). Aísla los mecanismos de protección de credenciales aplicando el estándar PBKDF2 con primitiva pseudoaleatoria HMAC-SHA256, 210,000 iteraciones computacionales, sales criptográficas aleatorias de 16 bytes generadas por `java.security.SecureRandom` y claves derivadas de 256 bits. Emplea `MessageDigest.isEqual(...)` para comparaciones en tiempo constante y `PBEKeySpec.clearPassword()` para la sanitización inmediata de secretos en memoria no administrada.
-
-4. **Capa de Persistencia e Integración (`storage`):**  
-   Centralizada en [`storage.ArchivoManager`](src/main/java/storage/ArchivoManager.java). Proporciona métodos estáticos para la serialización y deserialización atómica y bidireccional hacia los 19 archivos planos CSV ubicados en `data/` bajo codificación UTF-8. Implementa analizadores sintácticos defensivos con tolerancia a esquemas legados (retrocompatibilidad para registros históricos de cursos y asistencias), sanitización contra inyección de delimitadores y verificación de integridad referencial.
-
-5. **Capa de Dominio y Modelos (`models`):**  
-   Contiene las 18 entidades y 10 enumeraciones fuertemente tipadas que modelan con exactitud el ecosistema del IESTP Chincha: `Carrera`, `PlanEstudios`, `ModuloProfesional`, `PeriodoAcademico`, `BloqueSeccion`, `Curso`, `SeccionCurso`, `HorarioSeccion`, `SesionClase`, `Salon`, `Profesor`, `Estudiante`, `Matricula`, `RegistroDeAsistencia`, `IndicadorLogro`, `RegistroNota`, `DerechoPago`, `ComprobantePago`, `Usuario`, y enumeraciones como `Rol`, `EstadoEstudiante`, `EstadoMatricula`, `Turno`, `ModalidadDictado`, etc.
+**Nota sobre las figuras:** las fuentes Mermaid de `docs/diagrams/` son las versiones editables de referencia. Los archivos SVG/PNG de `docs/assets/` son exportaciones previas y deben regenerarse para reflejar estos cambios; Mermaid CLI (`mmdc`) no está instalado en el entorno actual.
 
 **Figura 1**
 *Diagrama de flujo de la arquitectura por capas del sistema*
 
 ![Diagrama de flujo de la arquitectura por capas](./docs/assets/arquitectura_proyecto_flowchart.svg)
+
+Fuente editable: [arquitectura_proyecto_flowchart.mmd](./docs/diagrams/arquitectura_proyecto_flowchart.mmd).
 
 *Nota.* Elaboración propia basada en la metodología de diseño modular por capas y representación de flujos descrita en Joyanes Aguilar (2013).
 
@@ -288,6 +282,8 @@ El siguiente diagrama formaliza las clases principales de cada capa, sus miembro
 
 ![Diagrama de clase de todo el proyecto](./docs/assets/proyecto_classDiagram.svg)
 
+Fuente editable: [proyecto_classDiagram.mmd](./docs/diagrams/proyecto_classDiagram.mmd).
+
 *Nota.* Elaboración propia siguiendo las convenciones de modelado orientado a objetos y notación UML descritas en Joyanes Aguilar (2013).
 
 ##### C. Diagrama de flujo de la aplicacion
@@ -299,14 +295,18 @@ El siguiente diagrama formaliza las clases principales de cada capa, sus miembro
 
   ![Diagrama de flujo general de la aplicación](./docs/assets/flujo_inicio_sesion.svg)
 
+  Fuente editable: [flujo_inicio_sesion.mmd](./docs/diagrams/flujo_inicio_sesion.mmd).
+
   *Nota.* Elaboración propia basada en la simbología y notación estándar de diagramas de flujo de Joyanes Aguilar (2013) y García-Bermejo Giner (2008).
 
 - Diagrama de flujo de la aplicación de terminal (Docente)
 
   **Figura 4**
-  *Diagrama de flujo del perfil Docente — Toma de asistencia y registro de notas*
+  *Diagrama de flujo del perfil Docente — Detalle del curso y toma de asistencia*
 
   ![Diagrama de flujo docente](./docs/assets/flujo_docente.svg)
+
+  Fuente editable: [flujo_docente.mmd](./docs/diagrams/flujo_docente.mmd).
 
   *Nota.* Elaboración propia basada en Joyanes Aguilar (2013) y Petersen (2001).
 
@@ -315,7 +315,9 @@ El siguiente diagrama formaliza las clases principales de cada capa, sus miembro
   **Figura 5**
   *Diagrama de flujo del perfil Estudiante — Consulta de asistencia*
 
-  ![Diagrama de flujo docente](./docs/assets/flujo_alumno.svg)
+  ![Diagrama de flujo del estudiante](./docs/assets/flujo_alumno.svg)
+
+  Fuente editable: [flujo_alumno.mmd](./docs/diagrams/flujo_alumno.mmd).
 
   *Nota.* Elaboración propia basada en Joyanes Aguilar (2013) y García-Bermejo Giner (2008).
 
@@ -325,9 +327,9 @@ La concepción arquitectónica del software responde a principios y patrones con
 
 | Principio / Patrón                                 | Aplicación Concreta en el Código del Repositorio                                                                                                                                                              | Justificación de Ingeniería y Beneficio                                                                                                                            |
 | :------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Separación de Responsabilidades (SoC)**          | Estructuración estricta en 5 paquetes: `sistema` (I/O consola), `service` (negocio), `security` (criptografía), `storage` (I/O CSV) y `models` (entidades).                                                   | Garantiza que cambios en la presentación (CLI) o persistencia (CSV a BD) no impacten en las reglas de cálculo de inasistencias ni en el dominio.                   |
-| **Single Responsibility Principle (SRP)**          | `PasswordHasher` sólo deriva y verifica contraseñas; `ArchivoManager` sólo parsea y guarda archivos CSV; `ServicioAcademico` sólo aplica reglas institucionales.                                              | Alta cohesión de clases y bajo acoplamiento, simplificando las pruebas unitarias y el mantenimiento.                                                               |
-| **Programación Defensiva (Defensive Programming)** | Delimitación matemática de horas en `ServicioAcademico`: $horas = \max(0, \min(h, max))$, control de streams en `SistemaApp` con `scanner.hasNextInt()` y manejo de esquemas CSV legados en `ArchivoManager`. | Inmunidad frente a entradas anómalas, evitando fallos en tiempo de ejecución (`InputMismatchException`, `NumberFormatException` o desbordamiento de horas).        |
+| **Separación de Responsabilidades (SoC)**          | Paquetes `app`, `servicio`, `repositorio`, `almacenamiento.csv`, `security` y `modelo`. | La presentación y la persistencia quedan fuera de las reglas de asistencia y de las entidades del dominio. |
+| **Single Responsibility Principle (SRP)**          | `PasswordHasher` verifica credenciales; los repositorios coordinan consultas; las clases `Almacenamiento*Csv` leen catálogos y `PersistenciaAsistenciaCsv` asigna identificadores y guarda asistencia. | Las responsabilidades de autenticación, reglas, acceso a archivos y escritura quedan separadas. |
+| **Programación Defensiva (Defensive Programming)** | `app.App` valida la entrada numérica; `RegistroAsistenciaFactory` limita horas al intervalo $[0, horasProgramadas]`; el registro exige una sesión y matrícula activa. | Reduce errores de entrada y conserva las invariantes del registro de asistencia. |
 | **Seguridad por Diseño (Security by Design)**      | Hash PBKDF2 con 210,000 iteraciones, mitigación de ataques de temporización mediante hash ficticio en `AutenticacionService` y comparación en tiempo constante con `MessageDigest.isEqual`.                   | Protección robusta de credenciales frente a ataques de fuerza bruta offline, tablas arcoíris y timing attacks sin requerir librerías externas.                     |
 | **Cero Dependencias Externas (Zero Dependencies)** | Construcción del 100% del código apoyándose exclusivamente en Java SE 21 LTS (`java.time`, `java.security`, `javax.crypto`).                                                                                  | Neutralización de vulnerabilidades en la cadena de suministro de software (_Supply Chain Attacks_) y portabilidad inmediata en cualquier entorno con JVM estándar. |
 
@@ -339,31 +341,32 @@ Esta sección presenta los componentes principales y fragmentos representativos 
 
 ##### Organización y flujo entre capas
 
-El sistema es una aplicación de consola Java organizada por paquetes. `SistemaApp` recibe las acciones del usuario y coordina los casos de uso; los servicios resuelven autenticación y reglas académicas; `ArchivoManager` carga y guarda los datos; `models` define las entidades y enumeraciones compartidas. `PasswordHasher` encapsula la derivación y verificación de contraseñas.
+El sistema es una aplicación Java de consola. `app.App` recibe las acciones del usuario; `servicio` contiene autenticación y coordinación de asistencia; `repositorio` define contratos de acceso; `almacenamiento.csv` implementa esos contratos y opera sobre los archivos; `modelo` contiene entidades y enumeraciones; y `security.PasswordHasher` verifica credenciales.
 
 | Paquete / componente | Responsabilidad | Integración principal |
 | --- | --- | --- |
-| `models` | Entidades como `Usuario`, `Curso`, `SesionClase`, `Matricula` y `RegistroDeAsistencia`, más enumeraciones del dominio. | Son entradas y resultados de los servicios y de la persistencia. |
-| `security.PasswordHasher` | Generación y verificación de hashes PBKDF2-HMAC-SHA256. | Lo utiliza `AutenticacionService`; no accede a archivos ni presenta menús. |
-| `storage.ArchivoManager` | Lectura y escritura de los catálogos y registros CSV en `data/`. | Lo invocan los servicios para obtener o persistir entidades. |
-| `service.AutenticacionService` | Normaliza el correo y autentica cuentas activas. | Consulta usuarios en `ArchivoManager` y verifica credenciales mediante `PasswordHasher`. |
-| `service.ServicioAcademico` | Consultas académicas y reglas de asistencia, matrícula e inhabilitación. | La interfaz solicita operaciones; el servicio coordina modelos y persistencia. |
-| `sistema.SistemaApp` | Inicio, menús por rol, lectura de entradas y presentación de resultados. | Delega las operaciones a `AutenticacionService` y `ServicioAcademico`. |
+| `modelo` | Entidades como `Usuario`, `Curso`, `SesionClase`, `Matricula` y `RegistroDeAsistencia`, además de enumeraciones. | Tipos compartidos por servicios y adaptadores de almacenamiento. |
+| `security.PasswordHasher` | Verificación de hashes PBKDF2-HMAC-SHA256. | Lo utiliza `AutenticacionService`; no lee archivos ni presenta menús. |
+| `repositorio` | Contratos `RepositorioUsuario` y `RepositorioAsistencia`. | Abstraen de los servicios la consulta y persistencia de datos. |
+| `almacenamiento.csv` | Repositorios CSV y lectores/escritores específicos para los archivos en `data/`. | Implementa los contratos de repositorio y realiza la E/S. |
+| `servicio` | Autenticación, reglas de asistencia y creación validada de registros. | Usa contratos de repositorio; no accede directamente a archivos. |
+| `app.App` | Inicio, menús por rol, entrada y presentación de resultados. | Delega autenticación y casos de uso al paquete `servicio`. |
 
 El recorrido típico es: entrada por consola → servicio de aplicación → modelos y persistencia → resultado presentado por consola. Así, la interfaz no contiene las reglas centrales del dominio.
 
 ##### Interfaz de consola y orquestación
 
-`SistemaApp` crea los servicios, presenta el menú inicial y delega el inicio de sesión. La contraseña se lee sin eco cuando existe una consola interactiva; la lógica de autenticación queda fuera de esta clase.
+`App` crea `ServicioAsistencia` con `RepositorioAsistenciaCsv`, presenta el menú inicial y delega el inicio de sesión. `AutenticacionService` usa el repositorio CSV por defecto; la contraseña se lee sin eco cuando existe una consola interactiva y, para entrada redirigida, mediante `Scanner`.
 
 ```java
-public class SistemaApp {
+public class App {
   private final Scanner scanner = new Scanner(System.in);
-  private final ServicioAcademico servicio = new ServicioAcademico();
+  private final ServicioAsistencia servicioAsistencia =
+      new ServicioAsistencia(new RepositorioAsistenciaCsv());
   private final AutenticacionService autenticacion = new AutenticacionService();
 
   public static void main(String[] args) {
-    new SistemaApp().iniciar();
+    new App().iniciar();
   }
 
   private String leerContrasena(String mensaje) {
@@ -415,7 +418,7 @@ El fragmento de verificación se ha reducido: el archivo real valida `null`, el 
 
 ##### Servicios y reglas académicas
 
-`ServicioAcademico` es el punto de coordinación para registrar asistencia. Primero resuelve la sesión, la sección, el curso y al estudiante; exige una matrícula para el bloque de esa sesión y luego crea el registro con las horas acotadas a la duración programada.
+`ServicioAsistencia` delega el registro a `RegistroAsistenciaService`, que resuelve la sesión, sección, curso, estudiante y matrícula activa. `RegistroAsistenciaFactory` acota las horas a la duración de la sesión y deriva la presencia antes de crear el registro.
 
 ```java
 public RegistroDeAsistencia crearRegistroSesion(
@@ -432,7 +435,7 @@ public RegistroDeAsistencia crearRegistroSesion(
 }
 ```
 
-La selección de sesión y la validación de matrícula se realizan en otros métodos del mismo servicio. Para los resúmenes, el servicio suma faltas de sesiones que ya tienen registro; las sesiones sin asistencia registrada no se contabilizan como dictadas. También centraliza el cálculo del porcentaje y la regla que determina si una matrícula puede registrar notas.
+La selección de sesión y la validación de matrícula se realizan antes de crear el registro. Para el resumen del estudiante, `App` agrupa matrículas activas del periodo vigente, suma horas programadas y asistidas de registros existentes y muestra el porcentaje de inasistencia calculado por `ServicioAsistencia`.
 
 ##### Modelos del dominio
 
@@ -463,7 +466,7 @@ Se omiten getters, constructores compatibles con registros anteriores y el resto
 
 ##### Persistencia en archivos CSV
 
-`ArchivoManager` concentra el acceso a los archivos en `data/`. Los lectores reconstruyen objetos a partir de las filas y contemplan versiones históricas de algunos esquemas. Para asistencia, las columnas opcionales de sesión y matrícula permiten leer registros antiguos que solo contienen las columnas originales.
+La E/S se divide por catálogo dentro de `almacenamiento.csv`. `RepositorioAsistenciaCsv` combina las lecturas de los componentes CSV y delega la escritura de lotes a `PersistenciaAsistenciaCsv`; esta asigna identificadores y llama a `AlmacenamientoAsistenciaCsv` para agregar las filas de asistencia.
 
 ```java
 public static List<RegistroDeAsistencia> leerTodasAsistencias() {
