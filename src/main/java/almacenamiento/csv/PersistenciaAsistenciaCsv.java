@@ -2,11 +2,12 @@ package almacenamiento.csv;
 
 import java.util.List;
 
-import models.RegistroDeAsistencia;
+import modelo.RegistroDeAsistencia;
 
 /** Asigna identificadores y agrega lotes de asistencia al archivo CSV. */
 final class PersistenciaAsistenciaCsv {
-  private PersistenciaAsistenciaCsv() {}
+  private PersistenciaAsistenciaCsv() {
+  }
 
   static void guardar(List<RegistroDeAsistencia> registros) {
     List<RegistroDeAsistencia> existentes = AlmacenamientoAsistenciaCsv.leerTodos();

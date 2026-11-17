@@ -6,17 +6,19 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import models.Carrera;
-import models.Curso;
-import models.EstadoPeriodo;
-import models.EstadoPlan;
-import models.ModuloProfesional;
-import models.PeriodoAcademico;
-import models.PlanEstudios;
+
+import modelo.Carrera;
+import modelo.Curso;
+import modelo.EstadoPeriodo;
+import modelo.EstadoPlan;
+import modelo.ModuloProfesional;
+import modelo.PeriodoAcademico;
+import modelo.PlanEstudios;
 
 /** Lee los catálogos curriculares utilizados por el flujo de asistencia. */
 final class AlmacenamientoCurriculoCsv {
-  private AlmacenamientoCurriculoCsv() {}
+  private AlmacenamientoCurriculoCsv() {
+  }
 
   static List<Carrera> leerCarreras() {
     List<Carrera> resultado = new ArrayList<>();
@@ -24,10 +26,13 @@ final class AlmacenamientoCurriculoCsv {
       lector.readLine();
       String linea;
       while ((linea = lector.readLine()) != null) {
-        if (linea.isBlank()) continue;
+        if (linea.isBlank())
+          continue;
         String[] campos = linea.split(",", -1);
-        if (campos.length >= 3) resultado.add(new Carrera(campos[0].trim(), campos[1].trim(), campos[2].trim()));
-        else if (campos.length >= 2) resultado.add(new Carrera(campos[0].trim(), campos[1].trim(), "Educación Superior"));
+        if (campos.length >= 3)
+          resultado.add(new Carrera(campos[0].trim(), campos[1].trim(), campos[2].trim()));
+        else if (campos.length >= 2)
+          resultado.add(new Carrera(campos[0].trim(), campos[1].trim(), "Educación Superior"));
       }
     } catch (FileNotFoundException e) {
       System.out.println("No se encontro data/carrera.csv");
@@ -43,11 +48,13 @@ final class AlmacenamientoCurriculoCsv {
       lector.readLine();
       String linea;
       while ((linea = lector.readLine()) != null) {
-        if (linea.isBlank()) continue;
+        if (linea.isBlank())
+          continue;
         String[] campos = linea.split(",", -1);
         if (campos.length >= 7) {
           resultado.add(new PlanEstudios(campos[0].trim(), campos[1].trim(), campos[2].trim(), campos[3].trim(),
-              Integer.parseInt(campos[4].trim()), Integer.parseInt(campos[5].trim()), EstadoPlan.valueOf(campos[6].trim())));
+              Integer.parseInt(campos[4].trim()), Integer.parseInt(campos[5].trim()),
+              EstadoPlan.valueOf(campos[6].trim())));
         }
       }
     } catch (FileNotFoundException e) {
@@ -64,7 +71,8 @@ final class AlmacenamientoCurriculoCsv {
       lector.readLine();
       String linea;
       while ((linea = lector.readLine()) != null) {
-        if (linea.isBlank()) continue;
+        if (linea.isBlank())
+          continue;
         String[] campos = linea.split(",", -1);
         if (campos.length >= 5) {
           resultado.add(new ModuloProfesional(campos[0].trim(), campos[1].trim(), campos[2].trim(), campos[3].trim(),
@@ -85,11 +93,13 @@ final class AlmacenamientoCurriculoCsv {
       lector.readLine();
       String linea;
       while ((linea = lector.readLine()) != null) {
-        if (linea.isBlank()) continue;
+        if (linea.isBlank())
+          continue;
         String[] campos = linea.split(",", -1);
         if (campos.length >= 6) {
           int semanas = campos.length >= 7 && !campos[6].isBlank()
-              ? Integer.parseInt(campos[6].trim()) : PeriodoAcademico.DEFAULT_SEMANAS_LECTIVAS;
+              ? Integer.parseInt(campos[6].trim())
+              : PeriodoAcademico.DEFAULT_SEMANAS_LECTIVAS;
           resultado.add(new PeriodoAcademico(campos[0].trim(), campos[1].trim(), campos[2].trim(), campos[3].trim(),
               campos[4].trim(), EstadoPeriodo.valueOf(campos[5].trim()), semanas));
         }
@@ -109,7 +119,8 @@ final class AlmacenamientoCurriculoCsv {
       boolean tieneTotalHorasLectivas = cabecera != null && cabecera.contains("total_horas_lectivas");
       String linea;
       while ((linea = lector.readLine()) != null) {
-        if (linea.isBlank()) continue;
+        if (linea.isBlank())
+          continue;
         String[] campos = linea.split(",", -1);
         if (tieneTotalHorasLectivas && campos.length >= 7) {
           resultado.add(new Curso(campos[0].trim(), campos[1].trim(), campos[2].trim(),
@@ -117,11 +128,13 @@ final class AlmacenamientoCurriculoCsv {
               Integer.parseInt(campos[5].trim()), Integer.parseInt(campos[6].trim())));
         } else if (campos.length >= 8) {
           resultado.add(new Curso(campos[0].trim(), campos[1].trim(), campos[2].trim(),
-              Integer.parseInt(campos[3].trim()), Integer.parseInt(campos[4].trim()), Integer.parseInt(campos[5].trim()),
+              Integer.parseInt(campos[3].trim()), Integer.parseInt(campos[4].trim()),
+              Integer.parseInt(campos[5].trim()),
               Integer.parseInt(campos[6].trim()), Integer.parseInt(campos[7].trim())));
         } else if (campos.length >= 7) {
           resultado.add(new Curso(campos[0].trim(), campos[1].trim(), campos[2].trim(),
-              Integer.parseInt(campos[3].trim()), Integer.parseInt(campos[4].trim()), Integer.parseInt(campos[5].trim()),
+              Integer.parseInt(campos[3].trim()), Integer.parseInt(campos[4].trim()),
+              Integer.parseInt(campos[5].trim()),
               Integer.parseInt(campos[4].trim()) + Integer.parseInt(campos[5].trim())));
         } else if (campos.length >= 5) {
           resultado.add(new Curso(campos[0].trim(), campos[1].trim(), Integer.parseInt(campos[2].trim()),

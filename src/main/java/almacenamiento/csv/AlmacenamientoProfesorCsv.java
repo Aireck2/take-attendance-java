@@ -5,13 +5,15 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import models.Profesor;
+
+import modelo.Profesor;
 
 /** Lee profesores desde su archivo CSV. */
 final class AlmacenamientoProfesorCsv {
   private static final String ARCHIVO = "data/profesor.csv";
 
-  private AlmacenamientoProfesorCsv() {}
+  private AlmacenamientoProfesorCsv() {
+  }
 
   static List<Profesor> leerTodos() {
     List<Profesor> profesores = new ArrayList<>();

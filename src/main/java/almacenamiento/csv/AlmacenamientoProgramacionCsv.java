@@ -7,22 +7,24 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
-import models.BloqueSeccion;
-import models.DiaSemana;
-import models.EstadoMatricula;
-import models.HorarioSeccion;
-import models.Matricula;
-import models.ModalidadDictado;
-import models.Salon;
-import models.SeccionCurso;
-import models.SesionClase;
-import models.TipoClase;
-import models.TipoSalon;
-import models.Turno;
+
+import modelo.BloqueSeccion;
+import modelo.DiaSemana;
+import modelo.EstadoMatricula;
+import modelo.HorarioSeccion;
+import modelo.Matricula;
+import modelo.ModalidadDictado;
+import modelo.Salon;
+import modelo.SeccionCurso;
+import modelo.SesionClase;
+import modelo.TipoClase;
+import modelo.TipoSalon;
+import modelo.Turno;
 
 /** Lee bloques, secciones, horarios, sesiones y matrículas desde CSV. */
 final class AlmacenamientoProgramacionCsv {
-  private AlmacenamientoProgramacionCsv() {}
+  private AlmacenamientoProgramacionCsv() {
+  }
 
   static List<BloqueSeccion> leerBloques() {
     List<BloqueSeccion> resultado = new ArrayList<>();
@@ -30,10 +32,12 @@ final class AlmacenamientoProgramacionCsv {
       lector.readLine();
       String linea;
       while ((linea = lector.readLine()) != null) {
-        if (linea.isBlank()) continue;
+        if (linea.isBlank())
+          continue;
         String[] campos = linea.split(",", -1);
-        if (campos.length >= 4) resultado.add(new BloqueSeccion(campos[0].trim(), campos[1].trim(), campos[2].trim(),
-            Turno.valueOf(campos[3].trim())));
+        if (campos.length >= 4)
+          resultado.add(new BloqueSeccion(campos[0].trim(), campos[1].trim(), campos[2].trim(),
+              Turno.valueOf(campos[3].trim())));
       }
     } catch (IOException e) {
       e.printStackTrace();
@@ -47,10 +51,12 @@ final class AlmacenamientoProgramacionCsv {
       lector.readLine();
       String linea;
       while ((linea = lector.readLine()) != null) {
-        if (linea.isBlank()) continue;
+        if (linea.isBlank())
+          continue;
         String[] campos = linea.split(",", -1);
-        if (campos.length >= 5) resultado.add(new SeccionCurso(campos[0].trim(), campos[1].trim(), campos[2].trim(),
-            ModalidadDictado.valueOf(campos[3].trim()), Integer.parseInt(campos[4].trim())));
+        if (campos.length >= 5)
+          resultado.add(new SeccionCurso(campos[0].trim(), campos[1].trim(), campos[2].trim(),
+              ModalidadDictado.valueOf(campos[3].trim()), Integer.parseInt(campos[4].trim())));
       }
     } catch (IOException e) {
       e.printStackTrace();
@@ -64,11 +70,14 @@ final class AlmacenamientoProgramacionCsv {
       lector.readLine();
       String linea;
       while ((linea = lector.readLine()) != null) {
-        if (linea.isBlank()) continue;
+        if (linea.isBlank())
+          continue;
         String[] campos = linea.split(",", -1);
-        if (campos.length >= 8) resultado.add(new HorarioSeccion(campos[0].trim(), campos[1].trim(),
-            DiaSemana.valueOf(campos[2].trim()), campos[3].trim(), campos[4].trim(), TipoClase.valueOf(campos[5].trim()),
-            campos[6].trim(), campos[7].trim()));
+        if (campos.length >= 8)
+          resultado.add(new HorarioSeccion(campos[0].trim(), campos[1].trim(),
+              DiaSemana.valueOf(campos[2].trim()), campos[3].trim(), campos[4].trim(),
+              TipoClase.valueOf(campos[5].trim()),
+              campos[6].trim(), campos[7].trim()));
       }
     } catch (IOException e) {
       e.printStackTrace();
@@ -82,10 +91,12 @@ final class AlmacenamientoProgramacionCsv {
       lector.readLine();
       String linea;
       while ((linea = lector.readLine()) != null) {
-        if (linea.isBlank()) continue;
+        if (linea.isBlank())
+          continue;
         String[] campos = linea.split(",", -1);
-        if (campos.length >= 6) resultado.add(new SesionClase(campos[0].trim(), campos[1].trim(), campos[2].trim(),
-            Integer.parseInt(campos[3].trim()), campos[4].trim(), campos[5].trim()));
+        if (campos.length >= 6)
+          resultado.add(new SesionClase(campos[0].trim(), campos[1].trim(), campos[2].trim(),
+              Integer.parseInt(campos[3].trim()), campos[4].trim(), campos[5].trim()));
       }
     } catch (IOException e) {
       e.printStackTrace();
@@ -99,10 +110,12 @@ final class AlmacenamientoProgramacionCsv {
       lector.readLine();
       String linea;
       while ((linea = lector.readLine()) != null) {
-        if (linea.isBlank()) continue;
+        if (linea.isBlank())
+          continue;
         String[] campos = linea.split(",", -1);
-        if (campos.length >= 4) resultado.add(new Salon(campos[0].trim(), campos[1].trim(),
-            TipoSalon.valueOf(campos[2].trim()), Integer.parseInt(campos[3].trim())));
+        if (campos.length >= 4)
+          resultado.add(new Salon(campos[0].trim(), campos[1].trim(),
+              TipoSalon.valueOf(campos[2].trim()), Integer.parseInt(campos[3].trim())));
       }
     } catch (IOException e) {
       e.printStackTrace();
@@ -116,10 +129,12 @@ final class AlmacenamientoProgramacionCsv {
       lector.readLine();
       String linea;
       while ((linea = lector.readLine()) != null) {
-        if (linea.isBlank()) continue;
+        if (linea.isBlank())
+          continue;
         String[] campos = linea.split(",", -1);
-        if (campos.length >= 5) resultado.add(new Matricula(campos[0].trim(), campos[1].trim(), campos[2].trim(),
-            campos[3].trim(), EstadoMatricula.valueOf(campos[4].trim())));
+        if (campos.length >= 5)
+          resultado.add(new Matricula(campos[0].trim(), campos[1].trim(), campos[2].trim(),
+              campos[3].trim(), EstadoMatricula.valueOf(campos[4].trim())));
       }
     } catch (IOException e) {
       e.printStackTrace();
