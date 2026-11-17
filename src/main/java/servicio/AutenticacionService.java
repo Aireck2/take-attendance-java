@@ -1,9 +1,9 @@
-package service;
+package servicio;
 
 import java.util.Locale;
 
 import almacenamiento.csv.RepositorioUsuarioCsv;
-import models.Usuario;
+import modelo.Usuario;
 import repositorio.RepositorioUsuario;
 import security.PasswordHasher;
 

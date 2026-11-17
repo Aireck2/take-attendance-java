@@ -1,29 +1,34 @@
 package test;
 
-import java.util.Comparator;
-import java.util.List;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.Comparator;
+import java.util.List;
 
-import models.RegistroDeAsistencia;
-import models.Curso;
-import models.Estudiante;
-import models.Profesor;
-import models.SeccionCurso;
-import models.SesionClase;
-import service.ServicioAsistencia;
 import almacenamiento.csv.RepositorioAsistenciaCsv;
+import modelo.Curso;
+import modelo.Estudiante;
+import modelo.Profesor;
+import modelo.RegistroDeAsistencia;
+import modelo.SeccionCurso;
+import modelo.SesionClase;
+import servicio.ServicioAsistencia;
 
-/** Run only from an isolated working directory containing a disposable data/ copy. */
+/**
+ * Run only from an isolated working directory containing a disposable data/
+ * copy.
+ */
 public final class AttendancePersistenceTest {
-  private AttendancePersistenceTest() {}
+  private AttendancePersistenceTest() {
+  }
 
   public static void main(String[] args) {
     RepositorioAsistenciaCsv repositorio = new RepositorioAsistenciaCsv();
     ServicioAsistencia servicio = new ServicioAsistencia(repositorio);
     Profesor profesor = repositorio.buscarProfesor("DOC-001").orElse(null);
-    if (profesor == null) throw new AssertionError("No se encontró al profesor asignado");
+    if (profesor == null)
+      throw new AssertionError("No se encontró al profesor asignado");
     Curso curso = servicio.listarCursosDeProfesor(profesor).stream()
         .filter(item -> item.getIdCurso().equals("UD-ETHHACK")).findFirst().orElseThrow();
     if (!"Arquitectura de Plataformas y Servicios de Tecnologías de Información"

@@ -1,20 +1,20 @@
-package service;
+package servicio;
 
+import java.time.LocalDate;
 import java.util.List;
 
-import models.Estudiante;
-import models.RegistroDeAsistencia;
-import models.Curso;
-import models.Profesor;
-import models.SeccionCurso;
-import models.BloqueSeccion;
-import models.HorarioSeccion;
-import models.Salon;
-import models.Carrera;
-import models.PeriodoAcademico;
-import java.time.LocalDate;
-import models.SesionClase;
-import models.Matricula;
+import modelo.BloqueSeccion;
+import modelo.Carrera;
+import modelo.Curso;
+import modelo.Estudiante;
+import modelo.HorarioSeccion;
+import modelo.Matricula;
+import modelo.PeriodoAcademico;
+import modelo.Profesor;
+import modelo.RegistroDeAsistencia;
+import modelo.Salon;
+import modelo.SeccionCurso;
+import modelo.SesionClase;
 import repositorio.RepositorioAsistencia;
 
 /** Coordina el registro, consulta y persistencia de asistencia. */
@@ -100,13 +100,15 @@ public final class ServicioAsistencia {
   }
 
   public int horasProgramadasDe(RegistroDeAsistencia registro) {
-    if (registro == null || registro.getIdSesion() == null || registro.getIdSesion().isEmpty()) return 0;
+    if (registro == null || registro.getIdSesion() == null || registro.getIdSesion().isEmpty())
+      return 0;
     return repositorio.buscarSesion(registro.getIdSesion())
         .map(SesionClase::getHorasProgramadas).orElse(0);
   }
 
   public double calcularPorcentajeFaltas(int horasDictadas, int horasAsistidas) {
-    if (horasDictadas <= 0) return 0.0;
+    if (horasDictadas <= 0)
+      return 0.0;
     int noAsistidas = Math.max(0, horasDictadas - horasAsistidas);
     return (double) noAsistidas / horasDictadas * 100.0;
   }

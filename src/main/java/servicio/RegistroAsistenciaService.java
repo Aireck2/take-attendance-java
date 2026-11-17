@@ -1,11 +1,11 @@
-package service;
+package servicio;
 
-import models.Curso;
-import models.Estudiante;
-import models.Matricula;
-import models.RegistroDeAsistencia;
-import models.SeccionCurso;
-import models.SesionClase;
+import modelo.Curso;
+import modelo.Estudiante;
+import modelo.Matricula;
+import modelo.RegistroDeAsistencia;
+import modelo.SeccionCurso;
+import modelo.SesionClase;
 import repositorio.RepositorioAsistencia;
 
 /** Resolves attendance registration inputs and enforces active enrollment. */
@@ -18,14 +18,18 @@ final class RegistroAsistenciaService {
 
   RegistroDeAsistencia registrar(String idSesion, String idEstudiante, int horasAsistidas) {
     SesionClase sesion = repositorio.buscarSesion(idSesion).orElse(null);
-    if (sesion == null) return null;
+    if (sesion == null)
+      return null;
     SeccionCurso seccion = repositorio.buscarSeccionDeSesion(sesion).orElse(null);
-    if (seccion == null) return null;
+    if (seccion == null)
+      return null;
     Curso curso = repositorio.buscarCurso(seccion.getIdCurso()).orElse(null);
     Estudiante estudiante = repositorio.buscarEstudiante(idEstudiante).orElse(null);
-    if (curso == null || estudiante == null) return null;
+    if (curso == null || estudiante == null)
+      return null;
     Matricula matricula = repositorio.buscarMatriculaActiva(idEstudiante, seccion.getIdBloque()).orElse(null);
-    if (matricula == null) return null;
+    if (matricula == null)
+      return null;
     return RegistroAsistenciaFactory.crear(sesion, curso, estudiante, horasAsistidas, matricula.getIdMatricula());
   }
 }

@@ -1,20 +1,20 @@
 package repositorio;
 
 import java.util.List;
-
-import models.RegistroDeAsistencia;
-import models.SesionClase;
-import models.SeccionCurso;
-import models.Curso;
-import models.Estudiante;
-import models.Matricula;
-import models.Profesor;
-import models.BloqueSeccion;
-import models.HorarioSeccion;
-import models.Salon;
-import models.Carrera;
-import models.PeriodoAcademico;
 import java.util.Optional;
+
+import modelo.BloqueSeccion;
+import modelo.Carrera;
+import modelo.Curso;
+import modelo.Estudiante;
+import modelo.HorarioSeccion;
+import modelo.Matricula;
+import modelo.PeriodoAcademico;
+import modelo.Profesor;
+import modelo.RegistroDeAsistencia;
+import modelo.Salon;
+import modelo.SeccionCurso;
+import modelo.SesionClase;
 
 /** Contrato de consulta y persistencia de registros de asistencia. */
 public interface RepositorioAsistencia {
