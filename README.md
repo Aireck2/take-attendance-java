@@ -41,3 +41,13 @@ Requisito: **JDK 21** o superior.
 javac -d out $(find src/main/java src/test/java -name "*.java")
 java -cp out test.TestRunner
 ```
+
+La prueba de persistencia agrega registros al CSV, por eso se ejecuta desde una copia temporal de `data/`:
+
+```bash
+project=$(pwd)
+tmp=$(mktemp -d)
+trap 'rm -rf "$tmp"' EXIT
+cp -R data "$tmp/data"
+(cd "$tmp" && java -cp "$project/out" test.AttendancePersistenceTest)
+```
