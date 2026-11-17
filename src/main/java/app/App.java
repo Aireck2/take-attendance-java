@@ -190,7 +190,7 @@ public class App {
     }
 
     imprimirTitulo("DETALLE DEL CURSO");
-    mostrarDetalleCurso(seccionSeleccionada, cursoSel);
+    String carreraCurso = mostrarDetalleCurso(seccionSeleccionada, cursoSel);
 
     List<Estudiante> alumnosCurso = servicioAsistencia.listarEstudiantesDeCursoEnBloque(cursoSel,
         seccionSeleccionada.getIdBloque());
@@ -205,6 +205,7 @@ public class App {
       System.out.println(" " + (i + 1) + ". " + est.getNombreCompleto());
       System.out.println("    - Código: " + est.getCodigo());
       System.out.println("    - Correo: " + est.getCorreo());
+      System.out.println("    - Carrera: " + carreraCurso);
     }
 
     String fecha = LocalDate.now().toString();
@@ -322,7 +323,7 @@ public class App {
    * Un curso puede abrirse en mas de una seccion; se muestra una ficha por
    * seccion en la que el profesor dicta al menos una franja.
    */
-  private void mostrarDetalleCurso(SeccionCurso seccion, Curso curso) {
+  private String mostrarDetalleCurso(SeccionCurso seccion, Curso curso) {
     BloqueSeccion bloque = servicioAsistencia.buscarBloque(seccion.getIdBloque());
     System.out.println("Curso: " + curso.getNombreCurso());
     modelo.Carrera carreraCurso = servicioAsistencia.buscarCarreraDeCurso(curso);
@@ -338,6 +339,7 @@ public class App {
     if (periodo != null && periodo.getSemanasLectivas() > 0) {
       System.out.printf("Horas semanales requeridas: %.2f hrs%n", periodo.calcularHorasSemanalesRequeridas(curso));
     }
+    return carrera;
   }
 
   /**

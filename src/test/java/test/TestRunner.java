@@ -2,7 +2,12 @@ package test;
 
 import java.util.List;
 import java.util.Optional;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 
+import app.App;
 import almacenamiento.csv.RepositorioAsistenciaCsv;
 import modelo.Curso;
 import modelo.Estudiante;
@@ -31,6 +36,7 @@ public final class TestRunner {
         probarAutenticacionConRepositorioInyectado();
         probarInicioSesionYResolucionDePerfil();
         probarRecorridoAcademicoHastaRegistro();
+        probarCarreraEnListaDeAlumnosDelCurso();
         if (fallos == 0) {
             System.out.println("OK: " + total + " pruebas del flujo de asistencia pasaron.");
         } else {
@@ -116,6 +122,28 @@ public final class TestRunner {
                 "normaliza las horas al máximo permitido por la sesión");
         verificar(registro != null && servicio.horasProgramadasDe(registro) == sesion.getHorasProgramadas(),
                 "resuelve las horas dictadas de la sesión para el resumen del estudiante");
+    }
+
+    private static void probarCarreraEnListaDeAlumnosDelCurso() {
+        var entradaOriginal = System.in;
+        var salidaOriginal = System.out;
+        ByteArrayOutputStream salida = new ByteArrayOutputStream();
+        String entrada = String.join("\n", "1", "carlos.mendoza@iestpchincha.edu.pe", "Docente2026*", "1", "1",
+                "2", "3", "2", "");
+        try {
+            System.setIn(new ByteArrayInputStream(entrada.getBytes(StandardCharsets.UTF_8)));
+            System.setOut(new PrintStream(salida, true, StandardCharsets.UTF_8));
+            new App().iniciar();
+        } finally {
+            System.setIn(entradaOriginal);
+            System.setOut(salidaOriginal);
+        }
+
+        String resultado = salida.toString(StandardCharsets.UTF_8);
+        long alumnos = resultado.lines().filter(linea -> linea.contains("- Código:")).count();
+        long carreras = resultado.lines().filter(linea -> linea.contains("- Carrera:")).count();
+        verificar(alumnos > 0 && carreras == alumnos,
+                "muestra la carrera junto a cada alumno matriculado en el detalle del curso");
     }
 
     private static void verificar(boolean condicion, String descripcion) {
