@@ -3,32 +3,36 @@ config:
   layout: dagre
   theme: redux-color
   look: neo
-  fontFamily: '''Open Sans Variable'', sans-serif'
-  themeVariables:
-    fontFamily: '''Open Sans Variable'', sans-serif'
 ---
 flowchart TB
- subgraph Pres["Capa de Presentación (CLI)"]
-        App["sistema.SistemaApp"]
-  end
- subgraph Negocio["Capa de Servicios y Negocio"]
-        ServAca["service.ServicioAcademico"]
-        ServAuth["service.AutenticacionService"]
-  end
- subgraph IO["Capa de Persistencia (I/O)"]
-        Manager["storage.ArchivoManager"]
-  end
- subgraph Sec["Capa de Seguridad"]
-        Hasher["security.PasswordHasher"]
-  end
- subgraph Dominio["Capa de Dominio (Modelos)"]
-        Models["Carrera, PlanEstudios, ModuloProfesional, Curso, SesionClase,<br>RegistroDeAsistencia, Matricula, IndicadorLogro, RegistroNota, ..."]
-  end
-    App -- delega operaciones de asistencia y notas --> ServAca
-    App -- autentica credenciales por consola --> ServAuth
-    ServAuth -- verifica hash PBKDF2 --> Sec
-    ServAuth -- lee catálogo de usuarios --> IO
-    ServAca -- persiste y consulta 19 archivos CSV --> IO
-   
-    Manager -- hidrata y serializa entidades --> Dominio
-     ServAca -- aplica reglas sobre --> Dominio
+    App["app.App<br>CLI y menús por rol"]
+    Auth["servicio.AutenticacionService"]
+    Asistencia["servicio.ServicioAsistencia"]
+    Registro["servicio.RegistroAsistenciaService<br>servicio.RegistroAsistenciaFactory"]
+    RepoUsuario["repositorio.RepositorioUsuario<br>contrato"]
+    RepoAsistencia["repositorio.RepositorioAsistencia<br>contrato"]
+    CsvUsuario["almacenamiento.csv.RepositorioUsuarioCsv"]
+    CsvAsistencia["almacenamiento.csv.RepositorioAsistenciaCsv"]
+    Lectura["almacenamiento.csv.Almacenamiento*Csv"]
+    Escritura["almacenamiento.csv.PersistenciaAsistenciaCsv"]
+    Datos[("Archivos CSV en data/")]
+    Hash["security.PasswordHasher"]
+    Dominio["modelo.*<br>entidades y enumeraciones"]
+
+    App -->|autentica| Auth
+    App -->|invoca casos de asistencia| Asistencia
+    Auth -->|consulta| RepoUsuario
+    Auth -->|verifica credenciales| Hash
+    Asistencia -->|coordina consultas y reglas| RepoAsistencia
+    Asistencia --> Registro
+    Registro -->|valida sesión, matrícula y horas| RepoAsistencia
+    RepoUsuario -. implementación CSV .-> CsvUsuario
+    RepoAsistencia -. implementación CSV .-> CsvAsistencia
+    CsvUsuario --> Lectura
+    CsvAsistencia --> Lectura
+    CsvAsistencia --> Escritura
+    Lectura -->|lee y reconstruye| Datos
+    Escritura -->|agrega registros| Datos
+    Auth --> Dominio
+    Asistencia --> Dominio
+    CsvAsistencia --> Dominio

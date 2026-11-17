@@ -1,203 +1,92 @@
 classDiagram
     direction TB
 
-    namespace sistema {
-        class SistemaApp {
+    namespace app {
+        class App {
             - scanner : Scanner
-            - servicio : ServicioAcademico
+            - servicioAsistencia : ServicioAsistencia
             - autenticacion : AutenticacionService
-            + main(args : String[]) void$
+            + main(args : String[]) void
             + iniciar() void
-            - leerOpcion(mensaje : String) int
             - iniciarSesion() void
-            - leerContrasena(prompt : String) String
-            - menuProfesor(profActual : Profesor) void
             - gestionarCursosProfesor(prof : Profesor) void
-            - mostrarDetalleCurso(prof : Profesor, curso : Curso) void
-            - mostrarDocentesDeSeccion(seccion : SeccionCurso) void
-            - mostrarHorarioDeSeccion(seccion : SeccionCurso) void
-            - menuEstudiante(estActual : Estudiante) void
+            - mostrarDetalleCurso(seccion : SeccionCurso, curso : Curso) String
             - mostrarResumenAsistenciaEstudiante(est : Estudiante) void
         }
     }
 
-    namespace service {
+    namespace servicio {
         class AutenticacionService {
-            - HASH_FICTICIO : String$
+            - repositorio : RepositorioUsuario
             + autenticar(correo : String, contrasena : String) Usuario
-            - buscarPorCorreo(correoNormalizado : String) Usuario
         }
-        class ServicioAcademico {
-            + LIMITE_INASISTENCIA : double = 15.0$
-            + LIMITE_INASISTENCIA_NORMATIVO : double = 30.0$
-            + listarCursosProfesor(profesor : Profesor) List~Curso~
-            + seccionesProfesor(profesor : Profesor, curso : Curso) List~SeccionCurso~
-            + profesoresSeccion(idSeccion : String) List~Profesor~
-            + buscarBloque(idBloque : String) BloqueSeccion
-            + buscarSalon(idSalon : String) Salon
-            + listarEstudiantesCurso(curso : Curso) List~Estudiante~
-            + listarCursosEstudiante(estudiante : Estudiante) List~Curso~
-            + historialEstudiante(estudiante : Estudiante) List~RegistroDeAsistencia~
-            + crearRegistroSesion(sesion : SesionClase, curso : Curso, estudiante : Estudiante, horasAsistidas : int, idMatricula : String) RegistroDeAsistencia
-            + registrarAsistenciaSesion(idSesion : String, idEstudiante : String, horasAsistidas : int) RegistroDeAsistencia
-            + guardarAsistencias(registros : List~RegistroDeAsistencia~) void
-            + calcularHorasFaltadas(sesiones : List~SesionClase~, registros : List~RegistroDeAsistencia~) int
-            + horasFaltadasUnidadDidactica(matricula : Matricula, curso : Curso) int
-            + horasProgramadasDe(registro : RegistroDeAsistencia, curso : Curso) int
-            + calcularPorcentajeInasistencia(horasFaltadas : int, horasLectivasTotales : int) double
-            + calcularPorcentajeFaltas(horasDictadas : int, horasAsistidas : int) double
-            + estaInhabilitadoPorInasistencia(horasFaltadas : int, horasLectivasTotales : int) boolean
-            + puedeRegistrarNotas(matricula : Matricula, curso : Curso) boolean
-            + puedeRegistrarNota(matricula : Matricula, curso : Curso, sesiones : List~SesionClase~, registros : List~RegistroDeAsistencia~) boolean
-            + crearRegistroNota(idIndicador : String, idEstudiante : String, nota : int, fecha : String) RegistroNota
-            + guardarNotas(notas : List~RegistroNota~) void
+        class ServicioAsistencia {
+            - repositorio : RepositorioAsistencia
+            - registro : RegistroAsistenciaService
+            + listarEstudiantesDeCursoEnBloque(curso, idBloque) List~Estudiante~
+            + buscarCarreraDeCurso(curso) Carrera
+            + registrar(idSesion, idEstudiante, horasAsistidas) RegistroDeAsistencia
+            + guardarLote(registros) void
+            + calcularPorcentajeFaltas(horasDictadas, horasAsistidas) double
+        }
+        class RegistroAsistenciaService {
+            - repositorio : RepositorioAsistencia
+            ~ registrar(idSesion, idEstudiante, horasAsistidas) RegistroDeAsistencia
+        }
+        class RegistroAsistenciaFactory {
+            ~ crear(sesion, curso, estudiante, horasAsistidas, idMatricula) RegistroDeAsistencia
         }
     }
 
     namespace security {
         class PasswordHasher {
-            - ALGORITMO : String = "PBKDF2WithHmacSHA256"$
-            - PREFIJO : String = "pbkdf2_sha256"$
-            - ITERACIONES : int = 210000$
-            - LONGITUD_CLAVE_BITS : int = 256$
-            - LONGITUD_SAL_BYTES : int = 16$
-            + hash(contrasena : String) String$
-            + verificar(contrasena : String, almacenado : String) boolean$
-            - derivar(contrasena : String, sal : byte[], iteraciones : int) byte[]$
+            + hash(contrasena : String) String
+            + verificar(contrasena : String, almacenado : String) boolean
         }
     }
 
-    namespace storage {
-        class ArchivoManager {
-            - CARPETA_DATOS : String = "data"$
-            + leerProfesores() List~Profesor~$
-            + leerEstudiantes() List~Estudiante~$
-            + leerUsuarios() List~Usuario~$
-            + leerCursos() List~Curso~$
-            + leerSesiones() List~SesionClase~$
-            + leerMatriculas() List~Matricula~$
-            + guardarMatriculas(matriculas : List~Matricula~) void$
-            + leerTodasAsistencias() List~RegistroDeAsistencia~$
-            + leerAsistenciasEstudiante(idEstudiante : String) List~RegistroDeAsistencia~$
-            + guardarAsistencia(registros : List~RegistroDeAsistencia~) void$
-            + leerIndicadores() List~IndicadorLogro~$
-            + leerNotas() List~RegistroNota~$
-            + guardarNotas(notas : List~RegistroNota~) void$
+    namespace repositorio {
+        class RepositorioUsuario {
+            <<interface>>
+            + buscarPorCorreo(correo : String) Optional~Usuario~
+        }
+        class RepositorioAsistencia {
+            <<interface>>
+            + listarPorEstudiante(idEstudiante) List~RegistroDeAsistencia~
+            + listarEstudiantesDeCursoEnBloque(curso, idBloque) List~Estudiante~
+            + buscarCarreraDeCurso(curso) Optional~Carrera~
+            + buscarMatriculaActiva(idEstudiante, idBloque) Optional~Matricula~
+            + guardarLote(registros) void
         }
     }
 
-    namespace models {
-        class Carrera {
-            - idCarrera : String
-            - nombre : String
-            - tipo : String
-            + getIdCarrera() String
-            + getNombre() String
+    namespace almacenamiento_csv {
+        class RepositorioUsuarioCsv {
+            + buscarPorCorreo(correo) Optional~Usuario~
         }
-        class PlanEstudios {
-            - idPlan : String
-            - idCarrera : String
-            - codigo : String
-            - estado : EstadoPlan
+        class RepositorioAsistenciaCsv {
+            + listarPorEstudiante(idEstudiante) List~RegistroDeAsistencia~
+            + guardarLote(registros) void
+            + buscarCarreraDeCurso(curso) Optional~Carrera~
         }
-        class ModuloProfesional {
-            - idModulo : String
-            - idPlan : String
-            - nombre : String
+        class AlmacenamientoAsistenciaCsv {
+            ~ leerTodos() List~RegistroDeAsistencia~
+            ~ agregar(registros) void
         }
-        class Curso {
-            - idCurso : String
-            - nombreCurso : String
-            - totalHorasSesion : int
-            - duracionCurso : int
-            - creditos : int
-            - horasTeoricas : int
-            - horasPracticas : int
-            + getHorasLectivasTotales() int
-            + getTotalHorasSesion() int
-            + getDuracionCurso() int
+        class AlmacenamientoCurriculoCsv {
+            ~ leerCarreras() List~Carrera~
+            ~ leerPlanesEstudios() List~PlanEstudios~
+            ~ leerModulosProfesionales() List~ModuloProfesional~
         }
-        class SeccionCurso {
-            - idSeccion : String
-            - idBloque : String
-            - idCurso : String
-            - modalidad : ModalidadDictado
+        class AlmacenamientoUsuarioCsv {
+            ~ leerTodos() List~Usuario~
         }
-        class SesionClase {
-            - idSesion : String
-            - idHorario : String
-            - fecha : String
-            - horasProgramadas : int
-            - idProfesor : String
-            - idSalon : String
-            + getIdSesion() String
-            + getHorasProgramadas() int
-            + getFecha() String
+        class PersistenciaAsistenciaCsv {
+            ~ guardar(registros) void
         }
-        class RegistroDeAsistencia {
-            - idAsistencia : String
-            - idCurso : String
-            - idEstudiante : String
-            - fecha : String
-            - horasAsistidas : int
-            - presente : boolean
-            - idSesion : String
-            - idMatricula : String
-            + getHorasAsistidas() int
-            + isPresente() boolean
-            + getIdSesion() String
-            + getIdMatricula() String
-        }
-        class Matricula {
-            - idMatricula : String
-            - idEstudiante : String
-            - idBloque : String
-            - fechaMatricula : String
-            - estado : EstadoMatricula
-            + getIdMatricula() String
-            + getIdEstudiante() String
-            + getIdBloque() String
-            + getEstado() EstadoMatricula
-        }
-        class IndicadorLogro {
-            - idIndicador : String
-            - idSeccion : String
-            - nombre : String
-            - peso : int
-            + getIdIndicador() String
-            + getNombre() String
-        }
-        class RegistroNota {
-            - idRegistroNota : String
-            - idIndicador : String
-            - idEstudiante : String
-            - nota : int
-            - fecha : String
-            + getNota() int
-            + getIdIndicador() String
-        }
-        class Profesor {
-            - id : String
-            - nombre : String
-            - apellido : String
-            - correo : String
-            - especialidad : String
-            + getNombreCompleto() String
-            + mostrarPerfil() void
-        }
-        class Estudiante {
-            - id : String
-            - codigo : String
-            - nombres : String
-            - apellidos : String
-            - dni : String
-            - correo : String
-            - escuelaProfesional : String
-            - estado : EstadoEstudiante
-            + getNombreCompleto() String
-            + getCodigo() String
-            + mostrarPerfil() void
-        }
+    }
+
+    namespace modelo {
         class Usuario {
             - id : String
             - correo : String
@@ -205,26 +94,72 @@ classDiagram
             - rol : Rol
             - idReferencia : String
             - activo : boolean
-            + getRol() Rol
-            + isActivo() boolean
-            + getIdReferencia() String
+        }
+        class Estudiante {
+            - id : String
+            - codigo : String
+            - nombres : String
+            - apellidos : String
+            - correo : String
+            - estado : EstadoEstudiante
+        }
+        class Curso {
+            - idCurso : String
+            - nombreCurso : String
+            - idModulo : String
+            - totalHorasSesion : int
+        }
+        class Carrera {
+            - idCarrera : String
+            - nombre : String
+        }
+        class PlanEstudios {
+            - idPlan : String
+            - idCarrera : String
+        }
+        class ModuloProfesional {
+            - idModulo : String
+            - idPlan : String
+        }
+        class Matricula {
+            - idMatricula : String
+            - idEstudiante : String
+            - idBloque : String
+            - estado : EstadoMatricula
+        }
+        class BloqueSeccion {
+            - idBloque : String
+            - idPeriodo : String
+        }
+        class SeccionCurso {
+            - idSeccion : String
+            - idBloque : String
+            - idCurso : String
+        }
+        class HorarioSeccion {
+            - idHorario : String
+            - idSeccion : String
+            - idProfesor : String
+            - idSalon : String
+        }
+        class SesionClase {
+            - idSesion : String
+            - idHorario : String
+            - fecha : String
+            - horasProgramadas : int
+        }
+        class RegistroDeAsistencia {
+            - idAsistencia : String
+            - idCurso : String
+            - idEstudiante : String
+            - idSesion : String
+            - idMatricula : String
+            - horasAsistidas : int
         }
         class Rol {
             <<enumeration>>
             PROFESOR
             ESTUDIANTE
-            + menuSesion() MenuSesion
-        }
-        class MenuSesion {
-            <<enumeration>>
-            PROFESOR
-            ESTUDIANTE
-            NINGUNO
-        }
-        class EstadoPlan {
-            <<enumeration>>
-            VIGENTE
-            HISTORICO
         }
         class EstadoMatricula {
             <<enumeration>>
@@ -235,36 +170,37 @@ classDiagram
         class EstadoEstudiante {
             <<enumeration>>
             REGULAR
-            SUSPENDIDO
             RESERVA_MATRICULA
-        }
-        class ModalidadDictado {
-            <<enumeration>>
-            PRESENCIAL
-            VIRTUAL
-            HIBRIDA
+            TRASLADO_INTERNO
+            SUSPENDIDO
+            EGRESADO
         }
     }
 
-    SistemaApp --> ServicioAcademico : delega operaciones
-    SistemaApp --> AutenticacionService : delega inicio de sesión
-    AutenticacionService ..> PasswordHasher : verifica derivación criptográfica
-    AutenticacionService ..> ArchivoManager : lee usuarios
-    ServicioAcademico ..> ArchivoManager : persiste y consulta registros
-    ServicioAcademico ..> Curso : valida carga lectiva
-    ServicioAcademico ..> RegistroDeAsistencia : procesa inasistencias
-    ServicioAcademico ..> Matricula : verifica condición activa
-    ServicioAcademico ..> RegistroNota : valida y asienta evaluación
-    Usuario --> Rol : tipado de permisos
-    Rol --> MenuSesion : redirige al menú
-    Curso --> ModuloProfesional : pertenece a
-    ModuloProfesional --> PlanEstudios : compone
-    PlanEstudios --> Carrera : pertenece a
-    PlanEstudios --> EstadoPlan : estado
-    SeccionCurso --> Curso : apertura de
-    SeccionCurso --> ModalidadDictado : modalidad
-    SesionClase ..> RegistroDeAsistencia : referencia horaria
-    Matricula --> RegistroDeAsistencia : vincula por idMatricula
-    Matricula ..> Estudiante : asocia
-    RegistroNota --> IndicadorLogro : evalúa
-    RegistroNota ..> Estudiante : califica
+    App --> ServicioAsistencia : ejecuta casos de asistencia
+    App --> AutenticacionService : autentica
+    AutenticacionService --> RepositorioUsuario : consulta cuentas
+    AutenticacionService ..> PasswordHasher : verifica contrasenas
+    ServicioAsistencia --> RepositorioAsistencia : consulta y guarda
+    ServicioAsistencia --> RegistroAsistenciaService : delega registro
+    RegistroAsistenciaService --> RegistroAsistenciaFactory : crea registro validado
+    RegistroAsistenciaService --> RepositorioAsistencia : resuelve sesion y matricula
+    RepositorioUsuario <|.. RepositorioUsuarioCsv
+    RepositorioAsistencia <|.. RepositorioAsistenciaCsv
+    RepositorioUsuarioCsv ..> AlmacenamientoUsuarioCsv : lee usuarios
+    RepositorioAsistenciaCsv ..> AlmacenamientoAsistenciaCsv : consulta registros
+    RepositorioAsistenciaCsv ..> AlmacenamientoCurriculoCsv : resuelve carrera del curso
+    RepositorioAsistenciaCsv ..> PersistenciaAsistenciaCsv : delega guardado
+    PersistenciaAsistenciaCsv ..> AlmacenamientoAsistenciaCsv : asigna ID y agrega filas
+    Usuario --> Rol
+    Curso --> ModuloProfesional
+    ModuloProfesional --> PlanEstudios
+    PlanEstudios --> Carrera
+    Matricula ..> Estudiante : referencia idEstudiante
+    Matricula --> BloqueSeccion : referencia idBloque
+    SeccionCurso --> Curso
+    SeccionCurso --> BloqueSeccion
+    SesionClase --> HorarioSeccion
+    RegistroDeAsistencia --> SesionClase
+    RegistroDeAsistencia --> Matricula
+    Matricula --> EstadoMatricula : estado

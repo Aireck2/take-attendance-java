@@ -3,44 +3,23 @@ config:
   theme: default
 ---
 flowchart TB
-    Menu[/"MENU PRINCIPAL - SISTEMA DE ASISTENCIA - IESTP CHINCHA<br>1. Iniciar sesion<br>2. Salir"/] --> LeerOp@{ label: "leerOpcion('Seleccione una opcion: ')" }
-    LeerOp --> LeerInt["opcion = scanner.nextInt()<br>scanner.nextLine()"]
-    LeerInt --> Switch{{"switch (opcion)"}}
-    Switch -- 1 --> CallSesion[["Llamar iniciarSesion()"]]
-    Switch -- 2 --> Salir@{ label: "Escribir 'Saliendo del sistema...'" }
-    Switch -- default --> OpInvalida@{ label: "Escribir 'Opcion invalida.'" }
-    OpInvalida --> Menu
-    Salir --> Fin(["FIN"])
-    CallSesion --> ReadCorreo[/"Leer correo y aplicar trim()"/]
-    ReadCorreo --> ReadPass[/"Leer contrasena<br>Console.readPassword()"/]
-    ReadPass --> Vacias{"correo vacio o contrasena vacia?"}
-    Vacias -- Si --> AuthNull["AuthNull"]
-    Vacias -- No --> CallBuscar[["Llamar buscarPorCorreo(correoNormalizado)"]]
-    CallBuscar --> LeerUsuarios[["Llamar ArchivoManager.leerUsuarios()"]]
-    LeerUsuarios --> VerifOk{"La contrasena coincide?"}
-    VerifOk -- No --> AuthNull
-    VerifOk -- Si --> AuthOk[/"Devolver usuario autenticado"/]
-    AuthNull --> CredencialesInvalidas@{ label: "Escribir 'Credenciales invalidas.'<br>return → vuelve al menu principal" }
-    CredencialesInvalidas --> VolverMenu["Volver al menu principal (repite el do-while)"]
-    AuthOk --> RolMsg@{ label: "Escribir 'Sesion iniciada como ' + usuario.getRol()" }
-    RolMsg --> SwitchRol{{"switch (usuario.getRol().menuSesion())"}}
-    SwitchRol -- PROFESOR --> CallProf[["Llamar servicio.buscarProfesor(usuario.getIdReferencia())"]]
-    SwitchRol -- ESTUDIANTE --> CallEst[["Llamar servicio.buscarEstudiante(usuario.getIdReferencia())"]]
-    SwitchRol -- NINGUNO --> RolSinMenu@{ label: "Escribir 'El rol no tiene un menu asignado. Sesion cerrada.'<br>return → vuelve al menu principal" }
-    RolSinMenu --> VolverMenu
-    CallProf --> BienvProf@{ label: "Escribir 'Bienvenido, ' + profesor.getNombreCompleto()" }
-    CallEst --> BienvEst@{ label: "Escribir 'Bienvenido, ' + estudiante.getNombreCompleto()" }
-    BienvEst --> F(("E"))
-    BienvProf --> E(("P"))
-    F --> VolverMenu
-    E --> VolverMenu
-    VolverMenu --> Menu
-    Start(["INICIO"]) --> Menu
-
-    LeerOp@{ shape: lean-r}
-    Salir@{ shape: lean-r}
-    OpInvalida@{ shape: lean-r}
-    CredencialesInvalidas@{ shape: lean-r}
-    RolMsg@{ shape: lean-r}
-    BienvProf@{ shape: lean-r}
-    BienvEst@{ shape: lean-r}
+    Inicio([INICIO]) --> Menu["Sistema de asistencia<br>1. Iniciar sesión<br>2. Salir"]
+    Menu --> LeerOpcion["leerOpcion() lee un entero y descarta el resto de la línea"]
+    LeerOpcion --> Opcion{"Opción seleccionada"}
+    Opcion -- "2" --> Salir["Escribir 'Saliendo del sistema...'"] --> Fin([FIN])
+    Opcion -- "inválida" --> ErrorOpcion["Escribir 'Opción inválida.'"] --> Menu
+    Opcion -- "1" --> Correo["Leer correo y quitar espacios externos"]
+    Correo --> Contrasena["Leer contraseña<br>Console.readPassword() si hay consola;<br>si no, leer con Scanner"]
+    Contrasena --> Auth["AutenticacionService.autenticar(correo, contraseña)"]
+    Auth --> Usuario{"¿Credenciales válidas<br>y usuario activo?"}
+    Usuario -- No --> Credenciales["Escribir 'Credenciales inválidas.'"] --> Menu
+    Usuario -- Sí --> Rol{"Rol de la cuenta"}
+    Rol -->|PROFESOR| PerfilProfesor["ServicioAsistencia.buscarProfesor(idReferencia)"]
+    Rol -->|ESTUDIANTE| PerfilEstudiante["ServicioAsistencia.buscarEstudiante(idReferencia)"]
+    Rol -->|sin menú| SinMenu["Informar que el rol no tiene menú<br>y cerrar sesión"] --> Menu
+    PerfilProfesor --> ExisteProfesor{"¿Perfil encontrado?"}
+    PerfilEstudiante --> ExisteEstudiante{"¿Perfil encontrado?"}
+    ExisteProfesor -- No --> ErrorPerfilP["Informar perfil de profesor no encontrado"] --> Menu
+    ExisteEstudiante -- No --> ErrorPerfilE["Informar perfil de estudiante no encontrado"] --> Menu
+    ExisteProfesor -- Sí --> MenuProfesor["Dar bienvenida y abrir menú docente"] --> Cierre["Cerrar sesión"] --> Menu
+    ExisteEstudiante -- Sí --> MenuEstudiante["Dar bienvenida y abrir menú estudiante"] --> Cierre
