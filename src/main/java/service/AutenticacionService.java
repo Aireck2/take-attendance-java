@@ -1,22 +1,31 @@
 package service;
 
-import java.util.List;
 import java.util.Locale;
 
+import almacenamiento.csv.RepositorioUsuarioCsv;
 import models.Usuario;
+import repositorio.RepositorioUsuario;
 import security.PasswordHasher;
-import storage.ArchivoManager;
 
 /**
  * Valida credenciales de acceso contra los usuarios persistidos.
  */
 public class AutenticacionService {
+  private final RepositorioUsuario repositorio;
 
   /**
    * Hash ficticio para gastar el mismo tiempo de calculo cuando el correo no
    * existe y no filtrar por diferencias de tiempo si una cuenta esta registrada.
    */
   private static final String HASH_FICTICIO = PasswordHasher.hash("usuario-inexistente");
+
+  public AutenticacionService() {
+    this(new RepositorioUsuarioCsv());
+  }
+
+  public AutenticacionService(RepositorioUsuario repositorio) {
+    this.repositorio = repositorio;
+  }
 
   /**
    * Autentica un correo y una contrasena. Devuelve el usuario activo o null.
@@ -31,7 +40,7 @@ public class AutenticacionService {
       return null;
     }
 
-    Usuario usuario = buscarPorCorreo(correoNormalizado);
+    Usuario usuario = repositorio.buscarPorCorreo(correoNormalizado).orElse(null);
     if (usuario == null || !usuario.isActivo()) {
       PasswordHasher.verificar(contrasena, HASH_FICTICIO);
       return null;
@@ -42,13 +51,4 @@ public class AutenticacionService {
     return usuario;
   }
 
-  private Usuario buscarPorCorreo(String correoNormalizado) {
-    List<Usuario> usuarios = ArchivoManager.leerUsuarios();
-    for (Usuario usuario : usuarios) {
-      if (usuario.getCorreo().equalsIgnoreCase(correoNormalizado)) {
-        return usuario;
-      }
-    }
-    return null;
-  }
 }
