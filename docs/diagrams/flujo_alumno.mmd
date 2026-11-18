@@ -1,18 +1,21 @@
----
+--
 config:
   theme: default
 ---
 flowchart TB
-    Inicio([Inicio del menú estudiante]) --> Menu["1. Ver cursos asignados y estado de asistencia<br>2. Ver perfil<br>3. Cerrar sesión"]
+    Inicio(["Inicio del menú estudiante"]) --> Menu["1. Ver cursos asignados y estado de asistencia<br>2. Ver perfil<br>3. Cerrar sesión"]
     Menu --> Opcion["leerOpcion()"]
     Opcion --> Elegir{"Opción"}
-    Elegir -- "2" --> Perfil["estudiante.mostrarPerfil()"] --> Menu
-    Elegir -- "3" --> Salir([Cerrar sesión])
-    Elegir -- inválida --> Error["Escribir 'Opción inválida.'"] --> Menu
-    Elegir -- "1" --> Asistencias["ServicioAsistencia.listarPorEstudiante(idEstudiante)"]
+    Elegir -- 2 --> Perfil["estudiante.mostrarPerfil()"]
+    Perfil --> Menu
+    Elegir -- 3 --> Salir(["Cerrar sesión"])
+    Elegir -- inválida --> Error@{ label: "Escribir 'Opción inválida.'" }
+    Error --> Menu
+    Elegir -- 1 --> Asistencias["ServicioAsistencia.listarPorEstudiante(idEstudiante)"]
     Asistencias --> Periodo["Buscar período académico activo"]
     Periodo --> HayPeriodo{"¿Existe período activo?"}
-    HayPeriodo -- No --> SinPeriodo["Informar que no hay período activo"] --> Menu
+    HayPeriodo -- No --> SinPeriodo["Informar que no hay período activo"]
+    SinPeriodo --> Menu
     HayPeriodo -- Sí --> Matriculas["Recorrer matrículas activas del estudiante"]
     Matriculas --> Bloque["Validar que el bloque corresponda al período activo"]
     Bloque --> Secciones["Recorrer secciones del bloque y obtener sus cursos"]
@@ -21,3 +24,11 @@ flowchart TB
     Mostrar --> Menu
     Bloque -. datos consultados mediante .-> Servicio["ServicioAsistencia"]
     Servicio -. acceso a datos .-> Repositorio["RepositorioAsistenciaCsv<br>y almacenamiento CSV"]
+
+    Menu@{ shape: lean-r}
+    Opcion@{ shape: lean-r}
+    Perfil@{ shape: subproc}
+    Error@{ shape: lean-r}
+    Asistencias@{ shape: subproc}
+    SinPeriodo@{ shape: lean-r}
+    Mostrar@{ shape: lean-r}

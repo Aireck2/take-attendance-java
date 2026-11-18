@@ -4,30 +4,37 @@ config:
   theme: default
 ---
 flowchart TB
-    Inicio([Inicio del menú docente]) --> Menu["1. Ver cursos asignados<br>2. Ver perfil<br>3. Cerrar sesión"]
+    Inicio(["Inicio del menú docente"]) --> Menu["1. Ver cursos asignados<br>2. Ver perfil<br>3. Cerrar sesión"]
     Menu --> Opcion["leerOpcion()"]
     Opcion --> Elegir{"Opción"}
-    Elegir -- "2" --> Perfil["profesor.mostrarPerfil()"] --> Menu
-    Elegir -- "3" --> Salir([Cerrar sesión])
-    Elegir -- inválida --> Error["Escribir 'Opción inválida.'"] --> Menu
-    Elegir -- "1" --> Cursos["ServicioAsistencia.listarCursosDeProfesor(profesor)"]
+    Elegir -- 2 --> Perfil["profesor.mostrarPerfil()"]
+    Perfil --> Menu
+    Elegir -- 3 --> Salir(["Cerrar sesión"])
+    Elegir -- inválida --> Error@{ label: "Escribir 'Opción inválida.'" }
+    Error --> Menu
+    Elegir -- 1 --> Cursos["ServicioAsistencia.listarCursosDeProfesor(profesor)"]
     Cursos --> HayCursos{"¿Tiene cursos asignados?"}
-    HayCursos -- No --> SinCursos["Informar que no tiene cursos asignados"] --> Menu
+    HayCursos -- No --> SinCursos["Informar que no tiene cursos asignados"]
+    SinCursos --> Menu
     HayCursos -- Sí --> Periodo["Mostrar secciones asignadas del período activo<br>y los datos de su bloque y sesiones de hoy"]
     Periodo --> HaySecciones{"¿Hay secciones vigentes?"}
-    HaySecciones -- No --> SinSecciones["Informar que no hay secciones asignadas<br>en el período activo"] --> Menu
+    HaySecciones -- No --> SinSecciones["Informar que no hay secciones asignadas<br>en el período activo"]
+    SinSecciones --> Menu
     HaySecciones -- Sí --> Seleccionar["Seleccionar sección de la lista"]
     Seleccionar --> SeccionValida{"¿Selección válida?"}
-    SeccionValida -- No --> ErrorSeccion["Informar sección no válida"] --> Menu
+    SeccionValida -- No --> ErrorSeccion["Informar sección no válida"]
+    ErrorSeccion --> Menu
     SeccionValida -- Sí --> Curso["Resolver curso asociado a la sección"]
     Curso --> Carrera["ServicioAsistencia.buscarCarreraDeCurso(curso)"]
     Carrera --> Detalle["Mostrar curso, carrera del plan, ciclo, bloque,<br>docentes, horarios y ambientes"]
     Detalle --> Nomina["Listar alumnos matriculados en el bloque<br>y mostrar nombre, código, correo y carrera"]
     Nomina --> HayAlumnos{"¿Hay alumnos matriculados?"}
-    HayAlumnos -- No --> SinAlumnos["Informar que no hay alumnos inscritos"] --> Menu
+    HayAlumnos -- No --> SinAlumnos["Informar que no hay alumnos inscritos"]
+    SinAlumnos --> Menu
     HayAlumnos -- Sí --> Sesiones["Buscar sesiones de hoy para el curso<br>y conservar las de la sección elegida"]
     Sesiones --> HaySesion{"¿Hay sesión hoy?"}
-    HaySesion -- No --> SinSesion["Informar que no hay sesión programada"] --> Menu
+    HaySesion -- No --> SinSesion["Informar que no hay sesión programada"]
+    SinSesion --> Menu
     HaySesion -- Sí --> Preguntar["Preguntar si desea tomar asistencia"]
     Preguntar --> Tomar{"¿Confirma la toma?"}
     Tomar -- No --> Menu
@@ -39,4 +46,21 @@ flowchart TB
     MasAlumnos -- Sí --> Capturar
     MasAlumnos -- No --> Guardar["ServicioAsistencia.guardarLote(registros)"]
     Guardar --> Csv["RepositorioAsistenciaCsv → PersistenciaAsistenciaCsv<br>asigna identificadores y agrega filas al CSV"]
-    Csv --> Confirmar["Informar que la asistencia fue guardada"] --> Menu
+    Csv --> Confirmar["Informar que la asistencia fue guardada"]
+    Confirmar --> Menu
+
+    Menu@{ shape: lean-r}
+    Perfil@{ shape: subproc}
+    Error@{ shape: lean-r}
+    Cursos@{ shape: subproc}
+    SinSecciones@{ shape: lean-r}
+    ErrorSeccion@{ shape: in-out}
+    Carrera@{ shape: subproc}
+    Detalle@{ shape: lean-r}
+    Nomina@{ shape: lean-r}
+    SinAlumnos@{ shape: lean-r}
+    SinSesion@{ shape: in-out}
+    Preguntar@{ shape: in-out}
+    Registrar@{ shape: subproc}
+    Guardar@{ shape: subproc}
+    Confirmar@{ shape: in-out}

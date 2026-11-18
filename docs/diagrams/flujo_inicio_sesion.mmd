@@ -3,23 +3,48 @@ config:
   theme: default
 ---
 flowchart TB
-    Inicio([INICIO]) --> Menu["Sistema de asistencia<br>1. Iniciar sesión<br>2. Salir"]
-    Menu --> LeerOpcion["leerOpcion() lee un entero y descarta el resto de la línea"]
+    Inicio(["INICIO"]) --> Menu["Sistema de asistencia<br>1. Iniciar sesión<br>2. Salir"]
+    Menu --> LeerOpcion["leerOpcion()"]
     LeerOpcion --> Opcion{"Opción seleccionada"}
-    Opcion -- "2" --> Salir["Escribir 'Saliendo del sistema...'"] --> Fin([FIN])
-    Opcion -- "inválida" --> ErrorOpcion["Escribir 'Opción inválida.'"] --> Menu
-    Opcion -- "1" --> Correo["Leer correo y quitar espacios externos"]
+    Opcion -- 2 --> Salir@{ label: "Escribir 'Saliendo del sistema...'" }
+    Salir --> Fin(["FIN"])
+    Opcion -- inválida --> ErrorOpcion@{ label: "Escribir 'Opción inválida.'" }
+    ErrorOpcion --> Menu
+    Opcion -- 1 --> Correo["Leer correo y quitar espacios externos"]
     Correo --> Contrasena["Leer contraseña<br>Console.readPassword() si hay consola;<br>si no, leer con Scanner"]
     Contrasena --> Auth["AutenticacionService.autenticar(correo, contraseña)"]
     Auth --> Usuario{"¿Credenciales válidas<br>y usuario activo?"}
-    Usuario -- No --> Credenciales["Escribir 'Credenciales inválidas.'"] --> Menu
+    Usuario -- No --> Credenciales@{ label: "Escribir 'Credenciales inválidas.'" }
+    Credenciales --> Menu
     Usuario -- Sí --> Rol{"Rol de la cuenta"}
-    Rol -->|PROFESOR| PerfilProfesor["ServicioAsistencia.buscarProfesor(idReferencia)"]
-    Rol -->|ESTUDIANTE| PerfilEstudiante["ServicioAsistencia.buscarEstudiante(idReferencia)"]
-    Rol -->|sin menú| SinMenu["Informar que el rol no tiene menú<br>y cerrar sesión"] --> Menu
+    Rol -- PROFESOR --> PerfilProfesor["ServicioAsistencia.buscarProfesor(idReferencia)"]
+    Rol -- ESTUDIANTE --> PerfilEstudiante["ServicioAsistencia.buscarEstudiante(idReferencia)"]
+    Rol -- sin menú --> SinMenu["Informar que el rol no tiene menú<br>y cerrar sesión"]
+    SinMenu --> Menu
     PerfilProfesor --> ExisteProfesor{"¿Perfil encontrado?"}
     PerfilEstudiante --> ExisteEstudiante{"¿Perfil encontrado?"}
-    ExisteProfesor -- No --> ErrorPerfilP["Informar perfil de profesor no encontrado"] --> Menu
-    ExisteEstudiante -- No --> ErrorPerfilE["Informar perfil de estudiante no encontrado"] --> Menu
-    ExisteProfesor -- Sí --> MenuProfesor["Dar bienvenida y abrir menú docente"] --> Cierre["Cerrar sesión"] --> Menu
-    ExisteEstudiante -- Sí --> MenuEstudiante["Dar bienvenida y abrir menú estudiante"] --> Cierre
+    ExisteProfesor -- No --> ErrorPerfilP["Informar perfil de profesor no encontrado"]
+    ErrorPerfilP --> Menu
+    ExisteEstudiante -- No --> ErrorPerfilE["Informar perfil de estudiante no encontrado"]
+    ErrorPerfilE --> Menu
+    ExisteProfesor -- Sí --> MenuProfesor["Dar bienvenida y abrir menú docente"]
+    MenuProfesor --> Cierre["Cerrar sesión"]
+    Cierre --> Menu
+    ExisteEstudiante -- Sí --> MenuEstudiante["Dar bienvenida y abrir menú estudiante"]
+    MenuEstudiante --> Cierre
+
+    Menu@{ shape: lean-r}
+    LeerOpcion@{ shape: lean-r}
+    Salir@{ shape: lean-r}
+    ErrorOpcion@{ shape: lean-r}
+    Correo@{ shape: lean-r}
+    Contrasena@{ shape: lean-r}
+    Auth@{ shape: subproc}
+    Credenciales@{ shape: lean-r}
+    PerfilProfesor@{ shape: subproc}
+    PerfilEstudiante@{ shape: subproc}
+    SinMenu@{ shape: lean-r}
+    ErrorPerfilP@{ shape: lean-r}
+    ErrorPerfilE@{ shape: lean-r}
+    MenuProfesor@{ shape: lean-r}
+    MenuEstudiante@{ shape: lean-r}

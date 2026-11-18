@@ -6,12 +6,18 @@ classDiagram
             - scanner : Scanner
             - servicioAsistencia : ServicioAsistencia
             - autenticacion : AutenticacionService
-            + main(args : String[]) void
+            + main(args : String[]) void$
             + iniciar() void
             - iniciarSesion() void
+            - menuProfesor(prof : Profesor) void
+            - menuEstudiante(est : Estudiante) void
             - gestionarCursosProfesor(prof : Profesor) void
             - mostrarDetalleCurso(seccion : SeccionCurso, curso : Curso) String
             - mostrarResumenAsistenciaEstudiante(est : Estudiante) void
+            - mostrarDocentesDeSeccion(seccion : SeccionCurso) void
+            - mostrarHorarioDeSeccion(seccion : SeccionCurso) void
+            - mostrarSesionesProgramadasHoy(seccion : SeccionCurso, curso : Curso) void
+            - mostrarSeccionesPeriodoActual(secciones : List~SeccionCurso~) void
         }
     }
 
@@ -23,25 +29,48 @@ classDiagram
         class ServicioAsistencia {
             - repositorio : RepositorioAsistencia
             - registro : RegistroAsistenciaService
-            + listarEstudiantesDeCursoEnBloque(curso, idBloque) List~Estudiante~
-            + buscarCarreraDeCurso(curso) Carrera
-            + registrar(idSesion, idEstudiante, horasAsistidas) RegistroDeAsistencia
-            + guardarLote(registros) void
-            + calcularPorcentajeFaltas(horasDictadas, horasAsistidas) double
+            + listarTodos() List~RegistroDeAsistencia~
+            + listarPorEstudiante(idEstudiante : String) List~RegistroDeAsistencia~
+            + listarEstudiantesDeSesion(idSesion : String) List~Estudiante~
+            + listarSesionesDeCursoEnFecha(curso : Curso, fecha : String) List~SesionClase~
+            + listarCursosDeProfesor(profesor : Profesor) List~Curso~
+            + listarSeccionesDeProfesor(profesor : Profesor, curso : Curso) List~SeccionCurso~
+            + buscarBloque(idBloque : String) BloqueSeccion
+            + listarHorariosDeSeccion(idSeccion : String) List~HorarioSeccion~
+            + buscarSalon(idSalon : String) Salon
+            + listarTodasLasSesiones() List~SesionClase~
+            + listarEstudiantesDeCursoEnBloque(curso : Curso, idBloque : String) List~Estudiante~
+            + listarProfesoresDeSeccion(idSeccion : String) List~Profesor~
+            + buscarCarreraDeCurso(curso : Curso) Carrera
+            + listarPeriodosAcademicos() List~PeriodoAcademico~
+            + buscarProfesor(idProfesor : String) Profesor
+            + buscarEstudiante(idEstudiante : String) Estudiante
+            + listarMatriculasDeEstudiante(idEstudiante : String) List~Matricula~
+            + listarSeccionesDeBloque(idBloque : String) List~SeccionCurso~
+            + buscarCurso(idCurso : String) Curso
+            + horasProgramadasDe(registro : RegistroDeAsistencia) int
+            + calcularPorcentajeFaltas(horasDictadas : int, horasAsistidas : int) double
+            + calcularSemanaLectiva(periodo : PeriodoAcademico, fecha : LocalDate) int
+            + registrar(idSesion : String, idEstudiante : String, horasAsistidas : int) RegistroDeAsistencia
+            + crear(sesion : SesionClase, curso : Curso, estudiante : Estudiante, horasAsistidas : int) RegistroDeAsistencia
+            + guardarLote(registros : List~RegistroDeAsistencia~) void
         }
         class RegistroAsistenciaService {
             - repositorio : RepositorioAsistencia
-            ~ registrar(idSesion, idEstudiante, horasAsistidas) RegistroDeAsistencia
+            ~ registrar(idSesion : String, idEstudiante : String, horasAsistidas : int) RegistroDeAsistencia
         }
         class RegistroAsistenciaFactory {
-            ~ crear(sesion, curso, estudiante, horasAsistidas, idMatricula) RegistroDeAsistencia
+            ~ crear(sesion : SesionClase, curso : Curso, estudiante : Estudiante, horasAsistidas : int, idMatricula : String) RegistroDeAsistencia$
+        }
+        class CalendarioAcademico {
+            ~ semanaLectiva(periodo : PeriodoAcademico, fecha : LocalDate) int$
         }
     }
 
     namespace security {
         class PasswordHasher {
-            + hash(contrasena : String) String
-            + verificar(contrasena : String, almacenado : String) boolean
+            + hash(contrasena : String) String$
+            + verificar(contrasena : String, almacenado : String) boolean$
         }
     }
 
@@ -52,37 +81,91 @@ classDiagram
         }
         class RepositorioAsistencia {
             <<interface>>
-            + listarPorEstudiante(idEstudiante) List~RegistroDeAsistencia~
-            + listarEstudiantesDeCursoEnBloque(curso, idBloque) List~Estudiante~
-            + buscarCarreraDeCurso(curso) Optional~Carrera~
-            + buscarMatriculaActiva(idEstudiante, idBloque) Optional~Matricula~
-            + guardarLote(registros) void
+            + listarTodos() List~RegistroDeAsistencia~
+            + listarPorEstudiante(idEstudiante : String) List~RegistroDeAsistencia~
+            + guardarLote(registros : List~RegistroDeAsistencia~) void
+            + buscarSesion(idSesion : String) Optional~SesionClase~
+            + buscarSeccionDeSesion(sesion : SesionClase) Optional~SeccionCurso~
+            + buscarCurso(idCurso : String) Optional~Curso~
+            + buscarEstudiante(idEstudiante : String) Optional~Estudiante~
+            + buscarMatriculaActiva(idEstudiante : String, idBloque : String) Optional~Matricula~
+            + listarEstudiantesDeSesion(idSesion : String) List~Estudiante~
+            + listarSesionesDeCursoEnFecha(curso : Curso, fecha : String) List~SesionClase~
+            + listarCursosDeProfesor(profesor : Profesor) List~Curso~
+            + listarSeccionesDeProfesor(profesor : Profesor, curso : Curso) List~SeccionCurso~
+            + buscarBloque(idBloque : String) Optional~BloqueSeccion~
+            + listarHorariosDeSeccion(idSeccion : String) List~HorarioSeccion~
+            + buscarSalon(idSalon : String) Optional~Salon~
+            + listarTodasLasSesiones() List~SesionClase~
+            + listarEstudiantesDeCursoEnBloque(curso : Curso, idBloque : String) List~Estudiante~
+            + listarProfesoresDeSeccion(idSeccion : String) List~Profesor~
+            + buscarCarreraDeCurso(curso : Curso) Optional~Carrera~
+            + listarPeriodosAcademicos() List~PeriodoAcademico~
+            + buscarProfesor(idProfesor : String) Optional~Profesor~
+            + listarMatriculasDeEstudiante(idEstudiante : String) List~Matricula~
+            + listarSeccionesDeBloque(idBloque : String) List~SeccionCurso~
         }
     }
 
     namespace almacenamiento_csv {
         class RepositorioUsuarioCsv {
-            + buscarPorCorreo(correo) Optional~Usuario~
+            + buscarPorCorreo(correo : String) Optional~Usuario~
         }
         class RepositorioAsistenciaCsv {
-            + listarPorEstudiante(idEstudiante) List~RegistroDeAsistencia~
-            + guardarLote(registros) void
-            + buscarCarreraDeCurso(curso) Optional~Carrera~
+            + listarTodos() List~RegistroDeAsistencia~
+            + listarPorEstudiante(idEstudiante : String) List~RegistroDeAsistencia~
+            + guardarLote(registros : List~RegistroDeAsistencia~) void
+            + buscarSesion(idSesion : String) Optional~SesionClase~
+            + buscarSeccionDeSesion(sesion : SesionClase) Optional~SeccionCurso~
+            + buscarCurso(idCurso : String) Optional~Curso~
+            + buscarEstudiante(idEstudiante : String) Optional~Estudiante~
+            + buscarMatriculaActiva(idEstudiante : String, idBloque : String) Optional~Matricula~
+            + listarEstudiantesDeSesion(idSesion : String) List~Estudiante~
+            + listarSesionesDeCursoEnFecha(curso : Curso, fecha : String) List~SesionClase~
+            + listarCursosDeProfesor(profesor : Profesor) List~Curso~
+            + listarSeccionesDeProfesor(profesor : Profesor, curso : Curso) List~SeccionCurso~
+            + buscarBloque(idBloque : String) Optional~BloqueSeccion~
+            + listarHorariosDeSeccion(idSeccion : String) List~HorarioSeccion~
+            + buscarSalon(idSalon : String) Optional~Salon~
+            + listarTodasLasSesiones() List~SesionClase~
+            + listarEstudiantesDeCursoEnBloque(curso : Curso, idBloque : String) List~Estudiante~
+            + listarProfesoresDeSeccion(idSeccion : String) List~Profesor~
+            + buscarCarreraDeCurso(curso : Curso) Optional~Carrera~
+            + listarPeriodosAcademicos() List~PeriodoAcademico~
+            + buscarProfesor(idProfesor : String) Optional~Profesor~
+            + listarMatriculasDeEstudiante(idEstudiante : String) List~Matricula~
+            + listarSeccionesDeBloque(idBloque : String) List~SeccionCurso~
         }
         class AlmacenamientoAsistenciaCsv {
-            ~ leerTodos() List~RegistroDeAsistencia~
-            ~ agregar(registros) void
+            ~ leerTodos() List~RegistroDeAsistencia~$
+            ~ agregar(registros : List~RegistroDeAsistencia~) void$
         }
         class AlmacenamientoCurriculoCsv {
-            ~ leerCarreras() List~Carrera~
-            ~ leerPlanesEstudios() List~PlanEstudios~
-            ~ leerModulosProfesionales() List~ModuloProfesional~
+            ~ leerCarreras() List~Carrera~$
+            ~ leerPlanesEstudios() List~PlanEstudios~$
+            ~ leerModulosProfesionales() List~ModuloProfesional~$
+            ~ leerCursos() List~Curso~$
+            ~ leerPeriodosAcademicos() List~PeriodoAcademico~$
+        }
+        class AlmacenamientoEstudianteCsv {
+            ~ leerTodos() List~Estudiante~$
+        }
+        class AlmacenamientoProfesorCsv {
+            ~ leerTodos() List~Profesor~$
+        }
+        class AlmacenamientoProgramacionCsv {
+            ~ leerBloques() List~BloqueSeccion~$
+            ~ leerSecciones() List~SeccionCurso~$
+            ~ leerHorarios() List~HorarioSeccion~$
+            ~ leerSalones() List~Salon~$
+            ~ leerSesiones() List~SesionClase~$
+            ~ leerMatriculas() List~Matricula~$
         }
         class AlmacenamientoUsuarioCsv {
-            ~ leerTodos() List~Usuario~
+            ~ leerTodos() List~Usuario~$
         }
         class PersistenciaAsistenciaCsv {
-            ~ guardar(registros) void
+            ~ guardar(registros : List~RegistroDeAsistencia~) void$
         }
     }
 
@@ -94,78 +177,270 @@ classDiagram
             - rol : Rol
             - idReferencia : String
             - activo : boolean
+            + getId() String
+            + getCorreo() String
+            + getHashContrasena() String
+            + getRol() Rol
+            + getIdReferencia() String
+            + isActivo() boolean
         }
         class Estudiante {
             - id : String
             - codigo : String
             - nombres : String
             - apellidos : String
+            - dni : String
             - correo : String
             - estado : EstadoEstudiante
+            + getId() String
+            + getCodigo() String
+            + getNombres() String
+            + getApellidos() String
+            + getNombreCompleto() String
+            + getDni() String
+            + getCorreo() String
+            + getEstado() EstadoEstudiante
+        }
+        class Profesor {
+            - id : String
+            - nombre : String
+            - apellido : String
+            - correo : String
+            - tipoDeDocumento : String
+            - nroDocumento : String
+            - telefono : int
+            - departamentoAcademico : String
+            - especialidad : String
+            + getId() String
+            + getNombre() String
+            + getApellido() String
+            + getNombreCompleto() String
+            + getCorreo() String
+            + getTipoDeDocumento() String
+            + getNroDocumento() String
+            + getTelefono() int
+            + getDepartamentoAcademico() String
+            + getEspecialidad() String
+        }
+        class Carrera {
+            - idCarrera : String
+            - nombre : String
+            - tipo : String
+            + getIdCarrera() String
+            + getNombre() String
+            + getTipo() String
+        }
+        class PlanEstudios {
+            - idPlan : String
+            - idCarrera : String
+            - codigo : String
+            - nombre : String
+            - creditosTotales : int
+            - horasTotales : int
+            - estado : EstadoPlan
+            + getIdPlan() String
+            + getIdCarrera() String
+            + getCodigo() String
+            + getNombre() String
+            + getCreditosTotales() int
+            + getHorasTotales() int
+            + getEstado() EstadoPlan
+        }
+        class ModuloProfesional {
+            - idModulo : String
+            - idPlan : String
+            - nombre : String
+            - competencia : String
+            - creditosModulo : int
+            + getIdModulo() String
+            + getIdPlan() String
+            + getNombre() String
+            + getCompetencia() String
+            + getCreditosModulo() int
         }
         class Curso {
             - idCurso : String
             - nombreCurso : String
             - idModulo : String
-            - totalHorasSesion : int
+            - creditos : int
+            - horasTeoricas : int
+            - horasPracticas : int
+            - totalHorasLectivas : int
+            + getIdCurso() String
+            + getNombreCurso() String
+            + getIdModulo() String
+            + getCreditos() int
+            + getHorasTeoricas() int
+            + getHorasPracticas() int
+            + getTotalHorasLectivas() int
         }
-        class Carrera {
-            - idCarrera : String
-            - nombre : String
-        }
-        class PlanEstudios {
+        class PeriodoAcademico {
+            - idPeriodo : String
             - idPlan : String
-            - idCarrera : String
-        }
-        class ModuloProfesional {
-            - idModulo : String
-            - idPlan : String
-        }
-        class Matricula {
-            - idMatricula : String
-            - idEstudiante : String
-            - idBloque : String
-            - estado : EstadoMatricula
+            - codigo : String
+            - fechaInicio : String
+            - fechaFin : String
+            - estado : EstadoPeriodo
+            - semanasLectivas : int
+            + getIdPeriodo() String
+            + getIdPlan() String
+            + getCodigo() String
+            + getFechaInicio() String
+            + getFechaFin() String
+            + getEstado() EstadoPeriodo
+            + getSemanasLectivas() int
         }
         class BloqueSeccion {
             - idBloque : String
             - idPeriodo : String
+            - nombre : String
+            - turno : Turno
+            + getIdBloque() String
+            + getIdPeriodo() String
+            + getNombre() String
+            + getTurno() Turno
         }
         class SeccionCurso {
             - idSeccion : String
             - idBloque : String
             - idCurso : String
+            - modalidad : ModalidadDictado
+            - cupoMaximo : int
+            + getIdSeccion() String
+            + getIdBloque() String
+            + getIdCurso() String
+            + getModalidad() ModalidadDictado
+            + getCupoMaximo() int
+        }
+        class Salon {
+            - idSalon : String
+            - nombre : String
+            - tipo : TipoSalon
+            - capacidad : int
+            + getIdSalon() String
+            + getNombre() String
+            + getTipo() TipoSalon
+            + getCapacidad() int
         }
         class HorarioSeccion {
             - idHorario : String
             - idSeccion : String
+            - diaSemana : DiaSemana
+            - horaInicio : String
+            - horaFin : String
+            - tipoClase : TipoClase
             - idProfesor : String
             - idSalon : String
+            + getIdHorario() String
+            + getIdSeccion() String
+            + getDiaSemana() DiaSemana
+            + getHoraInicio() String
+            + getHoraFin() String
+            + getTipoClase() TipoClase
+            + getIdProfesor() String
+            + getIdSalon() String
         }
         class SesionClase {
             - idSesion : String
             - idHorario : String
             - fecha : String
             - horasProgramadas : int
+            - idProfesor : String
+            - idSalon : String
+            + getIdSesion() String
+            + getIdHorario() String
+            + getFecha() String
+            + getHorasProgramadas() int
+            + getIdProfesor() String
+            + getIdSalon() String
+        }
+        class Matricula {
+            - idMatricula : String
+            - idEstudiante : String
+            - idBloque : String
+            - fechaMatricula : String
+            - estado : EstadoMatricula
+            + getIdMatricula() String
+            + getIdEstudiante() String
+            + getIdBloque() String
+            + getFechaMatricula() String
+            + getEstado() EstadoMatricula
         }
         class RegistroDeAsistencia {
             - idAsistencia : String
             - idCurso : String
             - idEstudiante : String
+            - fecha : String
+            - horasAsistidas : int
+            - presente : boolean
             - idSesion : String
             - idMatricula : String
-            - horasAsistidas : int
+            + getIdAsistencia() String
+            + getIdCurso() String
+            + getIdEstudiante() String
+            + getFecha() String
+            + getHorasAsistidas() int
+            + isPresente() boolean
+            + getIdSesion() String
+            + getIdMatricula() String
+        }
+        class IndicadorLogro {
+            - idIndicador : String
+            - idSeccion : String
+            - nombre : String
+            - peso : int
+            + getIdIndicador() String
+            + getIdSeccion() String
+            + getNombre() String
+            + getPeso() int
+        }
+        class RegistroNota {
+            - idRegistroNota : String
+            - idIndicador : String
+            - idEstudiante : String
+            - nota : int
+            - fecha : String
+            + getIdRegistroNota() String
+            + getIdIndicador() String
+            + getIdEstudiante() String
+            + getNota() int
+            + getFecha() String
+        }
+        class DerechoPago {
+            - idDerecho : String
+            - codigo : String
+            - nombre : String
+            - monto : double
+            + getIdDerecho() String
+            + getCodigo() String
+            + getNombre() String
+            + getMonto() double
+        }
+        class ComprobantePago {
+            - idComprobante : String
+            - idEstudiante : String
+            - idDerecho : String
+            - fecha : String
+            - monto : double
+            - estado : EstadoComprobante
+            + getIdComprobante() String
+            + getIdEstudiante() String
+            + getIdDerecho() String
+            + getFecha() String
+            + getMonto() double
+            + getEstado() EstadoComprobante
         }
         class Rol {
             <<enumeration>>
             PROFESOR
             ESTUDIANTE
+            NINGUNO
         }
-        class EstadoMatricula {
+        class MenuSesion {
             <<enumeration>>
-            ACTIVA
-            RETIRADA
-            COMPLETADA
+            PROFESOR
+            ESTUDIANTE
+            NINGUNO
         }
         class EstadoEstudiante {
             <<enumeration>>
@@ -175,32 +450,131 @@ classDiagram
             SUSPENDIDO
             EGRESADO
         }
+        class EstadoMatricula {
+            <<enumeration>>
+            ACTIVA
+            RETIRADA
+            COMPLETADA
+        }
+        class EstadoPlan {
+            <<enumeration>>
+            VIGENTE
+            HISTORICO
+        }
+        class EstadoPeriodo {
+            <<enumeration>>
+            PLANIFICADO
+            ACTIVO
+            CERRADO
+        }
+        class EstadoComprobante {
+            <<enumeration>>
+            PAGADO
+            PENDIENTE
+            ANULADO
+        }
+        class ModalidadDictado {
+            <<enumeration>>
+            PRESENCIAL
+            VIRTUAL
+            HIBRIDA
+        }
+        class TipoClase {
+            <<enumeration>>
+            TEORIA
+            PRACTICA
+            LABORATORIO
+        }
+        class TipoSalon {
+            <<enumeration>>
+            AULA
+            LABORATORIO
+            TALLER
+            AUDITORIO
+        }
+        class Turno {
+            <<enumeration>>
+            MANANA
+            TARDE
+            NOCHE
+        }
+        class DiaSemana {
+            <<enumeration>>
+            LUNES
+            MARTES
+            MIERCOLES
+            JUEVES
+            VIERNES
+            SABADO
+            DOMINGO
+        }
     }
 
-    App --> ServicioAsistencia : ejecuta casos de asistencia
-    App --> AutenticacionService : autentica
-    AutenticacionService --> RepositorioUsuario : consulta cuentas
-    AutenticacionService ..> PasswordHasher : verifica contrasenas
-    ServicioAsistencia --> RepositorioAsistencia : consulta y guarda
-    ServicioAsistencia --> RegistroAsistenciaService : delega registro
-    RegistroAsistenciaService --> RegistroAsistenciaFactory : crea registro validado
-    RegistroAsistenciaService --> RepositorioAsistencia : resuelve sesion y matricula
-    RepositorioUsuario <|.. RepositorioUsuarioCsv
-    RepositorioAsistencia <|.. RepositorioAsistenciaCsv
+    %% ==========================================
+    %% Relaciones de Arquitectura y Servicios
+    %% ==========================================
+    App "1" --> "1" ServicioAsistencia : ejecuta casos de asistencia
+    App "1" --> "1" AutenticacionService : autentica sesiones
+    AutenticacionService "1" --> "1" RepositorioUsuario : consulta cuentas
+    AutenticacionService ..> PasswordHasher : verifica hashes
+    ServicioAsistencia "1" --> "1" RepositorioAsistencia : consulta y persiste
+    ServicioAsistencia "1" --> "1" RegistroAsistenciaService : delega registro
+    ServicioAsistencia ..> CalendarioAcademico : consulta calendario
+    RegistroAsistenciaService "1" --> "1" RepositorioAsistencia : valida datos
+    RegistroAsistenciaService ..> RegistroAsistenciaFactory : crea registros
+    RepositorioUsuario <|.. RepositorioUsuarioCsv : implementa
+    RepositorioAsistencia <|.. RepositorioAsistenciaCsv : implementa
     RepositorioUsuarioCsv ..> AlmacenamientoUsuarioCsv : lee usuarios
     RepositorioAsistenciaCsv ..> AlmacenamientoAsistenciaCsv : consulta registros
-    RepositorioAsistenciaCsv ..> AlmacenamientoCurriculoCsv : resuelve carrera del curso
+    RepositorioAsistenciaCsv ..> AlmacenamientoCurriculoCsv : consulta curriculo
+    RepositorioAsistenciaCsv ..> AlmacenamientoEstudianteCsv : consulta estudiantes
+    RepositorioAsistenciaCsv ..> AlmacenamientoProfesorCsv : consulta profesores
+    RepositorioAsistenciaCsv ..> AlmacenamientoProgramacionCsv : consulta programacion
     RepositorioAsistenciaCsv ..> PersistenciaAsistenciaCsv : delega guardado
-    PersistenciaAsistenciaCsv ..> AlmacenamientoAsistenciaCsv : asigna ID y agrega filas
-    Usuario --> Rol
-    Curso --> ModuloProfesional
-    ModuloProfesional --> PlanEstudios
-    PlanEstudios --> Carrera
-    Matricula ..> Estudiante : referencia idEstudiante
-    Matricula --> BloqueSeccion : referencia idBloque
-    SeccionCurso --> Curso
-    SeccionCurso --> BloqueSeccion
-    SesionClase --> HorarioSeccion
-    RegistroDeAsistencia --> SesionClase
-    RegistroDeAsistencia --> Matricula
+    PersistenciaAsistenciaCsv ..> AlmacenamientoAsistenciaCsv : persiste filas
+
+    %% ==========================================
+    %% Relaciones del Modelo de Dominio (1 a N, etc.)
+    %% ==========================================
+    Carrera "1" *-- "1..*" PlanEstudios : organiza
+    PlanEstudios "1" *-- "1..*" ModuloProfesional : estructura
+    PlanEstudios "1" --> "1..*" PeriodoAcademico : planifica
+    ModuloProfesional "1" *-- "1..*" Curso : compone
+    Curso "1" <-- "1..*" SeccionCurso : dicta
+    PeriodoAcademico "1" --> "1..*" BloqueSeccion : apertura
+    BloqueSeccion "1" --> "1..*" SeccionCurso : agrupa
+    BloqueSeccion "1" --> "0..*" Matricula : inscribe
+    Estudiante "1" --> "0..*" Matricula : cursa
+    SeccionCurso "1" --> "1..*" HorarioSeccion : programa
+    Profesor "1" <-- "0..*" HorarioSeccion : asignado
+    Salon "1" <-- "0..*" HorarioSeccion : asigna
+    HorarioSeccion "1" --> "1..*" SesionClase : calendariza
+    Profesor "1" <-- "0..*" SesionClase : dicta
+    Salon "1" <-- "0..*" SesionClase : impartida en
+    SesionClase "1" --> "0..*" RegistroDeAsistencia : registra
+    Matricula "1" --> "0..*" RegistroDeAsistencia : vincula
+    Estudiante "1" --> "0..*" RegistroDeAsistencia : asiste
+    Curso "1" <-- "0..*" RegistroDeAsistencia : pertenece a
+    SeccionCurso "1" --> "1..*" IndicadorLogro : evalua con
+    IndicadorLogro "1" --> "0..*" RegistroNota : pondera
+    Estudiante "1" --> "0..*" RegistroNota : obtiene
+    DerechoPago "1" --> "0..*" ComprobantePago : tasa
+    Estudiante "1" --> "0..*" ComprobantePago : paga
+    Usuario "0..1" --> "0..1" Profesor : referencia profesor
+    Usuario "0..1" --> "0..1" Estudiante : referencia estudiante
+
+    %% ==========================================
+    %% Asociaciones con Enumeraciones
+    %% ==========================================
+    Usuario --> Rol : rol
+    Rol --> MenuSesion : menuSesion
+    Estudiante --> EstadoEstudiante : estado
     Matricula --> EstadoMatricula : estado
+    PlanEstudios --> EstadoPlan : estado
+    PeriodoAcademico --> EstadoPeriodo : estado
+    BloqueSeccion --> Turno : turno
+    SeccionCurso --> ModalidadDictado : modalidad
+    HorarioSeccion --> DiaSemana : diaSemana
+    HorarioSeccion --> TipoClase : tipoClase
+    Salon --> TipoSalon : tipo
+    ComprobantePago --> EstadoComprobante : estado
