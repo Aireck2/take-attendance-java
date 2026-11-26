@@ -46,6 +46,7 @@ public final class TestRunner {
         probarRecorridoAcademicoHastaRegistro();
         probarCalculosYCreacionEnServicioAsistencia();
         probarCarreraEnListaDeAlumnosDelCurso();
+        probarResumenAsistenciaEstudianteEnApp();
         if (fallos == 0) {
             System.out.println("OK: " + total + " pruebas del flujo de asistencia pasaron.");
         } else {
@@ -168,6 +169,24 @@ public final class TestRunner {
         long carreras = resultado.lines().filter(linea -> linea.contains("- Carrera:")).count();
         verificar(alumnos > 0 && carreras == alumnos,
                 "muestra la carrera junto a cada alumno matriculado en el detalle del curso");
+    }
+
+    private static void probarResumenAsistenciaEstudianteEnApp() {
+        var entradaOriginal = System.in;
+        var salidaOriginal = System.out;
+        ByteArrayOutputStream salida = new ByteArrayOutputStream();
+        String entrada = String.join("\n", "1", "erick.escriba@iestpchincha.edu.pe", "Alumno2026*", "1", "3", "2", "");
+        try {
+            System.setIn(new ByteArrayInputStream(entrada.getBytes(StandardCharsets.UTF_8)));
+            System.setOut(new PrintStream(salida, true, StandardCharsets.UTF_8));
+            new App().iniciar();
+        } finally {
+            System.setIn(entradaOriginal);
+            System.setOut(salidaOriginal);
+        }
+        String resultado = salida.toString(StandardCharsets.UTF_8);
+        verificar(resultado.contains("RESUMEN DE ASISTENCIA Y CURSOS"),
+                "abre la vista de resumen de asistencia para el estudiante autenticado");
     }
 
     private static void verificar(boolean condicion, String descripcion) {

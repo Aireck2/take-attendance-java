@@ -76,10 +76,6 @@ public final class ServicioAsistencia {
         .filter(s -> s.getIdSalon().equals(idSalon)).findFirst().orElse(null);
   }
 
-  public List<PeriodoAcademico> listarPeriodosAcademicos() {
-    return repositorio.listarPeriodosAcademicos();
-  }
-
   public PeriodoAcademico buscarPeriodoActivo() {
     return repositorio.listarPeriodosAcademicos().stream()
         .filter(p -> p.getEstado() == EstadoPeriodo.ACTIVO).findFirst().orElse(null);
@@ -160,15 +156,6 @@ public final class ServicioAsistencia {
     return repositorio.listarSesiones().stream()
         .filter(s -> fecha.equals(s.getFecha()))
         .filter(s -> horarios.stream().anyMatch(h -> h.getIdHorario().equals(s.getIdHorario())))
-        .toList();
-  }
-
-  public List<SesionClase> listarSesionesDeCursoEnFecha(Curso curso, String fecha) {
-    if (curso == null || fecha == null)
-      return List.of();
-    return repositorio.listarSecciones().stream()
-        .filter(s -> curso.getIdCurso().equals(s.getIdCurso()))
-        .flatMap(s -> listarSesionesDeSeccionEnFecha(s.getIdSeccion(), fecha).stream())
         .toList();
   }
 
