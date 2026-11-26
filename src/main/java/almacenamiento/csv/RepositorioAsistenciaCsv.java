@@ -1,6 +1,8 @@
 package almacenamiento.csv;
 
-import java.util.ArrayList;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,174 +23,68 @@ import modelo.SeccionCurso;
 import modelo.SesionClase;
 import repositorio.RepositorioAsistencia;
 
-/** Implementación CSV del repositorio de asistencia. */
+/** Adaptador CSV del repositorio de asistencia y catalogos academicos. */
 public final class RepositorioAsistenciaCsv implements RepositorioAsistencia {
-  @Override
-  public List<RegistroDeAsistencia> listarTodos() {
-    return PersistenciaAsistenciaCsv.leerTodos();
-  }
+  private static final String ARCHIVO_ASISTENCIA = "data/registro_de_asistencia.csv";
 
   @Override
-  public List<RegistroDeAsistencia> listarPorEstudiante(String idEstudiante) {
-    return PersistenciaAsistenciaCsv.leerTodos().stream()
-        .filter(registro -> registro.getIdEstudiante().equals(idEstudiante)).toList();
+  public List<RegistroDeAsistencia> listarTodos() {
+    return LectorCsv.leer(ARCHIVO_ASISTENCIA, c -> {
+      if (c.length < 6)
+        return null;
+      boolean presente = "1".equals(c[5]) || "true".equalsIgnoreCase(c[5]);
+      String idSesion = c.length >= 7 ? c[6] : "";
+      String idMatricula = c.length >= 8 ? c[7] : "";
+      return new RegistroDeAsistencia(c[0], c[1], c[2], c[3], Integer.parseInt(c[4]), presente, idSesion, idMatricula);
+    });
   }
 
   @Override
   public void guardarLote(List<RegistroDeAsistencia> registros) {
-    PersistenciaAsistenciaCsv.guardar(registros);
-  }
-
-  @Override
-  public Optional<SesionClase> buscarSesion(String idSesion) {
-    if (idSesion == null)
-      return Optional.empty();
-    return listarTodasLasSesiones().stream().filter(item -> item.getIdSesion().equals(idSesion)).findFirst();
-  }
-
-  @Override
-  public Optional<SeccionCurso> buscarSeccionDeSesion(SesionClase sesion) {
-    if (sesion == null)
-      return Optional.empty();
-    return leerHorarios().stream()
-        .filter(item -> item.getIdHorario().equals(sesion.getIdHorario()))
-        .findFirst()
-        .flatMap(horario -> leerSecciones().stream()
-            .filter(seccion -> seccion.getIdSeccion().equals(horario.getIdSeccion()))
-            .findFirst());
-  }
-
-  @Override
-  public Optional<Curso> buscarCurso(String idCurso) {
-    if (idCurso == null)
-      return Optional.empty();
-    return leerCursos().stream().filter(item -> item.getIdCurso().equals(idCurso)).findFirst();
-  }
-
-  @Override
-  public Optional<Estudiante> buscarEstudiante(String idEstudiante) {
-    if (idEstudiante == null)
-      return Optional.empty();
-    return leerEstudiantes().stream().filter(item -> item.getId().equals(idEstudiante)).findFirst();
-  }
-
-  @Override
-  public Optional<Matricula> buscarMatriculaActiva(String idEstudiante, String idBloque) {
-    if (idEstudiante == null || idBloque == null)
-      return Optional.empty();
-    return leerMatriculas().stream()
-        .filter(item -> item.getIdEstudiante().equals(idEstudiante)
-            && item.getIdBloque().equals(idBloque) && item.getEstado() == EstadoMatricula.ACTIVA)
-        .findFirst();
-  }
-
-  @Override
-  public List<Estudiante> listarEstudiantesDeSesion(String idSesion) {
-    SeccionCurso seccion = buscarSesion(idSesion).flatMap(this::buscarSeccionDeSesion).orElse(null);
-    return seccion == null ? List.of() : listarEstudiantesActivosEnBloque(seccion.getIdBloque());
-  }
-
-  @Override
-  public List<SesionClase> listarSesionesDeCursoEnFecha(Curso curso, String fecha) {
-    if (curso == null || fecha == null)
-      return List.of();
-    List<HorarioSeccion> horarios = leerHorarios();
-    List<SeccionCurso> secciones = leerSecciones();
-    return listarTodasLasSesiones().stream()
-        .filter(sesion -> fecha.equals(sesion.getFecha()))
-        .filter(sesion -> horarios.stream()
-            .filter(h -> h.getIdHorario().equals(sesion.getIdHorario()))
-            .anyMatch(h -> secciones.stream()
-                .anyMatch(s -> s.getIdSeccion().equals(h.getIdSeccion()) && s.getIdCurso().equals(curso.getIdCurso()))))
-        .toList();
-  }
-
-  @Override
-  public List<Curso> listarCursosDeProfesor(Profesor profesor) {
-    if (profesor == null)
-      return List.of();
-    List<SeccionCurso> secciones = leerSecciones();
-    List<Curso> cursos = leerCursos();
-    List<Curso> resultado = new ArrayList<>();
-    for (HorarioSeccion horario : leerHorarios()) {
-      if (!profesor.getId().equals(horario.getIdProfesor()))
-        continue;
-      secciones.stream()
-          .filter(s -> s.getIdSeccion().equals(horario.getIdSeccion()))
-          .findFirst()
-          .flatMap(s -> cursos.stream().filter(c -> c.getIdCurso().equals(s.getIdCurso())).findFirst())
-          .ifPresent(curso -> {
-            if (resultado.stream().noneMatch(c -> c.getIdCurso().equals(curso.getIdCurso())))
-              resultado.add(curso);
-          });
+    int maxId = 0;
+    for (RegistroDeAsistencia reg : listarTodos()) {
+      String id = reg.getIdAsistencia();
+      if (id != null && id.startsWith("REG-ASI-")) {
+        try {
+          maxId = Math.max(maxId, Integer.parseInt(id.substring("REG-ASI-".length())));
+        } catch (NumberFormatException ignored) {
+        }
+      }
     }
-    return resultado;
-  }
-
-  @Override
-  public List<SeccionCurso> listarSeccionesDeProfesor(Profesor profesor, Curso curso) {
-    if (profesor == null || curso == null)
-      return List.of();
-    List<HorarioSeccion> horarios = leerHorarios();
-    return leerSecciones().stream()
-        .filter(s -> curso.getIdCurso().equals(s.getIdCurso()))
-        .filter(s -> horarios.stream()
-            .anyMatch(h -> s.getIdSeccion().equals(h.getIdSeccion()) && profesor.getId().equals(h.getIdProfesor())))
-        .toList();
-  }
-
-  @Override
-  public Optional<BloqueSeccion> buscarBloque(String idBloque) {
-    if (idBloque == null)
-      return Optional.empty();
-    return LectorCsv.leer("data/bloque_seccion.csv", c -> c.length >= 3
-        ? new BloqueSeccion(c[0], c[1], c[2]) : null).stream()
-        .filter(item -> item.getIdBloque().equals(idBloque)).findFirst();
-  }
-
-  @Override
-  public List<HorarioSeccion> listarHorariosDeSeccion(String idSeccion) {
-    return leerHorarios().stream().filter(item -> item.getIdSeccion().equals(idSeccion)).toList();
-  }
-
-  @Override
-  public Optional<Salon> buscarSalon(String idSalon) {
-    if (idSalon == null)
-      return Optional.empty();
-    return LectorCsv.leer("data/salon.csv", c -> c.length >= 2
-        ? new Salon(c[0], c[1]) : null).stream()
-        .filter(item -> item.getIdSalon().equals(idSalon)).findFirst();
-  }
-
-  @Override
-  public List<SesionClase> listarTodasLasSesiones() {
-    return LectorCsv.leer("data/sesion_clase.csv", c -> c.length >= 4
-        ? new SesionClase(c[0], c[1], c[2], Integer.parseInt(c[3])) : null);
-  }
-
-  @Override
-  public List<Estudiante> listarEstudiantesDeCursoEnBloque(Curso curso, String idBloque) {
-    if (curso == null || idBloque == null)
-      return List.of();
-    boolean cursoEnBloque = leerSecciones().stream()
-        .anyMatch(s -> s.getIdCurso().equals(curso.getIdCurso()) && s.getIdBloque().equals(idBloque));
-    return cursoEnBloque ? listarEstudiantesActivosEnBloque(idBloque) : List.of();
-  }
-
-  @Override
-  public List<Profesor> listarProfesoresDeSeccion(String idSeccion) {
-    List<Profesor> profesores = leerProfesores();
-    List<Profesor> resultado = new ArrayList<>();
-    for (HorarioSeccion horario : listarHorariosDeSeccion(idSeccion)) {
-      profesores.stream()
-          .filter(p -> p.getId().equals(horario.getIdProfesor()))
-          .findFirst()
-          .ifPresent(p -> {
-            if (resultado.stream().noneMatch(existente -> existente.getId().equals(p.getId())))
-              resultado.add(p);
-          });
+    int siguienteId = maxId + 1;
+    for (RegistroDeAsistencia reg : registros) {
+      reg.setIdAsistencia(String.format("REG-ASI-%04d", siguienteId++));
     }
-    return resultado;
+    try (PrintWriter escritor = new PrintWriter(new FileWriter(ARCHIVO_ASISTENCIA, true))) {
+      for (RegistroDeAsistencia registro : registros)
+        escritor.println(registro.toCsv());
+    } catch (IOException e) {
+      System.out.println("Error al guardar asistencias.");
+    }
+  }
+
+  @Override
+  public List<Estudiante> listarEstudiantes() {
+    return LectorCsv.leer("data/estudiante.csv", c -> c.length >= 7
+        ? new Estudiante(c[0], c[1], c[2], c[3], c[4], c[5], c[6]) : null);
+  }
+
+  @Override
+  public List<Profesor> listarProfesores() {
+    return LectorCsv.leer("data/profesor.csv", c -> c.length >= 9
+        ? new Profesor(c[0], c[1], c[2], c[3], c[4], c[5], Integer.parseInt(c[6]), c[7], c[8]) : null);
+  }
+
+  @Override
+  public List<Curso> listarCursos() {
+    return LectorCsv.leerConCabecera("data/curso.csv", (cabecera, c) -> {
+      if (c.length < 7)
+        return null;
+      int totalHoras = cabecera.contains("total_horas_lectivas")
+          ? Integer.parseInt(c[6])
+          : Integer.parseInt(c[4]) + Integer.parseInt(c[5]);
+      return new Curso(c[0], c[1], c[2], totalHoras);
+    });
   }
 
   @Override
@@ -216,73 +112,43 @@ public final class RepositorioAsistenciaCsv implements RepositorioAsistencia {
   }
 
   @Override
-  public Optional<Profesor> buscarProfesor(String idProfesor) {
-    if (idProfesor == null)
-      return Optional.empty();
-    return leerProfesores().stream().filter(p -> p.getId().equals(idProfesor)).findFirst();
+  public List<BloqueSeccion> listarBloques() {
+    return LectorCsv.leer("data/bloque_seccion.csv", c -> c.length >= 3
+        ? new BloqueSeccion(c[0], c[1], c[2]) : null);
   }
 
   @Override
-  public List<Matricula> listarMatriculasDeEstudiante(String idEstudiante) {
-    return leerMatriculas().stream().filter(m -> m.getIdEstudiante().equals(idEstudiante)).toList();
+  public List<SeccionCurso> listarSecciones() {
+    return LectorCsv.leer("data/seccion_curso.csv", c -> c.length >= 3
+        ? new SeccionCurso(c[0], c[1], c[2]) : null);
   }
 
   @Override
-  public List<SeccionCurso> listarSeccionesDeBloque(String idBloque) {
-    return leerSecciones().stream().filter(s -> s.getIdBloque().equals(idBloque)).toList();
+  public List<HorarioSeccion> listarHorarios() {
+    return LectorCsv.leer("data/horario_seccion.csv", c -> c.length >= 8
+        ? new HorarioSeccion(c[0], c[1], DiaSemana.valueOf(c[2]), c[3], c[4], c[6], c[7]) : null);
+  }
+
+  @Override
+  public List<SesionClase> listarSesiones() {
+    return LectorCsv.leer("data/sesion_clase.csv", c -> c.length >= 4
+        ? new SesionClase(c[0], c[1], c[2], Integer.parseInt(c[3])) : null);
+  }
+
+  @Override
+  public List<Salon> listarSalones() {
+    return LectorCsv.leer("data/salon.csv", c -> c.length >= 2
+        ? new Salon(c[0], c[1]) : null);
+  }
+
+  @Override
+  public List<Matricula> listarMatriculas() {
+    return LectorCsv.leer("data/matricula.csv", c -> c.length >= 5
+        ? new Matricula(c[0], c[1], c[2], EstadoMatricula.valueOf(c[4])) : null);
   }
 
   private static Optional<String> buscarValorPorClave(String ruta, String clave) {
     return LectorCsv.leer(ruta, c -> c.length >= 2 && c[0].equals(clave) ? c[1] : null)
         .stream().findFirst();
-  }
-
-  private List<Estudiante> listarEstudiantesActivosEnBloque(String idBloque) {
-    List<Estudiante> estudiantes = leerEstudiantes();
-    List<Estudiante> resultado = new ArrayList<>();
-    for (Matricula matricula : leerMatriculas()) {
-      if (matricula.getEstado() == EstadoMatricula.ACTIVA && matricula.getIdBloque().equals(idBloque)) {
-        estudiantes.stream().filter(e -> e.getId().equals(matricula.getIdEstudiante())).findFirst()
-            .ifPresent(resultado::add);
-      }
-    }
-    return resultado;
-  }
-
-  private static List<Estudiante> leerEstudiantes() {
-    return LectorCsv.leer("data/estudiante.csv", c -> c.length >= 7
-        ? new Estudiante(c[0], c[1], c[2], c[3], c[4], c[5], c[6]) : null);
-  }
-
-  private static List<Profesor> leerProfesores() {
-    return LectorCsv.leer("data/profesor.csv", c -> c.length >= 9
-        ? new Profesor(c[0], c[1], c[2], c[3], c[4], c[5], Integer.parseInt(c[6]), c[7], c[8]) : null);
-  }
-
-  private static List<HorarioSeccion> leerHorarios() {
-    return LectorCsv.leer("data/horario_seccion.csv", c -> c.length >= 8
-        ? new HorarioSeccion(c[0], c[1], DiaSemana.valueOf(c[2]), c[3], c[4], c[6], c[7])
-        : null);
-  }
-
-  private static List<SeccionCurso> leerSecciones() {
-    return LectorCsv.leer("data/seccion_curso.csv", c -> c.length >= 3
-        ? new SeccionCurso(c[0], c[1], c[2]) : null);
-  }
-
-  private static List<Matricula> leerMatriculas() {
-    return LectorCsv.leer("data/matricula.csv", c -> c.length >= 5
-        ? new Matricula(c[0], c[1], c[2], EstadoMatricula.valueOf(c[4])) : null);
-  }
-
-  private static List<Curso> leerCursos() {
-    return LectorCsv.leerConCabecera("data/curso.csv", (cabecera, c) -> {
-      if (c.length < 7)
-        return null;
-      int totalHoras = cabecera.contains("total_horas_lectivas")
-          ? Integer.parseInt(c[6])
-          : Integer.parseInt(c[4]) + Integer.parseInt(c[5]);
-      return new Curso(c[0], c[1], c[2], totalHoras);
-    });
   }
 }
