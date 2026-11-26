@@ -150,10 +150,6 @@ public final class ServicioAsistencia {
     return construirRegistro(sesion, curso, estudiante, horasAsistidas, matricula.getIdMatricula());
   }
 
-  public RegistroDeAsistencia crear(SesionClase sesion, Curso curso, Estudiante estudiante, int horasAsistidas) {
-    return construirRegistro(sesion, curso, estudiante, horasAsistidas, null);
-  }
-
   public void guardarLote(List<RegistroDeAsistencia> registros) {
     repositorio.guardarLote(registros);
   }

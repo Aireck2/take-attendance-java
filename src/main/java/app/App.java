@@ -9,6 +9,7 @@ import java.util.Scanner;
 import java.util.Set;
 
 import almacenamiento.csv.RepositorioAsistenciaCsv;
+import almacenamiento.csv.RepositorioUsuarioCsv;
 import modelo.BloqueSeccion;
 import modelo.Curso;
 import modelo.DiaSemana;
@@ -37,7 +38,7 @@ public class App {
   private static final int ANCHO_TITULO = 46;
   private final Scanner scanner = new Scanner(System.in);
   private final ServicioAsistencia servicioAsistencia = new ServicioAsistencia(new RepositorioAsistenciaCsv());
-  private final AutenticacionService autenticacion = new AutenticacionService();
+  private final AutenticacionService autenticacion = new AutenticacionService(new RepositorioUsuarioCsv());
 
   public static void main(String[] args) {
     new App().iniciar();

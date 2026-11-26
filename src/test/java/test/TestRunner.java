@@ -11,6 +11,7 @@ import java.time.LocalDate;
 import app.App;
 import almacenamiento.csv.LectorCsvTest;
 import almacenamiento.csv.RepositorioAsistenciaCsv;
+import almacenamiento.csv.RepositorioUsuarioCsv;
 import modelo.Curso;
 import modelo.EstadoPeriodo;
 import modelo.Estudiante;
@@ -77,7 +78,8 @@ public final class TestRunner {
     }
 
     private static void probarInicioSesionYResolucionDePerfil() {
-        Usuario usuario = new AutenticacionService().autenticar("carlos.mendoza@iestpchincha.edu.pe", "Docente2026*");
+        Usuario usuario = new AutenticacionService(new RepositorioUsuarioCsv())
+                .autenticar("carlos.mendoza@iestpchincha.edu.pe", "Docente2026*");
         verificar(usuario != null, "autentica al docente de demostración");
         if (usuario == null)
             return;
