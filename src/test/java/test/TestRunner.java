@@ -8,6 +8,7 @@ import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 
 import app.App;
+import almacenamiento.csv.LectorCsvTest;
 import almacenamiento.csv.RepositorioAsistenciaCsv;
 import modelo.Curso;
 import modelo.Estudiante;
@@ -33,6 +34,7 @@ public final class TestRunner {
     }
 
     public static void main(String[] args) {
+        LectorCsvTest.ejecutar();
         probarAutenticacionConRepositorioInyectado();
         probarInicioSesionYResolucionDePerfil();
         probarRecorridoAcademicoHastaRegistro();
