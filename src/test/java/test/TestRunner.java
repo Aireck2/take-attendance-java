@@ -16,6 +16,7 @@ import modelo.EstadoPeriodo;
 import modelo.Estudiante;
 import modelo.HorarioSeccion;
 import modelo.PeriodoAcademico;
+import modelo.PersonaTest;
 import modelo.Profesor;
 import modelo.RegistroDeAsistencia;
 import modelo.Rol;
@@ -38,6 +39,7 @@ public final class TestRunner {
 
     public static void main(String[] args) {
         LectorCsvTest.ejecutar();
+        PersonaTest.ejecutar();
         probarAutenticacionConRepositorioInyectado();
         probarInicioSesionYResolucionDePerfil();
         probarRecorridoAcademicoHastaRegistro();

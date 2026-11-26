@@ -145,7 +145,7 @@ public class App {
       opcProf = leerOpcion("Elija una opción: ");
       switch (opcProf) {
         case 1 -> gestionarCursosProfesor(profActual);
-        case 2 -> profActual.mostrarPerfil();
+        case 2 -> mostrarPerfilProfesor(profActual);
         case 3 -> {
         }
         default -> System.out.println("Opción inválida.");
@@ -423,7 +423,7 @@ public class App {
       opcEst = leerOpcion("Elija una opción: ");
       switch (opcEst) {
         case 1 -> mostrarResumenAsistenciaEstudiante(estActual);
-        case 2 -> estActual.mostrarPerfil();
+        case 2 -> mostrarPerfilEstudiante(estActual);
         case 3 -> {
         }
         default -> System.out.println("Opción inválida.");
@@ -500,6 +500,30 @@ public class App {
     if (seccionesMostradas.isEmpty()) {
       System.out.println("No hay cursos matriculados en el periodo activo.");
     }
+  }
+
+  private void mostrarPerfilProfesor(Profesor profesor) {
+    imprimirTitulo("PERFIL DEL PROFESOR");
+    System.out.println("ID: " + profesor.getId());
+    System.out.println("Nombre: " + profesor.getNombres());
+    System.out.println("Apellido: " + profesor.getApellidos());
+    System.out.println("Correo: " + profesor.getCorreo());
+    System.out.println("Telefono: " + profesor.getTelefono());
+    System.out.println("Tipo de documento: " + profesor.getTipoDeDocumento());
+    System.out.println("Nro de documento: " + profesor.getNroDocumento());
+    System.out.println("Departamento academico: " + profesor.getDepartamentoAcademico());
+    System.out.println("Especialidad: " + profesor.getEspecialidad());
+  }
+
+  private void mostrarPerfilEstudiante(Estudiante estudiante) {
+    imprimirTitulo("PERFIL DEL ESTUDIANTE");
+    System.out.println("ID: " + estudiante.getId());
+    System.out.println("Codigo: " + estudiante.getCodigo());
+    System.out.println("Nombres: " + estudiante.getNombres());
+    System.out.println("Apellidos: " + estudiante.getApellidos());
+    System.out.println("DNI: " + estudiante.getDni());
+    System.out.println("Correo: " + estudiante.getCorreo());
+    System.out.println("Estado: " + estudiante.getEstado());
   }
 
   private void imprimirTitulo(String titulo) {
