@@ -1,19 +1,19 @@
 package modelo;
 
-/** Unidad didactica de un plan de estudios con su carga lectiva total. */
+/** Unidad didactica vinculada a una carrera con su carga lectiva total. */
 public class Curso {
   private final String idCurso;
   private final String nombreCurso;
-  private final String idModulo;
+  private final String idCarrera;
   private final int totalHorasLectivas;
 
-  public Curso(String idCurso, String nombreCurso, String idModulo, int totalHorasLectivas) {
+  public Curso(String idCurso, String nombreCurso, String idCarrera, int totalHorasLectivas) {
     if (totalHorasLectivas < 0) {
       throw new IllegalArgumentException("totalHorasLectivas no puede ser negativo");
     }
     this.idCurso = idCurso;
     this.nombreCurso = nombreCurso;
-    this.idModulo = idModulo;
+    this.idCarrera = idCarrera;
     this.totalHorasLectivas = totalHorasLectivas;
   }
 
@@ -25,8 +25,8 @@ public class Curso {
     return nombreCurso;
   }
 
-  public String getIdModulo() {
-    return idModulo;
+  public String getIdCarrera() {
+    return idCarrera;
   }
 
   public int getTotalHorasLectivas() {

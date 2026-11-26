@@ -1,29 +1,7 @@
-id_curso,nombre_curso,id_modulo,creditos,horas_teoricas,horas_practicas,total_horas_lectivas
-UD-SEGREDES,Seguridad en Redes,MP-APSTI-01,4,32,32,64
-UD-ETHHACK,Ethical Hacking,MP-APSTI-01,3,32,16,48
-UD-ROUTING,Routing y Switching,MP-APSTI-01,4,32,32,64
-UD-CLOUD,Cloud Computing,MP-APSTI-02,3,32,16,48
-UD-BDAVZ,Bases de Datos Avanzadas,MP-APSTI-03,4,32,32,64
-UD-SEG-CLOUD,Seguridad de Servicios Cloud,MP-APSTI-02,4,32,32,64
-UD-REDES1,Fundamentos de Redes y Comunicaciones,MP-01,4,32,32,64
-UD-ADMIN-LINUX,Administracion de Sistemas Linux,MP-APSTI-01,4,40,40,80
-UD-SEG-IR,Seguridad de Infraestructura y Redes,MP-APSTI-01,5,48,48,96
-UD-VIRT-DATACENTER,Virtualizacion de Centros de Datos,MP-APSTI-02,4,40,40,80
-UD-SEG-PERIM,Seguridad de Perimetro y Firewalls,MP-APSTI-02,5,48,48,96
-UD-CLOUD-SEC,Seguridad en la Nube,MP-APSTI-02,4,40,40,80
-UD-ING-DATOS,Ingenieria de Datos,MP-APSTI-03,4,40,40,80
-UD-BI,Inteligencia de Negocios,MP-APSTI-03,4,40,40,80
-UD-NOSQL,Bases de Datos NoSQL,MP-APSTI-03,4,36,36,72
-UD-ETL,Procesos ETL y Almacenamiento,MP-APSTI-03,4,40,40,80
-UD-POO-JAVA,Programacion Orientada a Objetos con Java,MP-APSTI-04,5,48,48,96
-UD-DES-WEB,Desarrollo Web Seguro,MP-APSTI-04,5,48,48,96
-UD-DES-MOVIL,Desarrollo de Aplicaciones Moviles,MP-APSTI-04,5,40,48,88
-UD-TEST-SD,Pruebas de Software,MP-APSTI-04,5,48,40,88
-UD-ESTAD,Estadistica Descriptiva e Inferencial,MP-APSTI-05,5,48,48,96
-UD-ML,Aprendizaje Automatico,MP-APSTI-05,5,48,48,96
-UD-BIG-DATA,Big Data y Analitica,MP-APSTI-05,5,40,48,88
-UD-MLOPS,MLOps y Despliegue de Modelos,MP-APSTI-05,5,48,40,88
-UD-GESTION-TI,Gestion de Servicios de TI,MP-APSTI-06,5,48,48,96
-UD-PROY,Gestion de Proyectos TI,MP-APSTI-06,5,48,48,96
-UD-ITIL,Gobierno de TI,MP-APSTI-06,5,40,48,88
-UD-CALIDAD,Calidad y Auditoria de TI,MP-APSTI-06,5,48,40,88
+id_curso,nombre_curso,id_carrera,total_horas_lectivas
+UD-SEGREDES,Seguridad en Redes,PROG-APSTI,64
+UD-ETHHACK,Ethical Hacking,PROG-APSTI,48
+UD-ROUTING,Routing y Switching,PROG-APSTI,64
+UD-CLOUD,Cloud Computing,PROG-APSTI,48
+UD-BDAVZ,Bases de Datos Avanzadas,PROG-APSTI,64
+UD-SEG-CLOUD,Seguridad de Servicios Cloud,PROG-APSTI,64

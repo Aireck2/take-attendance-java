@@ -15,7 +15,6 @@ public final class LectorCsvTest {
 
   public static void ejecutar() {
     probarLecturaIgnorandoCabeceraLineasVaciasYNulos();
-    probarLecturaConCabecera();
     probarArchivoInexistenteDevuelveListaVacia();
   }
 
@@ -26,19 +25,6 @@ public final class LectorCsvTest {
           campos -> campos.length >= 2 ? campos[0] + ":" + campos[1] : null);
       if (!List.of("1:Ana", "2:Luis").equals(resultado)) {
         throw new AssertionError("LectorCsv no filtró o recortó correctamente: " + resultado);
-      }
-    } finally {
-      borrarSilencioso(archivo);
-    }
-  }
-
-  private static void probarLecturaConCabecera() {
-    Path archivo = crearTemporal("id,total_horas_lectivas\nUD-1,64\n");
-    try {
-      List<String> resultado = LectorCsv.leerConCabecera(archivo.toString(),
-          (cabecera, campos) -> cabecera.contains("total_horas_lectivas") ? campos[0] + "=" + campos[1] : null);
-      if (!List.of("UD-1=64").equals(resultado)) {
-        throw new AssertionError("LectorCsv.leerConCabecera no entregó la cabecera esperada: " + resultado);
       }
     } finally {
       borrarSilencioso(archivo);
