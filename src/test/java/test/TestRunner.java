@@ -45,6 +45,7 @@ public final class TestRunner {
         probarInicioSesionYResolucionDePerfil();
         probarRecorridoAcademicoHastaRegistro();
         probarCalculosYCreacionEnServicioAsistencia();
+        probarIntegridadReferencialDeDatosCsv();
         probarCarreraEnListaDeAlumnosDelCurso();
         probarResumenAsistenciaEstudianteEnApp();
         if (fallos == 0) {
@@ -147,6 +148,23 @@ public final class TestRunner {
                 "devuelve cero cuando la fecha es previa al periodo");
         verificar(servicio.calcularPorcentajeFaltas(10, 8) == 20.0,
                 "calcula el porcentaje de faltas sobre horas dictadas");
+    }
+
+    private static void probarIntegridadReferencialDeDatosCsv() {
+        RepositorioAsistenciaCsv repo = new RepositorioAsistenciaCsv();
+        ServicioAsistencia servicio = new ServicioAsistencia(repo);
+        verificar(repo.listarCursos().stream().allMatch(c -> servicio.buscarCarreraDeCurso(c) != null),
+                "todos los cursos en CSV apuntan a una carrera existente");
+        verificar(repo.listarSecciones().stream().allMatch(
+                s -> servicio.buscarBloque(s.getIdBloque()) != null && servicio.buscarCurso(s.getIdCurso()) != null),
+                "todas las secciones en CSV apuntan a bloque y curso existentes");
+        verificar(repo.listarHorarios().stream().allMatch(
+                h -> servicio.buscarProfesor(h.getIdProfesor()) != null && servicio.buscarSalon(h.getIdSalon()) != null),
+                "todos los horarios en CSV apuntan a profesor y salón existentes");
+        verificar(repo.listarTodos().stream().allMatch(
+                r -> servicio.buscarCurso(r.getIdCurso()) != null && servicio.buscarEstudiante(r.getIdEstudiante()) != null
+                        && servicio.horasProgramadasDe(r) > 0),
+                "todos los registros de asistencia en CSV apuntan a curso, estudiante y sesión válidos");
     }
 
     private static void probarCarreraEnListaDeAlumnosDelCurso() {

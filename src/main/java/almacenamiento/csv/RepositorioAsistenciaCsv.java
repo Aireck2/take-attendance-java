@@ -77,37 +77,29 @@ public final class RepositorioAsistenciaCsv implements RepositorioAsistencia {
 
   @Override
   public List<Curso> listarCursos() {
-    return LectorCsv.leerConCabecera("data/curso.csv", (cabecera, c) -> {
-      if (c.length < 7)
-        return null;
-      int totalHoras = cabecera.contains("total_horas_lectivas")
-          ? Integer.parseInt(c[6])
-          : Integer.parseInt(c[4]) + Integer.parseInt(c[5]);
-      return new Curso(c[0], c[1], c[2], totalHoras);
-    });
+    return LectorCsv.leer("data/curso.csv", c -> c.length >= 4
+        ? new Curso(c[0], c[1], c[2], Integer.parseInt(c[3])) : null);
   }
 
   @Override
   public Optional<Carrera> buscarCarreraDeCurso(Curso curso) {
-    if (curso == null || curso.getIdModulo() == null)
+    if (curso == null || curso.getIdCarrera() == null)
       return Optional.empty();
-    return buscarValorPorClave("data/modulo_profesional.csv", curso.getIdModulo())
-        .flatMap(idPlan -> buscarValorPorClave("data/plan_estudios.csv", idPlan))
-        .flatMap(idCarrera -> LectorCsv.leer("data/carrera.csv", c -> c.length >= 2
-            ? new Carrera(c[0], c[1]) : null).stream()
-            .filter(carrera -> carrera.getIdCarrera().equals(idCarrera))
-            .findFirst());
+    return LectorCsv.leer("data/carrera.csv", c -> c.length >= 2
+        ? new Carrera(c[0], c[1]) : null).stream()
+        .filter(carrera -> carrera.getIdCarrera().equals(curso.getIdCarrera()))
+        .findFirst();
   }
 
   @Override
   public List<PeriodoAcademico> listarPeriodosAcademicos() {
     return LectorCsv.leer("data/periodo_academico.csv", c -> {
-      if (c.length < 6)
+      if (c.length < 5)
         return null;
-      int semanas = c.length >= 7 && !c[6].isEmpty()
-          ? Integer.parseInt(c[6])
+      int semanas = c.length >= 6 && !c[5].isEmpty()
+          ? Integer.parseInt(c[5])
           : PeriodoAcademico.DEFAULT_SEMANAS_LECTIVAS;
-      return new PeriodoAcademico(c[0], c[2], c[3], c[4], EstadoPeriodo.valueOf(c[5]), semanas);
+      return new PeriodoAcademico(c[0], c[1], c[2], c[3], EstadoPeriodo.valueOf(c[4]), semanas);
     });
   }
 
@@ -125,8 +117,8 @@ public final class RepositorioAsistenciaCsv implements RepositorioAsistencia {
 
   @Override
   public List<HorarioSeccion> listarHorarios() {
-    return LectorCsv.leer("data/horario_seccion.csv", c -> c.length >= 8
-        ? new HorarioSeccion(c[0], c[1], DiaSemana.valueOf(c[2]), c[3], c[4], c[6], c[7]) : null);
+    return LectorCsv.leer("data/horario_seccion.csv", c -> c.length >= 7
+        ? new HorarioSeccion(c[0], c[1], DiaSemana.valueOf(c[2]), c[3], c[4], c[5], c[6]) : null);
   }
 
   @Override
@@ -143,12 +135,7 @@ public final class RepositorioAsistenciaCsv implements RepositorioAsistencia {
 
   @Override
   public List<Matricula> listarMatriculas() {
-    return LectorCsv.leer("data/matricula.csv", c -> c.length >= 5
-        ? new Matricula(c[0], c[1], c[2], EstadoMatricula.valueOf(c[4])) : null);
-  }
-
-  private static Optional<String> buscarValorPorClave(String ruta, String clave) {
-    return LectorCsv.leer(ruta, c -> c.length >= 2 && c[0].equals(clave) ? c[1] : null)
-        .stream().findFirst();
+    return LectorCsv.leer("data/matricula.csv", c -> c.length >= 4
+        ? new Matricula(c[0], c[1], c[2], EstadoMatricula.valueOf(c[3])) : null);
   }
 }
