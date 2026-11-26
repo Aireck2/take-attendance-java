@@ -2,20 +2,19 @@ package modelo;
 
 /**
  * Representa a un estudiante del sistema de asistencia.
- * Guarda su codigo, datos personales, documento de identidad y estado
- * academico.
+ * Guarda su codigo, datos personales, documento de identidad y estado academico.
  */
 public class Estudiante {
-  private String id;
-  private String codigo;
-  private String nombres;
-  private String apellidos;
-  private String dni;
-  private String correo;
-  private EstadoEstudiante estado;
+  private final String id;
+  private final String codigo;
+  private final String nombres;
+  private final String apellidos;
+  private final String dni;
+  private final String correo;
+  private final String estado;
 
   public Estudiante(String id, String codigo, String nombres, String apellidos, String dni, String correo,
-      EstadoEstudiante estado) {
+      String estado) {
     this.id = id;
     this.codigo = codigo;
     this.nombres = nombres;
@@ -45,7 +44,7 @@ public class Estudiante {
     return correo;
   }
 
-  public EstadoEstudiante getEstado() {
+  public String getEstado() {
     return estado;
   }
 

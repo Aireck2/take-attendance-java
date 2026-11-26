@@ -1,19 +1,13 @@
 package modelo;
 
-/**
- * Carrera / Programa de Estudios: programa profesional tecnico autorizado por
- * la institucion. Nivel institucional superior/estrategico.
- * Administra uno o varios planes de estudio vigentes o historicos.
- */
+/** Carrera o programa de estudios autorizado por la institucion. */
 public class Carrera {
-  private String idCarrera;
-  private String nombre;
-  private String tipo;
+  private final String idCarrera;
+  private final String nombre;
 
-  public Carrera(String idCarrera, String nombre, String tipo) {
+  public Carrera(String idCarrera, String nombre) {
     this.idCarrera = idCarrera;
     this.nombre = nombre;
-    this.tipo = tipo;
   }
 
   public String getIdCarrera() {
@@ -22,9 +16,5 @@ public class Carrera {
 
   public String getNombre() {
     return nombre;
-  }
-
-  public String getTipo() {
-    return tipo;
   }
 }

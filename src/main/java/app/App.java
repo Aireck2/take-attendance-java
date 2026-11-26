@@ -94,7 +94,7 @@ public class App {
     }
 
     System.out.println("Sesión iniciada como " + usuario.getRol() + ".");
-    switch (usuario.getRol().menuSesion()) {
+    switch (usuario.getRol()) {
       case PROFESOR -> {
         Profesor profesor = servicioAsistencia.buscarProfesor(usuario.getIdReferencia());
         if (profesor == null) {
@@ -112,10 +112,6 @@ public class App {
         }
         System.out.println("Bienvenido, " + estudiante.getNombreCompleto() + ".");
         menuEstudiante(estudiante);
-      }
-      case NINGUNO -> {
-        System.out.println("El rol '" + usuario.getRol() + "' no tiene un menú asignado. Sesión cerrada.");
-        return;
       }
     }
     System.out.println("Sesión cerrada.");

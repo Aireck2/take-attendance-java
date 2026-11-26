@@ -8,25 +8,17 @@ import modelo.BloqueSeccion;
 import modelo.Carrera;
 import modelo.Curso;
 import modelo.DiaSemana;
-import modelo.EstadoEstudiante;
 import modelo.EstadoMatricula;
 import modelo.EstadoPeriodo;
-import modelo.EstadoPlan;
 import modelo.Estudiante;
 import modelo.HorarioSeccion;
 import modelo.Matricula;
-import modelo.ModalidadDictado;
-import modelo.ModuloProfesional;
 import modelo.PeriodoAcademico;
-import modelo.PlanEstudios;
 import modelo.Profesor;
 import modelo.RegistroDeAsistencia;
 import modelo.Salon;
 import modelo.SeccionCurso;
 import modelo.SesionClase;
-import modelo.TipoClase;
-import modelo.TipoSalon;
-import modelo.Turno;
 import repositorio.RepositorioAsistencia;
 
 /** Implementación CSV del repositorio de asistencia. */
@@ -149,8 +141,8 @@ public final class RepositorioAsistenciaCsv implements RepositorioAsistencia {
   public Optional<BloqueSeccion> buscarBloque(String idBloque) {
     if (idBloque == null)
       return Optional.empty();
-    return LectorCsv.leer("data/bloque_seccion.csv", c -> c.length >= 4
-        ? new BloqueSeccion(c[0], c[1], c[2], Turno.valueOf(c[3])) : null).stream()
+    return LectorCsv.leer("data/bloque_seccion.csv", c -> c.length >= 3
+        ? new BloqueSeccion(c[0], c[1], c[2]) : null).stream()
         .filter(item -> item.getIdBloque().equals(idBloque)).findFirst();
   }
 
@@ -163,8 +155,8 @@ public final class RepositorioAsistenciaCsv implements RepositorioAsistencia {
   public Optional<Salon> buscarSalon(String idSalon) {
     if (idSalon == null)
       return Optional.empty();
-    return LectorCsv.leer("data/salon.csv", c -> c.length >= 4
-        ? new Salon(c[0], c[1], TipoSalon.valueOf(c[2]), Integer.parseInt(c[3])) : null).stream()
+    return LectorCsv.leer("data/salon.csv", c -> c.length >= 2
+        ? new Salon(c[0], c[1]) : null).stream()
         .filter(item -> item.getIdSalon().equals(idSalon)).findFirst();
   }
 
@@ -203,19 +195,11 @@ public final class RepositorioAsistenciaCsv implements RepositorioAsistencia {
   public Optional<Carrera> buscarCarreraDeCurso(Curso curso) {
     if (curso == null || curso.getIdModulo() == null)
       return Optional.empty();
-    return LectorCsv.leer("data/modulo_profesional.csv", c -> c.length >= 5
-        ? new ModuloProfesional(c[0], c[1], c[2], c[3], Integer.parseInt(c[4])) : null).stream()
-        .filter(m -> m.getIdModulo().equals(curso.getIdModulo()))
-        .findFirst()
-        .flatMap(m -> LectorCsv.leer("data/plan_estudios.csv", c -> c.length >= 7
-            ? new PlanEstudios(c[0], c[1], c[2], c[3], Integer.parseInt(c[4]), Integer.parseInt(c[5]),
-                EstadoPlan.valueOf(c[6])) : null).stream()
-            .filter(p -> p.getIdPlan().equals(m.getIdPlan()))
-            .findFirst())
-        .flatMap(p -> LectorCsv.leer("data/carrera.csv", c -> c.length >= 3
-            ? new Carrera(c[0], c[1], c[2])
-            : (c.length >= 2 ? new Carrera(c[0], c[1], "Educación Superior") : null)).stream()
-            .filter(carrera -> carrera.getIdCarrera().equals(p.getIdCarrera()))
+    return buscarValorPorClave("data/modulo_profesional.csv", curso.getIdModulo())
+        .flatMap(idPlan -> buscarValorPorClave("data/plan_estudios.csv", idPlan))
+        .flatMap(idCarrera -> LectorCsv.leer("data/carrera.csv", c -> c.length >= 2
+            ? new Carrera(c[0], c[1]) : null).stream()
+            .filter(carrera -> carrera.getIdCarrera().equals(idCarrera))
             .findFirst());
   }
 
@@ -248,6 +232,11 @@ public final class RepositorioAsistenciaCsv implements RepositorioAsistencia {
     return leerSecciones().stream().filter(s -> s.getIdBloque().equals(idBloque)).toList();
   }
 
+  private static Optional<String> buscarValorPorClave(String ruta, String clave) {
+    return LectorCsv.leer(ruta, c -> c.length >= 2 && c[0].equals(clave) ? c[1] : null)
+        .stream().findFirst();
+  }
+
   private List<Estudiante> listarEstudiantesActivosEnBloque(String idBloque) {
     List<Estudiante> estudiantes = leerEstudiantes();
     List<Estudiante> resultado = new ArrayList<>();
@@ -262,7 +251,7 @@ public final class RepositorioAsistenciaCsv implements RepositorioAsistencia {
 
   private static List<Estudiante> leerEstudiantes() {
     return LectorCsv.leer("data/estudiante.csv", c -> c.length >= 7
-        ? new Estudiante(c[0], c[1], c[2], c[3], c[4], c[5], EstadoEstudiante.valueOf(c[6])) : null);
+        ? new Estudiante(c[0], c[1], c[2], c[3], c[4], c[5], c[6]) : null);
   }
 
   private static List<Profesor> leerProfesores() {
@@ -272,13 +261,13 @@ public final class RepositorioAsistenciaCsv implements RepositorioAsistencia {
 
   private static List<HorarioSeccion> leerHorarios() {
     return LectorCsv.leer("data/horario_seccion.csv", c -> c.length >= 8
-        ? new HorarioSeccion(c[0], c[1], DiaSemana.valueOf(c[2]), c[3], c[4], TipoClase.valueOf(c[5]), c[6], c[7])
+        ? new HorarioSeccion(c[0], c[1], DiaSemana.valueOf(c[2]), c[3], c[4], c[6], c[7])
         : null);
   }
 
   private static List<SeccionCurso> leerSecciones() {
-    return LectorCsv.leer("data/seccion_curso.csv", c -> c.length >= 5
-        ? new SeccionCurso(c[0], c[1], c[2], ModalidadDictado.valueOf(c[3]), Integer.parseInt(c[4])) : null);
+    return LectorCsv.leer("data/seccion_curso.csv", c -> c.length >= 3
+        ? new SeccionCurso(c[0], c[1], c[2]) : null);
   }
 
   private static List<Matricula> leerMatriculas() {
