@@ -1,6 +1,8 @@
 package servicio;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import modelo.BloqueSeccion;
@@ -20,11 +22,9 @@ import repositorio.RepositorioAsistencia;
 /** Coordina el registro, consulta y persistencia de asistencia. */
 public final class ServicioAsistencia {
   private final RepositorioAsistencia repositorio;
-  private final RegistroAsistenciaService registro;
 
   public ServicioAsistencia(RepositorioAsistencia repositorio) {
     this.repositorio = repositorio;
-    this.registro = new RegistroAsistenciaService(repositorio);
   }
 
   public List<RegistroDeAsistencia> listarPorEstudiante(String idEstudiante) {
@@ -114,18 +114,56 @@ public final class ServicioAsistencia {
   }
 
   public int calcularSemanaLectiva(PeriodoAcademico periodo, LocalDate fecha) {
-    return CalendarioAcademico.semanaLectiva(periodo, fecha);
+    if (periodo == null || fecha == null || periodo.getSemanasLectivas() <= 0)
+      return 0;
+    if (periodo.getFechaInicio() == null || periodo.getFechaFin() == null
+        || periodo.getFechaInicio().isBlank() || periodo.getFechaFin().isBlank())
+      return 0;
+    try {
+      LocalDate inicio = LocalDate.parse(periodo.getFechaInicio());
+      LocalDate fin = LocalDate.parse(periodo.getFechaFin());
+      if (fecha.isBefore(inicio) || fecha.isAfter(fin))
+        return 0;
+      long dias = ChronoUnit.DAYS.between(inicio, fecha);
+      if (dias >= (long) periodo.getSemanasLectivas() * 7)
+        return 0;
+      return (int) (dias / 7) + 1;
+    } catch (DateTimeParseException e) {
+      return 0;
+    }
   }
 
   public RegistroDeAsistencia registrar(String idSesion, String idEstudiante, int horasAsistidas) {
-    return registro.registrar(idSesion, idEstudiante, horasAsistidas);
+    SesionClase sesion = repositorio.buscarSesion(idSesion).orElse(null);
+    if (sesion == null)
+      return null;
+    SeccionCurso seccion = repositorio.buscarSeccionDeSesion(sesion).orElse(null);
+    if (seccion == null)
+      return null;
+    Curso curso = repositorio.buscarCurso(seccion.getIdCurso()).orElse(null);
+    Estudiante estudiante = repositorio.buscarEstudiante(idEstudiante).orElse(null);
+    if (curso == null || estudiante == null)
+      return null;
+    Matricula matricula = repositorio.buscarMatriculaActiva(idEstudiante, seccion.getIdBloque()).orElse(null);
+    if (matricula == null)
+      return null;
+    return construirRegistro(sesion, curso, estudiante, horasAsistidas, matricula.getIdMatricula());
   }
 
   public RegistroDeAsistencia crear(SesionClase sesion, Curso curso, Estudiante estudiante, int horasAsistidas) {
-    return RegistroAsistenciaFactory.crear(sesion, curso, estudiante, horasAsistidas, null);
+    return construirRegistro(sesion, curso, estudiante, horasAsistidas, null);
   }
 
   public void guardarLote(List<RegistroDeAsistencia> registros) {
     repositorio.guardarLote(registros);
+  }
+
+  private static RegistroDeAsistencia construirRegistro(SesionClase sesion, Curso curso, Estudiante estudiante,
+      int horasAsistidas, String idMatricula) {
+    if (sesion == null || curso == null || estudiante == null)
+      return null;
+    int horasValidas = Math.max(0, Math.min(horasAsistidas, sesion.getHorasProgramadas()));
+    return new RegistroDeAsistencia(null, curso.getIdCurso(), estudiante.getId(), sesion.getFecha(), horasValidas,
+        horasValidas > 0, sesion.getIdSesion(), idMatricula);
   }
 }

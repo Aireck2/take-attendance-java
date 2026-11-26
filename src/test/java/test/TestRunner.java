@@ -6,13 +6,16 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 
 import app.App;
 import almacenamiento.csv.LectorCsvTest;
 import almacenamiento.csv.RepositorioAsistenciaCsv;
 import modelo.Curso;
+import modelo.EstadoPeriodo;
 import modelo.Estudiante;
 import modelo.HorarioSeccion;
+import modelo.PeriodoAcademico;
 import modelo.Profesor;
 import modelo.RegistroDeAsistencia;
 import modelo.Rol;
@@ -38,6 +41,7 @@ public final class TestRunner {
         probarAutenticacionConRepositorioInyectado();
         probarInicioSesionYResolucionDePerfil();
         probarRecorridoAcademicoHastaRegistro();
+        probarCalculosYCreacionEnServicioAsistencia();
         probarCarreraEnListaDeAlumnosDelCurso();
         if (fallos == 0) {
             System.out.println("OK: " + total + " pruebas del flujo de asistencia pasaron.");
@@ -124,6 +128,20 @@ public final class TestRunner {
                 "normaliza las horas al máximo permitido por la sesión");
         verificar(registro != null && servicio.horasProgramadasDe(registro) == sesion.getHorasProgramadas(),
                 "resuelve las horas dictadas de la sesión para el resumen del estudiante");
+    }
+
+    private static void probarCalculosYCreacionEnServicioAsistencia() {
+        ServicioAsistencia servicio = new ServicioAsistencia(new RepositorioAsistenciaCsv());
+        PeriodoAcademico periodo = new PeriodoAcademico("PER-1", "PLAN-1", "2026-II", "2026-08-01", "2026-12-15",
+                EstadoPeriodo.ACTIVO, 16);
+        verificar(servicio.calcularSemanaLectiva(periodo, LocalDate.of(2026, 8, 1)) == 1,
+                "calcula la primera semana lectiva al inicio del periodo");
+        verificar(servicio.calcularSemanaLectiva(periodo, LocalDate.of(2026, 8, 8)) == 2,
+                "calcula la segunda semana lectiva tras siete días");
+        verificar(servicio.calcularSemanaLectiva(periodo, LocalDate.of(2026, 7, 31)) == 0,
+                "devuelve cero cuando la fecha es previa al periodo");
+        verificar(servicio.calcularPorcentajeFaltas(10, 8) == 20.0,
+                "calcula el porcentaje de faltas sobre horas dictadas");
     }
 
     private static void probarCarreraEnListaDeAlumnosDelCurso() {
