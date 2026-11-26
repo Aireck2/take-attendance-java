@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Control de Asistencia IESTP Chincha · Flujo de Inicio de Sesión</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #f5f5f5;   /* white-smoke */
+      --color-ink:     #2d3142;   /* jet-black */
+      --color-muted:   #4f5d75;   /* blue-slate */
+      --color-accent:  #bf4520;   /* burnt-tangerine */
+      --font-sans:     'Geist', system-ui, sans-serif;
+      --font-serif:    'Instrument Serif', serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+    }
+
+    .frame { max-width: 960px; width: 100%; min-width: 0; }
+    /* El SVG conserva su ancho legible (min-width == viewBox) para que la rampa
+       tipografica no se reduzca en silencio. Este wrapper scrollea solo el
+       diagrama, no la pagina entera. */
+    .diagram-container { width: 100%; overflow-x: auto; }
+
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 1.5rem;
+    }
+
+    svg { width: 100%; min-width: 960px; display: block; }
+    /* El papel no tiene scrollbar: en impresion el diagrama se escala para
+       entrar completo en la hoja. Debe ir despues de la regla svg. */
+    @media print {
+      .diagram-container { overflow-x: visible; }
+      svg { min-width: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Flujograma · Notación Joyanes Aguilar</p>
+    <h1>Control de Asistencia IESTP Chincha · Flujo de Inicio de Sesión</h1>
+
+    <div class="diagram-container">
+      <svg viewBox="0 0 960 840" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="flujo-inicio-sesion-title flujo-inicio-sesion-desc">
+        <title id="flujo-inicio-sesion-title">Flujo de inicio de sesión</title>
+        <desc id="flujo-inicio-sesion-desc">Flujograma en notación Joyanes Aguilar del inicio de sesión: terminal de inicio, lectura de credenciales en romboide, decisión de validación PBKDF2, proceso de resolución del perfil, decisión de perfil asociado, dos salidas de error unidas por conector, decisión de rol y llamada a los subprogramas menuProfesor y menuEstudiante, que convergen en el terminal de fin.</desc>
+        <defs>
+          <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+          <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#bf4520"/></marker>
+          <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/></marker>
+        </defs>
+
+        <rect width="100%" height="100%" fill="#f5f5f5"/>
+
+        <!-- Lineas de flujo (dibujadas antes que los simbolos) -->
+        <!-- Terminal INICIO → romboide Leer -->
+        <line x1="338" y1="88" x2="338" y2="112" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <!-- Leer → decisión credenciales -->
+        <line x1="338" y1="160" x2="338" y2="184" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <!-- Decisión credenciales · SÍ → proceso Resolver perfil (camino válido) -->
+        <line x1="338" y1="272" x2="338" y2="296" stroke="#bf4520" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+        <!-- Resolver perfil → decisión perfil -->
+        <line x1="338" y1="344" x2="338" y2="368" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <!-- Decisión perfil · SÍ → decisión de rol -->
+        <line x1="338" y1="456" x2="338" y2="480" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <!-- Decisión de rol · PROFESOR → subprograma menuProfesor -->
+        <line x1="218" y1="524" x2="150" y2="524" stroke="#4f5d75" stroke-width="1.2"/>
+        <line x1="150" y1="524" x2="150" y2="592" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <!-- Decisión de rol · ESTUDIANTE → subprograma menuEstudiante -->
+        <line x1="458" y1="524" x2="526" y2="524" stroke="#4f5d75" stroke-width="1.2"/>
+        <line x1="526" y1="524" x2="526" y2="592" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <!-- Retorno de ambos subprogramas → terminal FIN -->
+        <line x1="150" y1="644" x2="150" y2="664" stroke="#4f5d75" stroke-width="1.2"/>
+        <line x1="150" y1="664" x2="338" y2="664" stroke="#4f5d75" stroke-width="1.2"/>
+        <line x1="526" y1="644" x2="526" y2="664" stroke="#4f5d75" stroke-width="1.2"/>
+        <line x1="526" y1="664" x2="338" y2="664" stroke="#4f5d75" stroke-width="1.2"/>
+        <line x1="338" y1="664" x2="338" y2="680" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <!-- Decisión credenciales · NO → romboide error -->
+        <line x1="458" y1="228" x2="594" y2="228" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <!-- Decisión perfil · NO → romboide error -->
+        <line x1="458" y1="412" x2="594" y2="412" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <!-- Romboide error credenciales → conector A -->
+        <line x1="706" y1="252" x2="706" y2="308" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <!-- Romboide error perfil → conector A -->
+        <line x1="706" y1="388" x2="706" y2="332" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <!-- Conector A → romboide Leer (reintento) -->
+        <line x1="146" y1="136" x2="226" y2="136" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+        <!-- Etiquetas de rama (mascara opaca + 8px de aire respecto al trazo) -->
+        <rect x="304" y="278" width="26" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="317" y="287" fill="#bf4520" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">SÍ</text>
+
+        <rect x="304" y="462" width="26" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="317" y="471" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">SÍ</text>
+
+        <rect x="513" y="208" width="26" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="526" y="217" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">NO</text>
+
+        <rect x="513" y="392" width="26" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="526" y="401" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">NO</text>
+
+        <!-- Etiquetas de rama de la decisión de rol (sobre el trazo horizontal, sin mascara) -->
+        <text x="184" y="517" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">PROFESOR</text>
+        <text x="492" y="517" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">ESTUDIANTE</text>
+
+        <!-- Terminal INICIO (óvalo) -->
+        <rect x="258" y="40" width="160" height="48" rx="24" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <text x="338" y="69" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle" letter-spacing="0.08em">INICIO</text>
+
+        <!-- Romboide · Leer credenciales (entrada) -->
+        <polygon points="234,112 458,112 442,160 218,160" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="338" y="130" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Leer</text>
+        <text x="338" y="146" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">correo y contraseña</text>
+
+        <!-- Rombo · ¿Credenciales válidas? -->
+        <polygon points="338,184 458,228 338,272 218,228" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="338" y="224" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">¿Credenciales válidas?</text>
+        <text x="338" y="240" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">activo + PBKDF2</text>
+
+        <!-- Rectángulo · Resolver perfil (proceso) -->
+        <rect x="238" y="296" width="200" height="48" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="338" y="316" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Resolver perfil</text>
+        <text x="338" y="332" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">por idReferencia</text>
+
+        <!-- Rombo · ¿Perfil asociado? -->
+        <polygon points="338,368 458,412 338,456 218,412" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="338" y="416" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">¿Perfil asociado?</text>
+
+        <!-- Rombo · ¿Rol de la cuenta? -->
+        <polygon points="338,480 458,524 338,568 218,524" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="338" y="520" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">¿Rol de la cuenta?</text>
+        <text x="338" y="536" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">switch (getRol())</text>
+
+        <!-- Subprograma · llamada a menuProfesor (rectangulo con doble linea vertical) -->
+        <rect x="40" y="592" width="220" height="52" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <line x1="52" y1="592" x2="52" y2="644" stroke="#2d3142" stroke-width="1"/>
+        <line x1="248" y1="592" x2="248" y2="644" stroke="#2d3142" stroke-width="1"/>
+        <text x="150" y="623" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">menuProfesor(profesor)</text>
+
+        <!-- Subprograma · llamada a menuEstudiante (rectangulo con doble linea vertical) -->
+        <rect x="416" y="592" width="220" height="52" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <line x1="428" y1="592" x2="428" y2="644" stroke="#2d3142" stroke-width="1"/>
+        <line x1="624" y1="592" x2="624" y2="644" stroke="#2d3142" stroke-width="1"/>
+        <text x="526" y="623" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">menuEstudiante(estudiante)</text>
+
+        <!-- Terminal FIN (óvalo) -->
+        <rect x="258" y="680" width="160" height="48" rx="24" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <text x="338" y="709" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle" letter-spacing="0.08em">FIN</text>
+
+        <!-- Romboide · Escribir credenciales inválidas (salida) -->
+        <polygon points="602,204 826,204 810,252 586,252" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="706" y="222" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Escribir</text>
+        <text x="706" y="238" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">«Credenciales inválidas»</text>
+
+        <!-- Romboide · Escribir cuenta sin perfil (salida) -->
+        <polygon points="602,388 826,388 810,436 586,436" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="706" y="406" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Escribir</text>
+        <text x="706" y="422" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">«Cuenta sin perfil»</text>
+
+        <!-- Conector A (origen del salto) -->
+        <circle cx="706" cy="320" r="12" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="706" y="323" fill="#2d3142" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">A</text>
+
+        <!-- Conector A (destino del salto) -->
+        <circle cx="134" cy="136" r="12" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="134" y="139" fill="#2d3142" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">A</text>
+
+        <!-- Leyenda -->
+        <line x1="40" y1="768" x2="920" y2="768" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+        <text x="40" y="786" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.18em">LEYENDA · SÍMBOLOS DE LA NOTACIÓN JOYANES AGUILAR</text>
+
+        <rect x="40" y="800" width="24" height="14" rx="7" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <text x="72" y="810" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">Inicio / fin</text>
+
+        <polygon points="154,800 182,800 178,814 150,814" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="190" y="810" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">Entrada / salida</text>
+
+        <rect x="290" y="800" width="24" height="14" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="322" y="810" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">Proceso</text>
+
+        <polygon points="398,799 410,807 398,815 386,807" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="418" y="810" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">Decisión</text>
+
+        <rect x="492" y="800" width="30" height="14" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <line x1="500" y1="800" x2="500" y2="814" stroke="#2d3142" stroke-width="1"/>
+        <line x1="514" y1="800" x2="514" y2="814" stroke="#2d3142" stroke-width="1"/>
+        <text x="530" y="810" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">Subprograma</text>
+
+        <circle cx="629" cy="807" r="7" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="640" y="810" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">Conector</text>
+
+        <line x1="706" y1="807" x2="734" y2="807" stroke="#bf4520" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+        <text x="742" y="810" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">Camino válido</text>
+      </svg>
+    </div>
+  </div>
+</body>
+</html>

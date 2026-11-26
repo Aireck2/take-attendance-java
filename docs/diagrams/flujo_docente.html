@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Control de Asistencia IESTP Chincha · Flujo del Docente</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #f5f5f5;
+      --color-ink:     #2d3142;
+      --color-muted:   #4f5d75;
+      --color-accent:  #bf4520;
+      --font-sans:     'Geist', system-ui, sans-serif;
+      --font-serif:    'Instrument Serif', serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 3rem 2rem;
+    }
+    .frame { max-width: 1240px; width: 100%; min-width: 0; }
+    .diagram-container { width: 100%; overflow-x: auto; }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.5rem;
+    }
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 1.5rem;
+    }
+    svg { width: 100%; min-width: 1240px; display: block; }
+    @media print {
+      .diagram-container { overflow-x: visible; }
+      svg { min-width: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Flujograma · Notación Joyanes Aguilar</p>
+    <h1>Control de Asistencia IESTP Chincha · Flujo del Docente</h1>
+
+    <div class="diagram-container">
+      <svg viewBox="0 0 1240 2880" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="flujo-docente-title flujo-docente-desc">
+        <title id="flujo-docente-title">Flujo del docente</title>
+        <desc id="flujo-docente-desc">Flujograma en notación Joyanes Aguilar del menú del profesor: ciclo del menú con validación de opción, listado de cursos asignados del periodo activo, selección de sección, detalle del curso, listado de alumnos matriculados, verificación de la sesión del día y registro de asistencia por alumno con guardado por lote.</desc>
+        <defs>
+          <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+          <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#bf4520"/></marker>
+        </defs>
+        <rect x="0" y="0" width="1240" height="2880" fill="#f5f5f5"/>
+        <!-- Riel de retorno al menú: recoge todas las salidas y sube por la izquierda -->
+        <polyline points="620,2726 620,2762 60,2762 60,148 400,148" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="100" y1="324" x2="60" y2="324" stroke="#4f5d75" stroke-width="1.2"/>
+        <line x1="100" y1="434" x2="60" y2="434" stroke="#4f5d75" stroke-width="1.2"/>
+        <line x1="100" y1="618" x2="60" y2="618" stroke="#4f5d75" stroke-width="1.2"/>
+        <line x1="100" y1="822" x2="60" y2="822" stroke="#4f5d75" stroke-width="1.2"/>
+        <line x1="100" y1="1002" x2="60" y2="1002" stroke="#4f5d75" stroke-width="1.2"/>
+        <line x1="100" y1="1112" x2="60" y2="1112" stroke="#4f5d75" stroke-width="1.2"/>
+        <line x1="100" y1="1410" x2="60" y2="1410" stroke="#4f5d75" stroke-width="1.2"/>
+        <line x1="100" y1="1716" x2="60" y2="1716" stroke="#4f5d75" stroke-width="1.2"/>
+        <line x1="100" y1="2112" x2="60" y2="2112" stroke="#4f5d75" stroke-width="1.2"/>
+
+        <!-- Columna del menú y de la selección del curso -->
+        <line x1="620" y1="88" x2="620" y2="106" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="620" y1="190" x2="620" y2="208" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="620" y1="260" x2="620" y2="278" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="620" y1="370" x2="620" y2="388" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="620" y1="480" x2="620" y2="498" stroke="#bf4520" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+        <line x1="620" y1="554" x2="620" y2="572" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="620" y1="664" x2="620" y2="682" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="620" y1="758" x2="620" y2="776" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="620" y1="868" x2="620" y2="886" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="620" y1="938" x2="620" y2="956" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="620" y1="1048" x2="620" y2="1066" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="620" y1="1158" x2="620" y2="1176" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="620" y1="1252" x2="620" y2="1270" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="620" y1="1346" x2="620" y2="1364" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="620" y1="1456" x2="620" y2="1474" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="620" y1="1558" x2="620" y2="1576" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="620" y1="1652" x2="620" y2="1670" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="620" y1="1762" x2="620" y2="1780" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+        <!-- Columna del registro de asistencia -->
+        <line x1="620" y1="1872" x2="620" y2="1890" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="620" y1="1954" x2="620" y2="1972" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="620" y1="2048" x2="620" y2="2066" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="620" y1="2158" x2="620" y2="2176" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="620" y1="2232" x2="620" y2="2250" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="620" y1="2334" x2="620" y2="2352" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="620" y1="2424" x2="620" y2="2442" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="620" y1="2534" x2="620" y2="2552" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="620" y1="2624" x2="620" y2="2642" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+        <!-- Salidas laterales hacia los mensajes de error -->
+        <line x1="470" y1="324" x2="380" y2="324" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="470" y1="434" x2="380" y2="434" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="470" y1="618" x2="380" y2="618" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="470" y1="822" x2="380" y2="822" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="470" y1="1002" x2="380" y2="1002" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="470" y1="1112" x2="380" y2="1112" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="470" y1="1410" x2="380" y2="1410" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="470" y1="1716" x2="380" y2="1716" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="470" y1="2112" x2="380" y2="2112" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="770" y1="434" x2="940" y2="434" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="470" y1="1826" x2="60" y2="1826" stroke="#4f5d75" stroke-width="1.2"/>
+
+        <!-- Retroceso del bucle por alumno -->
+        <polyline points="770,2488 1090,2488 1090,2292 820,2292" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <!-- Etiquetas de rama -->
+        <rect x="417" y="311" width="26" height="12" rx="2" fill="#f5f5f5"/><text x="430" y="320" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">NO</text>
+        <rect x="607" y="366" width="26" height="12" rx="2" fill="#f5f5f5"/><text x="620" y="375" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">SÍ</text>
+        <rect x="417" y="421" width="26" height="12" rx="2" fill="#f5f5f5"/><text x="430" y="430" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">2</text>
+        <rect x="620" y="476" width="26" height="12" rx="2" fill="#f5f5f5"/><text x="633" y="485" fill="#bf4520" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">1</text>
+        <rect x="842" y="421" width="26" height="12" rx="2" fill="#f5f5f5"/><text x="855" y="430" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">3</text>
+        <rect x="417" y="605" width="26" height="12" rx="2" fill="#f5f5f5"/><text x="430" y="614" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">NO</text>
+        <rect x="607" y="660" width="26" height="12" rx="2" fill="#f5f5f5"/><text x="620" y="669" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">SÍ</text>
+        <rect x="417" y="809" width="26" height="12" rx="2" fill="#f5f5f5"/><text x="430" y="818" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">NO</text>
+        <rect x="607" y="864" width="26" height="12" rx="2" fill="#f5f5f5"/><text x="620" y="873" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">SÍ</text>
+        <rect x="417" y="989" width="26" height="12" rx="2" fill="#f5f5f5"/><text x="430" y="998" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">NO</text>
+        <rect x="607" y="1044" width="26" height="12" rx="2" fill="#f5f5f5"/><text x="620" y="1053" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">SÍ</text>
+        <rect x="417" y="1099" width="26" height="12" rx="2" fill="#f5f5f5"/><text x="430" y="1108" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">NO</text>
+        <rect x="607" y="1154" width="26" height="12" rx="2" fill="#f5f5f5"/><text x="620" y="1163" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">SÍ</text>
+        <rect x="417" y="1397" width="26" height="12" rx="2" fill="#f5f5f5"/><text x="430" y="1406" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">NO</text>
+        <rect x="607" y="1452" width="26" height="12" rx="2" fill="#f5f5f5"/><text x="620" y="1461" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">SÍ</text>
+        <rect x="417" y="1703" width="26" height="12" rx="2" fill="#f5f5f5"/><text x="430" y="1712" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">NO</text>
+        <rect x="607" y="1758" width="26" height="12" rx="2" fill="#f5f5f5"/><text x="620" y="1767" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">SÍ</text>
+        <rect x="417" y="1813" width="26" height="12" rx="2" fill="#f5f5f5"/><text x="430" y="1822" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">NO</text>
+        <rect x="607" y="1868" width="26" height="12" rx="2" fill="#f5f5f5"/><text x="620" y="1877" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">SÍ</text>
+        <rect x="417" y="2099" width="26" height="12" rx="2" fill="#f5f5f5"/><text x="430" y="2108" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">NO</text>
+        <rect x="607" y="2154" width="26" height="12" rx="2" fill="#f5f5f5"/><text x="620" y="2163" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">SÍ</text>
+        <rect x="1040" y="2465" width="26" height="12" rx="2" fill="#f5f5f5"/><text x="1053" y="2474" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">SÍ</text>
+        <rect x="620" y="2540" width="26" height="12" rx="2" fill="#f5f5f5"/><text x="633" y="2549" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">NO</text>
+
+        <!-- Terminal INICIO -->
+        <rect x="530" y="40" width="180" height="48" rx="24" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <text x="620" y="69" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle" letter-spacing="0.08em">INICIO</text>
+
+        <!-- E/S · menú del profesor -->
+        <polygon points="410,106 830,106 810,190 390,190" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="620" y="132" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Escribir menú profesor</text>
+        <text x="620" y="152" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">1 Ver mis cursos asignados</text>
+        <text x="620" y="170" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">2 Ver mi perfil · 3 Cerrar sesión</text>
+
+        <!-- E/S · leer la opción -->
+        <polygon points="410,208 830,208 810,260 390,260" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="620" y="232" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Leer opción</text>
+        <text x="620" y="248" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">leerOpcion()</text>
+
+        <!-- Decisión · la opción pertenece al menú -->
+        <polygon points="620,278 770,324 620,370 470,324" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="620" y="320" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">¿Opción válida?</text>
+        <text x="620" y="336" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">1 · 2 · 3</text>
+
+        <!-- Decisión · despacho del menú -->
+        <polygon points="620,388 770,434 620,480 470,434" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="620" y="430" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">¿Opción?</text>
+        <text x="620" y="446" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">switch (opcProf)</text>
+
+        <!-- Terminal FIN · cierre de sesión -->
+        <rect x="940" y="410" width="180" height="48" rx="24" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <text x="1030" y="439" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle" letter-spacing="0.08em">FIN</text>
+
+        <!-- E/S · opción fuera de rango -->
+        <polygon points="110,290 390,290 370,358 90,358" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="240" y="316" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Escribir</text>
+        <text x="240" y="334" fill="#2d3142" font-size="11.5" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">«Opción inválida.»</text>
+
+        <!-- E/S · perfil del profesor -->
+        <polygon points="110,396 390,396 370,472 90,472" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="240" y="422" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Escribir perfil del profesor</text>
+        <text x="240" y="442" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">mostrarPerfilProfesor(prof)</text>
+        <text x="240" y="460" fill="#4f5d75" font-size="8.5" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">nombre · correo · carrera</text>
+
+        <!-- Proceso · cargar los cursos del profesor -->
+        <rect x="410" y="498" width="420" height="56" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="620" y="522" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Cargar cursos del profesor</text>
+        <text x="620" y="540" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">listarCursosDeProfesor(prof)</text>
+
+        <!-- Decisión · tiene cursos -->
+        <polygon points="620,572 770,618 620,664 470,618" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="620" y="614" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">¿Tiene cursos?</text>
+        <text x="620" y="630" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">misCursos.isEmpty()</text>
+
+        <!-- Subprograma · secciones del periodo activo -->
+        <rect x="410" y="682" width="420" height="76" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <line x1="424" y1="682" x2="424" y2="758" stroke="#2d3142" stroke-width="1"/>
+        <line x1="816" y1="682" x2="816" y2="758" stroke="#2d3142" stroke-width="1"/>
+        <text x="620" y="706" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Mostrar secciones del periodo</text>
+        <text x="620" y="724" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">mostrarSeccionesPeriodoActual()</text>
+        <text x="620" y="742" fill="#4f5d75" font-size="8.5" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">lista numerada · bloque del periodo</text>
+
+        <!-- Decisión · hay secciones vigentes -->
+        <polygon points="620,776 770,822 620,868 470,822" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="620" y="818" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">¿Hay secciones?</text>
+        <text x="620" y="834" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">en el periodo activo</text>
+
+        <!-- E/S · leer el índice de sección -->
+        <polygon points="410,886 830,886 810,938 390,938" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="620" y="910" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Leer índice de sección</text>
+        <text x="620" y="926" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">leerOpcion(...) - 1</text>
+
+        <!-- Decisión · índice dentro de rango -->
+        <polygon points="620,956 770,1002 620,1048 470,1002" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="620" y="998" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">¿Selección válida?</text>
+        <text x="620" y="1014" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">0 ≤ idx &lt; secciones.size()</text>
+
+        <!-- Decisión · curso asociado a la sección -->
+        <polygon points="620,1066 770,1112 620,1158 470,1112" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="620" y="1108" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">¿Curso asociado?</text>
+        <text x="620" y="1124" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">filtro por idCurso</text>
+
+        <!-- Subprograma · detalle del curso -->
+        <rect x="410" y="1176" width="420" height="76" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <line x1="424" y1="1176" x2="424" y2="1252" stroke="#2d3142" stroke-width="1"/>
+        <line x1="816" y1="1176" x2="816" y2="1252" stroke="#2d3142" stroke-width="1"/>
+        <text x="620" y="1200" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Mostrar detalle del curso</text>
+        <text x="620" y="1218" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">mostrarDetalleCurso(seccion, curso)</text>
+        <text x="620" y="1236" fill="#4f5d75" font-size="8.5" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">carrera · ciclo · bloque · semana · docentes</text>
+
+        <!-- Proceso · alumnos del curso en el bloque -->
+        <rect x="410" y="1270" width="420" height="76" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="620" y="1294" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Cargar alumnos del curso</text>
+        <text x="620" y="1312" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">listarEstudiantesDeCursoEnBloque()</text>
+        <text x="620" y="1330" fill="#4f5d75" font-size="8.5" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">curso + idBloque de la sección</text>
+
+        <!-- Decisión · hay alumnos inscritos -->
+        <polygon points="620,1364 770,1410 620,1456 470,1410" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="620" y="1406" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">¿Hay alumnos?</text>
+        <text x="620" y="1422" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">alumnosCurso.isEmpty()</text>
+
+        <!-- E/S · «No tiene cursos asignados.» -->
+        <polygon points="110,584 390,584 370,652 90,652" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="240" y="610" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Escribir</text>
+        <text x="240" y="628" fill="#2d3142" font-size="11.5" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">«No tiene cursos asignados.»</text>
+
+        <!-- E/S · «No hay secciones asignadas…» -->
+        <polygon points="110,780 390,780 370,864 90,864" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="240" y="806" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Escribir</text>
+        <text x="240" y="824" fill="#2d3142" font-size="11.5" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">«No hay secciones asignadas</text>
+        <text x="240" y="840" fill="#2d3142" font-size="11.5" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">en el periodo activo.»</text>
+
+        <!-- E/S · «Sección no válida.» -->
+        <polygon points="110,968 390,968 370,1036 90,1036" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="240" y="994" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Escribir</text>
+        <text x="240" y="1012" fill="#2d3142" font-size="11.5" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">«Sección no válida.»</text>
+
+        <!-- E/S · «No se encontró el curso asociado…» -->
+        <polygon points="110,1070 390,1070 370,1154 90,1154" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="240" y="1096" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Escribir</text>
+        <text x="240" y="1114" fill="#2d3142" font-size="11.5" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">«No se encontró el curso</text>
+        <text x="240" y="1130" fill="#2d3142" font-size="11.5" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">asociado a esta sección.»</text>
+
+        <!-- E/S · «No hay alumnos inscritos…» -->
+        <polygon points="110,1376 390,1376 370,1444 90,1444" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="240" y="1402" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Escribir</text>
+        <text x="240" y="1420" fill="#2d3142" font-size="11.5" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">«No hay alumnos inscritos.»</text>
+
+        <!-- E/S · alumnos matriculados -->
+        <polygon points="410,1474 830,1474 810,1558 390,1558" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="620" y="1500" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Escribir alumnos matriculados</text>
+        <text x="620" y="1520" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">n.º · nombre · código · correo · carrera</text>
+        <text x="620" y="1538" fill="#4f5d75" font-size="8.5" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">carrera del plan del curso</text>
+
+        <!-- Proceso · sesiones de hoy para la sección -->
+        <rect x="410" y="1576" width="420" height="76" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="620" y="1600" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Cargar sesiones de hoy</text>
+        <text x="620" y="1618" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">listarSesionesDeSeccionEnFecha()</text>
+        <text x="620" y="1636" fill="#4f5d75" font-size="8.5" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">sección + LocalDate.now()</text>
+
+        <!-- Decisión · hay sesión programada hoy -->
+        <polygon points="620,1670 770,1716 620,1762 470,1716" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="620" y="1712" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">¿Hay sesión hoy?</text>
+        <text x="620" y="1728" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">sesionesHoy.isEmpty()</text>
+
+        <!-- Decisión · confirma la toma -->
+        <polygon points="620,1780 770,1826 620,1872 470,1826" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="620" y="1822" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">¿Tomar asistencia?</text>
+        <text x="620" y="1838" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">leerOpcion(...) == 1</text>
+
+        <!-- Proceso · resolver la sesión del día -->
+        <rect x="410" y="1890" width="420" height="64" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="620" y="1914" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Tomar la sesión del día</text>
+        <text x="620" y="1932" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">sesion ← sesionesHoy.get(0)</text>
+        <text x="620" y="1948" fill="#4f5d75" font-size="8.5" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">si hay varias, se elige de la lista</text>
+
+        <!-- Proceso · alumnos de la sesión -->
+        <rect x="410" y="1972" width="420" height="76" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="620" y="1996" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Cargar alumnos de la sesión</text>
+        <text x="620" y="2014" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">listarEstudiantesDeSesion(idSesion)</text>
+        <text x="620" y="2032" fill="#4f5d75" font-size="8.5" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">matriculados en el bloque de la sesión</text>
+
+        <!-- Decisión · hay alumnos en el bloque -->
+        <polygon points="620,2066 770,2112 620,2158 470,2112" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="620" y="2108" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">¿Hay alumnos?</text>
+        <text x="620" y="2124" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">alumnosSesion.isEmpty()</text>
+
+        <!-- Proceso · preparar el lote -->
+        <rect x="410" y="2176" width="420" height="56" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="620" y="2200" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Preparar el lote de registros</text>
+        <text x="620" y="2218" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">registros ← nueva lista</text>
+
+        <!-- E/S · por cada alumno -->
+        <polygon points="410,2250 830,2250 810,2334 390,2334" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="620" y="2276" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Escribir alumno y leer horas</text>
+        <text x="620" y="2294" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">nombre · código del alumno</text>
+        <text x="620" y="2312" fill="#4f5d75" font-size="8.5" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">Horas asistidas (0 = ausente, máx. N)</text>
+
+        <!-- Proceso · registrar y acumular -->
+        <rect x="410" y="2352" width="420" height="72" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="620" y="2376" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Registrar la asistencia del alumno</text>
+        <text x="620" y="2394" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">registrar(idSesion, idEstudiante, horas)</text>
+        <text x="620" y="2412" fill="#4f5d75" font-size="8.5" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">si no es nulo, acumular en registros</text>
+
+        <!-- Decisión · quedan alumnos -->
+        <polygon points="620,2442 770,2488 620,2534 470,2488" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="620" y="2484" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">¿Quedan alumnos?</text>
+        <text x="620" y="2500" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">por cada uno del bloque</text>
+
+        <!-- Subprograma · guardar el lote -->
+        <rect x="410" y="2552" width="420" height="72" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <line x1="424" y1="2552" x2="424" y2="2624" stroke="#2d3142" stroke-width="1"/>
+        <line x1="816" y1="2552" x2="816" y2="2624" stroke="#2d3142" stroke-width="1"/>
+        <text x="620" y="2576" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Guardar el lote</text>
+        <text x="620" y="2594" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">guardarLote(registros)</text>
+        <text x="620" y="2612" fill="#4f5d75" font-size="8.5" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">asigna ids y agrega filas al CSV</text>
+
+        <!-- E/S · asistencia guardada (focal) -->
+        <polygon points="410,2642 830,2642 810,2726 390,2726" fill="rgba(191,69,32,0.08)" stroke="#bf4520" stroke-width="1"/>
+        <text x="620" y="2668" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Escribir</text>
+        <text x="620" y="2688" fill="#2d3142" font-size="11.5" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">«¡Asistencia guardada exitosamente</text>
+        <text x="620" y="2704" fill="#2d3142" font-size="11.5" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">en registro_de_asistencia.csv!»</text>
+
+        <!-- E/S · «No hay sesión programada…» -->
+        <polygon points="110,1674 390,1674 370,1758 90,1758" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="240" y="1700" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Escribir</text>
+        <text x="240" y="1718" fill="#2d3142" font-size="11.5" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">«No hay sesión programada</text>
+        <text x="240" y="1734" fill="#2d3142" font-size="11.5" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">para hoy.» · «0. Regresar»</text>
+
+        <!-- E/S · «No hay alumnos en el bloque…» -->
+        <polygon points="110,2070 390,2070 370,2154 90,2154" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="240" y="2096" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Escribir</text>
+        <text x="240" y="2114" fill="#2d3142" font-size="11.5" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">«No hay alumnos en el</text>
+        <text x="240" y="2130" fill="#2d3142" font-size="11.5" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">bloque de esta sesión.»</text>
+
+        <!-- Leyenda -->
+        <line x1="40" y1="2790" x2="1200" y2="2790" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+        <text x="40" y="2808" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.18em">LEYENDA · SÍMBOLOS DE LA NOTACIÓN JOYANES AGUILAR</text>
+
+        <rect x="40" y="2820" width="24" height="14" rx="7" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <text x="72" y="2830" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">Inicio / fin</text>
+
+        <polygon points="204,2820 228,2820 224,2834 200,2834" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="236" y="2830" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">Entrada / salida</text>
+
+        <rect x="380" y="2820" width="24" height="14" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="412" y="2830" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">Proceso</text>
+
+        <rect x="500" y="2820" width="24" height="14" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <line x1="505" y1="2820" x2="505" y2="2834" stroke="#2d3142" stroke-width="1"/>
+        <line x1="519" y1="2820" x2="519" y2="2834" stroke="#2d3142" stroke-width="1"/>
+        <text x="532" y="2830" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">Subprograma</text>
+
+        <polygon points="636,2819 648,2827 636,2835 624,2827" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="656" y="2830" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">Decisión</text>
+
+        <line x1="740" y1="2827" x2="768" y2="2827" stroke="#bf4520" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+        <text x="776" y="2830" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">Camino principal</text>
+
+        <polyline points="930,2834 930,2822 954,2822" fill="none" stroke="#4f5d75" stroke-width="1.2"/>
+        <text x="962" y="2830" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">Retorno al menú</text>
+      </svg>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Control de Asistencia IESTP Chincha · Flujo del Alumno</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #f5f5f5;
+      --color-ink:     #2d3142;
+      --color-muted:   #4f5d75;
+      --color-accent:  #bf4520;
+      --font-sans:     'Geist', system-ui, sans-serif;
+      --font-serif:    'Instrument Serif', serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+    }
+    .frame { max-width: 1240px; width: 100%; min-width: 0; }
+    .diagram-container { width: 100%; overflow-x: auto; }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.5rem;
+    }
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 1.5rem;
+    }
+    svg { width: 100%; min-width: 1240px; display: block; }
+    @media print {
+      .diagram-container { overflow-x: visible; }
+      svg { min-width: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Flujograma · Notación Joyanes Aguilar</p>
+    <h1>Control de Asistencia IESTP Chincha · Flujo del Alumno</h1>
+
+    <div class="diagram-container">
+      <svg viewBox="0 0 1240 1100" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="flujo-alumno-title flujo-alumno-desc">
+        <title id="flujo-alumno-title">Flujo del alumno</title>
+        <desc id="flujo-alumno-desc">Flujograma en notación Joyanes Aguilar del menú del estudiante: ciclo del menú con validación de opción, llamada al resumen de asistencia con sus filtros de periodo, matrícula y secciones, perfil del estudiante, y retorno al menú.</desc>
+        <defs>
+          <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+          <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#bf4520"/></marker>
+        </defs>
+        <rect x="0" y="0" width="1240" height="1100" fill="#f5f5f5"/>
+        <!-- Lineas de flujo (antes que los simbolos) · columna del menu -->
+        <line x1="520" y1="88" x2="520" y2="112" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="520" y1="184" x2="520" y2="208" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="520" y1="256" x2="520" y2="280" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="390" y1="324" x2="292" y2="324" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="520" y1="368" x2="520" y2="392" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="390" y1="436" x2="292" y2="436" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="520" y1="480" x2="520" y2="504" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <!-- Opcion 1 · ruta principal hacia el resumen de asistencia -->
+        <line x1="650" y1="436" x2="900" y2="436" stroke="#bf4520" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+
+        <!-- Lineas de flujo · columna del resumen de asistencia -->
+        <line x1="1010" y1="468" x2="1010" y2="492" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="880" y1="536" x2="832" y2="536" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="1010" y1="580" x2="1010" y2="604" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="1010" y1="676" x2="1010" y2="700" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="880" y1="744" x2="832" y2="744" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="1010" y1="788" x2="1010" y2="812" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+        <!-- Retorno al menu: riel inferior y subida por la izquierda -->
+        <line x1="88" y1="324" x2="40" y2="324" stroke="#4f5d75" stroke-width="1.2"/>
+        <line x1="190" y1="460" x2="190" y2="980" stroke="#4f5d75" stroke-width="1.2"/>
+        <line x1="730" y1="560" x2="730" y2="600" stroke="#4f5d75" stroke-width="1.2"/>
+        <line x1="730" y1="600" x2="600" y2="600" stroke="#4f5d75" stroke-width="1.2"/>
+        <line x1="600" y1="600" x2="600" y2="980" stroke="#4f5d75" stroke-width="1.2"/>
+        <line x1="628" y1="744" x2="600" y2="744" stroke="#4f5d75" stroke-width="1.2"/>
+        <line x1="1010" y1="884" x2="1010" y2="980" stroke="#4f5d75" stroke-width="1.2"/>
+        <line x1="40" y1="980" x2="1010" y2="980" stroke="#4f5d75" stroke-width="1.2"/>
+        <line x1="40" y1="980" x2="40" y2="232" stroke="#4f5d75" stroke-width="1.2"/>
+        <line x1="40" y1="232" x2="388" y2="232" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <!-- Etiquetas de rama (mascara opaca sobre el trazo) -->
+        <rect x="328" y="316" width="26" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="341" y="325" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">NO</text>
+        <rect x="507" y="370" width="26" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="520" y="379" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">SÍ</text>
+        <rect x="328" y="428" width="26" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="341" y="437" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">2</text>
+        <rect x="507" y="482" width="26" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="520" y="491" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">3</text>
+        <text x="775" y="428" fill="#bf4520" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">1</text>
+        <rect x="843" y="528" width="26" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="856" y="537" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">NO</text>
+        <rect x="997" y="582" width="26" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="1010" y="591" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">SÍ</text>
+        <rect x="843" y="736" width="26" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="856" y="745" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">NO</text>
+        <rect x="997" y="790" width="26" height="12" rx="2" fill="#f5f5f5"/>
+        <text x="1010" y="799" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">SÍ</text>
+
+        <!-- Terminal INICIO -->
+        <rect x="440" y="40" width="160" height="48" rx="24" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <text x="520" y="69" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle" letter-spacing="0.08em">INICIO</text>
+
+        <!-- E/S · escribir el menu del estudiante -->
+        <polygon points="396,112 660,112 644,184 380,184" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="520" y="136" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Escribir menú estudiante</text>
+        <text x="520" y="154" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">1 Cursos y asistencia</text>
+        <text x="520" y="170" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">2 Perfil · 3 Cerrar sesión</text>
+
+        <!-- E/S · leer la opcion -->
+        <polygon points="396,208 660,208 644,256 380,256" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="520" y="230" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Leer opción</text>
+        <text x="520" y="246" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">leerOpcion()</text>
+
+        <!-- Decision · la opcion pertenece al menu -->
+        <polygon points="520,280 650,324 520,368 390,324" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="520" y="320" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">¿Opción válida?</text>
+        <text x="520" y="336" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">1 · 2 · 3</text>
+
+        <!-- Decision · seleccion de la opcion -->
+        <polygon points="520,392 650,436 520,480 390,436" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="520" y="432" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">¿Opción?</text>
+        <text x="520" y="448" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">switch (opcEst)</text>
+
+        <!-- Terminal FIN -->
+        <rect x="440" y="504" width="160" height="48" rx="24" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <text x="520" y="533" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle" letter-spacing="0.08em">FIN</text>
+
+        <!-- E/S · opcion fuera de rango -->
+        <polygon points="96,300 300,300 284,348 80,348" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="190" y="321" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Escribir</text>
+        <text x="190" y="337" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">«Opción inválida.»</text>
+
+        <!-- E/S · perfil del estudiante -->
+        <polygon points="96,412 300,412 284,460 80,460" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="190" y="433" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Escribir</text>
+        <text x="190" y="449" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">perfil del estudiante</text>
+        <!-- Proceso · traer asistencias y periodo activo -->
+        <rect x="900" y="412" width="220" height="56" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="1010" y="436" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Cargar asistencias</text>
+        <text x="1010" y="452" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">y periodo activo</text>
+
+        <!-- Decision · hay periodo activo -->
+        <polygon points="1010,492 1140,536 1010,580 880,536" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="1010" y="532" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">¿Periodo activo?</text>
+        <text x="1010" y="548" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">buscarPeriodoActivo()</text>
+
+        <!-- E/S · no hay periodo activo -->
+        <polygon points="636,512 840,512 824,560 620,560" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="730" y="533" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Escribir</text>
+        <text x="730" y="549" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">«Sin periodo activo»</text>
+
+        <!-- Proceso · filtrar matriculas y secciones -->
+        <rect x="900" y="604" width="220" height="72" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="1010" y="628" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Filtrar matrículas</text>
+        <text x="1010" y="644" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">y secciones</text>
+        <text x="1010" y="662" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">ACTIVA · periodo · única</text>
+
+        <!-- Decision · quedan secciones tras los filtros -->
+        <polygon points="1010,700 1140,744 1010,788 880,744" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="1010" y="740" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">¿Quedan secciones?</text>
+        <text x="1010" y="756" fill="#4f5d75" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">tras los filtros</text>
+
+        <!-- E/S · no hay cursos en el periodo -->
+        <polygon points="636,720 840,720 824,768 620,768" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="730" y="741" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Escribir</text>
+        <text x="730" y="757" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">«Sin cursos matriculados»</text>
+
+        <!-- E/S · salida por curso (focal) -->
+        <polygon points="886,812 1150,812 1134,884 870,884" fill="rgba(191,69,32,0.08)" stroke="#bf4520" stroke-width="1"/>
+        <text x="1010" y="833" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Escribir</text>
+        <text x="1010" y="849" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">curso · docentes · horario</text>
+        <text x="1010" y="865" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">% de inasistencia</text>
+        <!-- Leyenda -->
+        <line x1="40" y1="1020" x2="1200" y2="1020" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+        <text x="40" y="1038" fill="#4f5d75" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.18em">LEYENDA · SÍMBOLOS DE LA NOTACIÓN JOYANES AGUILAR</text>
+
+        <rect x="40" y="1050" width="24" height="14" rx="7" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <text x="72" y="1060" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">Inicio / fin</text>
+
+        <polygon points="204,1050 228,1050 224,1064 200,1064" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="236" y="1060" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">Entrada / salida</text>
+
+        <rect x="380" y="1050" width="24" height="14" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="412" y="1060" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">Proceso</text>
+
+        <polygon points="532,1049 544,1057 532,1065 520,1057" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="552" y="1060" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">Decisión</text>
+
+        <line x1="660" y1="1057" x2="688" y2="1057" stroke="#bf4520" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+        <text x="696" y="1060" fill="#4f5d75" font-size="8.5" font-family="'Geist', system-ui, sans-serif">Camino principal</text>
+      </svg>
+    </div>
+  </div>
+</body>
+</html>
