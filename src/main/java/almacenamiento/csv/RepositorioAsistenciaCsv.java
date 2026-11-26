@@ -162,8 +162,8 @@ public final class RepositorioAsistenciaCsv implements RepositorioAsistencia {
 
   @Override
   public List<SesionClase> listarTodasLasSesiones() {
-    return LectorCsv.leer("data/sesion_clase.csv", c -> c.length >= 6
-        ? new SesionClase(c[0], c[1], c[2], Integer.parseInt(c[3]), c[4], c[5]) : null);
+    return LectorCsv.leer("data/sesion_clase.csv", c -> c.length >= 4
+        ? new SesionClase(c[0], c[1], c[2], Integer.parseInt(c[3])) : null);
   }
 
   @Override
@@ -211,7 +211,7 @@ public final class RepositorioAsistenciaCsv implements RepositorioAsistencia {
       int semanas = c.length >= 7 && !c[6].isEmpty()
           ? Integer.parseInt(c[6])
           : PeriodoAcademico.DEFAULT_SEMANAS_LECTIVAS;
-      return new PeriodoAcademico(c[0], c[1], c[2], c[3], c[4], EstadoPeriodo.valueOf(c[5]), semanas);
+      return new PeriodoAcademico(c[0], c[2], c[3], c[4], EstadoPeriodo.valueOf(c[5]), semanas);
     });
   }
 
@@ -272,23 +272,17 @@ public final class RepositorioAsistenciaCsv implements RepositorioAsistencia {
 
   private static List<Matricula> leerMatriculas() {
     return LectorCsv.leer("data/matricula.csv", c -> c.length >= 5
-        ? new Matricula(c[0], c[1], c[2], c[3], EstadoMatricula.valueOf(c[4])) : null);
+        ? new Matricula(c[0], c[1], c[2], EstadoMatricula.valueOf(c[4])) : null);
   }
 
   private static List<Curso> leerCursos() {
     return LectorCsv.leerConCabecera("data/curso.csv", (cabecera, c) -> {
-      if (cabecera.contains("total_horas_lectivas") && c.length >= 7)
-        return new Curso(c[0], c[1], c[2], Integer.parseInt(c[3]), Integer.parseInt(c[4]),
-            Integer.parseInt(c[5]), Integer.parseInt(c[6]));
-      if (c.length >= 8)
-        return new Curso(c[0], c[1], c[2], Integer.parseInt(c[3]), Integer.parseInt(c[4]),
-            Integer.parseInt(c[5]), Integer.parseInt(c[6]), Integer.parseInt(c[7]));
-      if (c.length >= 7)
-        return new Curso(c[0], c[1], c[2], Integer.parseInt(c[3]), Integer.parseInt(c[4]),
-            Integer.parseInt(c[5]), Integer.parseInt(c[4]) + Integer.parseInt(c[5]));
-      if (c.length >= 5)
-        return new Curso(c[0], c[1], Integer.parseInt(c[2]), Integer.parseInt(c[4]));
-      return null;
+      if (c.length < 7)
+        return null;
+      int totalHoras = cabecera.contains("total_horas_lectivas")
+          ? Integer.parseInt(c[6])
+          : Integer.parseInt(c[4]) + Integer.parseInt(c[5]);
+      return new Curso(c[0], c[1], c[2], totalHoras);
     });
   }
 }

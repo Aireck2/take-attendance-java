@@ -52,7 +52,7 @@ public final class TestRunner {
     }
 
     private static void probarAutenticacionConRepositorioInyectado() {
-        Usuario usuario = new Usuario("USR-TEST", "prueba@ejemplo.test", PasswordHasher.hash("clave"),
+        Usuario usuario = new Usuario("prueba@ejemplo.test", PasswordHasher.hash("clave"),
                 Rol.PROFESOR, "DOC-TEST", true);
         AutenticacionService servicio = new AutenticacionService(correo -> {
             verificar(correo.equals("prueba@ejemplo.test"), "normaliza el correo antes de consultar el repositorio");
@@ -67,7 +67,7 @@ public final class TestRunner {
         verificar(sinUsuario.autenticar("ausente@ejemplo.test", "clave") == null,
                 "rechaza las credenciales de usuario inexistente");
 
-        Usuario inactivo = new Usuario("USR-INACTIVO", "inactivo@ejemplo.test", PasswordHasher.hash("clave"),
+        Usuario inactivo = new Usuario("inactivo@ejemplo.test", PasswordHasher.hash("clave"),
                 Rol.PROFESOR, "DOC-INACTIVO", false);
         AutenticacionService servicioInactivo = new AutenticacionService(correo -> Optional.of(inactivo));
         verificar(servicioInactivo.autenticar("inactivo@ejemplo.test", "clave") == null,
@@ -132,7 +132,7 @@ public final class TestRunner {
 
     private static void probarCalculosYCreacionEnServicioAsistencia() {
         ServicioAsistencia servicio = new ServicioAsistencia(new RepositorioAsistenciaCsv());
-        PeriodoAcademico periodo = new PeriodoAcademico("PER-1", "PLAN-1", "2026-II", "2026-08-01", "2026-12-15",
+        PeriodoAcademico periodo = new PeriodoAcademico("PER-1", "2026-II", "2026-08-01", "2026-12-15",
                 EstadoPeriodo.ACTIVO, 16);
         verificar(servicio.calcularSemanaLectiva(periodo, LocalDate.of(2026, 8, 1)) == 1,
                 "calcula la primera semana lectiva al inicio del periodo");
