@@ -6,12 +6,18 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 
 import app.App;
+import almacenamiento.csv.LectorCsvTest;
 import almacenamiento.csv.RepositorioAsistenciaCsv;
+import almacenamiento.csv.RepositorioUsuarioCsv;
 import modelo.Curso;
+import modelo.EstadoPeriodo;
 import modelo.Estudiante;
 import modelo.HorarioSeccion;
+import modelo.PeriodoAcademico;
+import modelo.PersonaTest;
 import modelo.Profesor;
 import modelo.RegistroDeAsistencia;
 import modelo.Rol;
@@ -33,10 +39,14 @@ public final class TestRunner {
     }
 
     public static void main(String[] args) {
+        LectorCsvTest.ejecutar();
+        PersonaTest.ejecutar();
         probarAutenticacionConRepositorioInyectado();
         probarInicioSesionYResolucionDePerfil();
         probarRecorridoAcademicoHastaRegistro();
+        probarCalculosYCreacionEnServicioAsistencia();
         probarCarreraEnListaDeAlumnosDelCurso();
+        probarResumenAsistenciaEstudianteEnApp();
         if (fallos == 0) {
             System.out.println("OK: " + total + " pruebas del flujo de asistencia pasaron.");
         } else {
@@ -46,7 +56,7 @@ public final class TestRunner {
     }
 
     private static void probarAutenticacionConRepositorioInyectado() {
-        Usuario usuario = new Usuario("USR-TEST", "prueba@ejemplo.test", PasswordHasher.hash("clave"),
+        Usuario usuario = new Usuario("prueba@ejemplo.test", PasswordHasher.hash("clave"),
                 Rol.PROFESOR, "DOC-TEST", true);
         AutenticacionService servicio = new AutenticacionService(correo -> {
             verificar(correo.equals("prueba@ejemplo.test"), "normaliza el correo antes de consultar el repositorio");
@@ -61,7 +71,7 @@ public final class TestRunner {
         verificar(sinUsuario.autenticar("ausente@ejemplo.test", "clave") == null,
                 "rechaza las credenciales de usuario inexistente");
 
-        Usuario inactivo = new Usuario("USR-INACTIVO", "inactivo@ejemplo.test", PasswordHasher.hash("clave"),
+        Usuario inactivo = new Usuario("inactivo@ejemplo.test", PasswordHasher.hash("clave"),
                 Rol.PROFESOR, "DOC-INACTIVO", false);
         AutenticacionService servicioInactivo = new AutenticacionService(correo -> Optional.of(inactivo));
         verificar(servicioInactivo.autenticar("inactivo@ejemplo.test", "clave") == null,
@@ -69,7 +79,8 @@ public final class TestRunner {
     }
 
     private static void probarInicioSesionYResolucionDePerfil() {
-        Usuario usuario = new AutenticacionService().autenticar("carlos.mendoza@iestpchincha.edu.pe", "Docente2026*");
+        Usuario usuario = new AutenticacionService(new RepositorioUsuarioCsv())
+                .autenticar("carlos.mendoza@iestpchincha.edu.pe", "Docente2026*");
         verificar(usuario != null, "autentica al docente de demostración");
         if (usuario == null)
             return;
@@ -124,6 +135,20 @@ public final class TestRunner {
                 "resuelve las horas dictadas de la sesión para el resumen del estudiante");
     }
 
+    private static void probarCalculosYCreacionEnServicioAsistencia() {
+        ServicioAsistencia servicio = new ServicioAsistencia(new RepositorioAsistenciaCsv());
+        PeriodoAcademico periodo = new PeriodoAcademico("PER-1", "2026-II", "2026-08-01", "2026-12-15",
+                EstadoPeriodo.ACTIVO, 16);
+        verificar(servicio.calcularSemanaLectiva(periodo, LocalDate.of(2026, 8, 1)) == 1,
+                "calcula la primera semana lectiva al inicio del periodo");
+        verificar(servicio.calcularSemanaLectiva(periodo, LocalDate.of(2026, 8, 8)) == 2,
+                "calcula la segunda semana lectiva tras siete días");
+        verificar(servicio.calcularSemanaLectiva(periodo, LocalDate.of(2026, 7, 31)) == 0,
+                "devuelve cero cuando la fecha es previa al periodo");
+        verificar(servicio.calcularPorcentajeFaltas(10, 8) == 20.0,
+                "calcula el porcentaje de faltas sobre horas dictadas");
+    }
+
     private static void probarCarreraEnListaDeAlumnosDelCurso() {
         var entradaOriginal = System.in;
         var salidaOriginal = System.out;
@@ -144,6 +169,24 @@ public final class TestRunner {
         long carreras = resultado.lines().filter(linea -> linea.contains("- Carrera:")).count();
         verificar(alumnos > 0 && carreras == alumnos,
                 "muestra la carrera junto a cada alumno matriculado en el detalle del curso");
+    }
+
+    private static void probarResumenAsistenciaEstudianteEnApp() {
+        var entradaOriginal = System.in;
+        var salidaOriginal = System.out;
+        ByteArrayOutputStream salida = new ByteArrayOutputStream();
+        String entrada = String.join("\n", "1", "erick.escriba@iestpchincha.edu.pe", "Alumno2026*", "1", "3", "2", "");
+        try {
+            System.setIn(new ByteArrayInputStream(entrada.getBytes(StandardCharsets.UTF_8)));
+            System.setOut(new PrintStream(salida, true, StandardCharsets.UTF_8));
+            new App().iniciar();
+        } finally {
+            System.setIn(entradaOriginal);
+            System.setOut(salidaOriginal);
+        }
+        String resultado = salida.toString(StandardCharsets.UTF_8);
+        verificar(resultado.contains("RESUMEN DE ASISTENCIA Y CURSOS"),
+                "abre la vista de resumen de asistencia para el estudiante autenticado");
     }
 
     private static void verificar(boolean condicion, String descripcion) {

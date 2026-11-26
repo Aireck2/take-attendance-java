@@ -1,22 +1,16 @@
 package modelo;
 
-/**
- * Matricula: registro formal que valida la condicion del estudiante en un
- * bloque de seccion para el periodo activo.
- */
+/** Matricula del estudiante en un bloque de seccion. */
 public class Matricula {
-  private String idMatricula;
-  private String idEstudiante;
-  private String idBloque;
-  private String fechaMatricula;
-  private EstadoMatricula estado;
+  private final String idMatricula;
+  private final String idEstudiante;
+  private final String idBloque;
+  private final EstadoMatricula estado;
 
-  public Matricula(String idMatricula, String idEstudiante, String idBloque, String fechaMatricula,
-      EstadoMatricula estado) {
+  public Matricula(String idMatricula, String idEstudiante, String idBloque, EstadoMatricula estado) {
     this.idMatricula = idMatricula;
     this.idEstudiante = idEstudiante;
     this.idBloque = idBloque;
-    this.fechaMatricula = fechaMatricula;
     this.estado = estado;
   }
 
@@ -32,15 +26,7 @@ public class Matricula {
     return idBloque;
   }
 
-  public String getFechaMatricula() {
-    return fechaMatricula;
-  }
-
   public EstadoMatricula getEstado() {
     return estado;
-  }
-
-  public String toCsv() {
-    return idMatricula + "," + idEstudiante + "," + idBloque + "," + fechaMatricula + "," + estado;
   }
 }

@@ -16,52 +16,36 @@ import modelo.Salon;
 import modelo.SeccionCurso;
 import modelo.SesionClase;
 
-/** Contrato de consulta y persistencia de registros de asistencia. */
+/** Contrato de acceso a datos de asistencia y catalogos academicos. */
 public interface RepositorioAsistencia {
   List<RegistroDeAsistencia> listarTodos();
 
-  List<RegistroDeAsistencia> listarPorEstudiante(String idEstudiante);
-
   void guardarLote(List<RegistroDeAsistencia> registros);
 
-  Optional<SesionClase> buscarSesion(String idSesion);
+  List<Estudiante> listarEstudiantes();
 
-  Optional<SeccionCurso> buscarSeccionDeSesion(SesionClase sesion);
+  List<Profesor> listarProfesores();
 
-  Optional<Curso> buscarCurso(String idCurso);
+  default Optional<Profesor> buscarProfesor(String idProfesor) {
+    return idProfesor == null ? Optional.empty()
+        : listarProfesores().stream().filter(p -> p.getId().equals(idProfesor)).findFirst();
+  }
 
-  Optional<Estudiante> buscarEstudiante(String idEstudiante);
-
-  Optional<Matricula> buscarMatriculaActiva(String idEstudiante, String idBloque);
-
-  List<Estudiante> listarEstudiantesDeSesion(String idSesion);
-
-  List<SesionClase> listarSesionesDeCursoEnFecha(Curso curso, String fecha);
-
-  List<Curso> listarCursosDeProfesor(Profesor profesor);
-
-  List<SeccionCurso> listarSeccionesDeProfesor(Profesor profesor, Curso curso);
-
-  Optional<BloqueSeccion> buscarBloque(String idBloque);
-
-  List<HorarioSeccion> listarHorariosDeSeccion(String idSeccion);
-
-  Optional<Salon> buscarSalon(String idSalon);
-
-  List<SesionClase> listarTodasLasSesiones();
-
-  List<Estudiante> listarEstudiantesDeCursoEnBloque(Curso curso, String idBloque);
-
-  List<Profesor> listarProfesoresDeSeccion(String idSeccion);
+  List<Curso> listarCursos();
 
   Optional<Carrera> buscarCarreraDeCurso(Curso curso);
 
   List<PeriodoAcademico> listarPeriodosAcademicos();
 
-  Optional<Profesor> buscarProfesor(String idProfesor);
+  List<BloqueSeccion> listarBloques();
 
-  List<Matricula> listarMatriculasDeEstudiante(String idEstudiante);
+  List<SeccionCurso> listarSecciones();
 
-  List<SeccionCurso> listarSeccionesDeBloque(String idBloque);
+  List<HorarioSeccion> listarHorarios();
 
+  List<SesionClase> listarSesiones();
+
+  List<Salon> listarSalones();
+
+  List<Matricula> listarMatriculas();
 }

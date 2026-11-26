@@ -9,11 +9,12 @@ import java.util.Scanner;
 import java.util.Set;
 
 import almacenamiento.csv.RepositorioAsistenciaCsv;
+import almacenamiento.csv.RepositorioUsuarioCsv;
 import modelo.BloqueSeccion;
+import modelo.Carrera;
 import modelo.Curso;
 import modelo.DiaSemana;
 import modelo.EstadoMatricula;
-import modelo.EstadoPeriodo;
 import modelo.Estudiante;
 import modelo.HorarioSeccion;
 import modelo.Matricula;
@@ -28,27 +29,21 @@ import servicio.AutenticacionService;
 import servicio.ServicioAsistencia;
 
 /**
- * Aplicacion de terminal para tomar asistencia de clases
- *
- * Orquesta el inicio de sesion, los menus por rol y delega la logica
- * de negocio a la capa de servicio.
+ * Aplicacion de terminal para el control de asistencia de clases.
+ * Orquesta el inicio de sesion, los menus por rol y delega la logica a la capa de servicio.
  */
 public class App {
   private static final int ANCHO_TITULO = 46;
   private final Scanner scanner = new Scanner(System.in);
   private final ServicioAsistencia servicioAsistencia = new ServicioAsistencia(new RepositorioAsistenciaCsv());
-  private final AutenticacionService autenticacion = new AutenticacionService();
+  private final AutenticacionService autenticacion = new AutenticacionService(new RepositorioUsuarioCsv());
 
   public static void main(String[] args) {
     new App().iniciar();
   }
 
-  /**
-   * Bucle principal del menu. Solo main es estatico: la clase se instancia y
-   * sus atributos y metodos auxiliares pertenecen a la instancia.
-   */
   public void iniciar() {
-    int opcion = 0;
+    int opcion;
     do {
       imprimirTitulo("SISTEMA DE ASISTENCIA - IESTP CHINCHA");
       System.out.println("1. Iniciar sesión");
@@ -62,10 +57,6 @@ public class App {
     } while (opcion != 2);
   }
 
-  /**
-   * Solicita un número al usuario y devuelve la opción elegida.
-   * Si la entrada no es numérica, descarta el token y vuelve a pedir.
-   */
   private int leerOpcion(String mensaje) {
     System.out.print(mensaje);
     while (!scanner.hasNextInt()) {
@@ -77,10 +68,6 @@ public class App {
     return opcion;
   }
 
-  /**
-   * Pide correo y contraseña, valida las credenciales y abre el menú del rol.
-   * Si las credenciales son incorrectas, vuelve al menú principal.
-   */
   private void iniciarSesion() {
     imprimirTitulo("INICIO DE SESIÓN");
     System.out.print("Correo: ");
@@ -94,7 +81,7 @@ public class App {
     }
 
     System.out.println("Sesión iniciada como " + usuario.getRol() + ".");
-    switch (usuario.getRol().menuSesion()) {
+    switch (usuario.getRol()) {
       case PROFESOR -> {
         Profesor profesor = servicioAsistencia.buscarProfesor(usuario.getIdReferencia());
         if (profesor == null) {
@@ -113,19 +100,10 @@ public class App {
         System.out.println("Bienvenido, " + estudiante.getNombreCompleto() + ".");
         menuEstudiante(estudiante);
       }
-      case NINGUNO -> {
-        System.out.println("El rol '" + usuario.getRol() + "' no tiene un menú asignado. Sesión cerrada.");
-        return;
-      }
     }
     System.out.println("Sesión cerrada.");
   }
 
-  /**
-   * Lee la contraseña sin mostrarla cuando la terminal lo permite.
-   * Si no hay consola interactiva (por ejemplo, entrada redirigida), usa el
-   * scanner.
-   */
   private String leerContrasena(String mensaje) {
     System.out.print(mensaje);
     Console console = System.console();
@@ -136,11 +114,8 @@ public class App {
     return scanner.nextLine();
   }
 
-  /**
-   * Menu del profesor: ver cursos, ver perfil o cerrar sesión.
-   */
   private void menuProfesor(Profesor profActual) {
-    int opcProf = 0;
+    int opcProf;
     do {
       imprimirTitulo("MENÚ PROFESOR: " + profActual.getNombreCompleto());
       System.out.println("1. Ver mis cursos asignados");
@@ -149,7 +124,7 @@ public class App {
       opcProf = leerOpcion("Elija una opción: ");
       switch (opcProf) {
         case 1 -> gestionarCursosProfesor(profActual);
-        case 2 -> profActual.mostrarPerfil();
+        case 2 -> mostrarPerfilProfesor(profActual);
         case 3 -> {
         }
         default -> System.out.println("Opción inválida.");
@@ -157,9 +132,6 @@ public class App {
     } while (opcProf != 3);
   }
 
-  /**
-   * Muestra los cursos del profesor, su detalle y permite tomar asistencia.
-   */
   private void gestionarCursosProfesor(Profesor prof) {
     List<Curso> misCursos = servicioAsistencia.listarCursosDeProfesor(prof);
     if (misCursos.isEmpty()) {
@@ -208,10 +180,8 @@ public class App {
       System.out.println("    - Carrera: " + carreraCurso);
     }
 
-    String fecha = LocalDate.now().toString();
-    List<SesionClase> sesionesHoy = servicioAsistencia.listarSesionesDeCursoEnFecha(cursoSel, fecha).stream()
-        .filter(sesion -> sesionPerteneceASeccion(sesion, seccionSeleccionada))
-        .toList();
+    List<SesionClase> sesionesHoy = servicioAsistencia.listarSesionesDeSeccionEnFecha(
+        seccionSeleccionada.getIdSeccion(), LocalDate.now().toString());
     if (sesionesHoy.isEmpty()) {
       System.out.println("No hay una sesión programada para este curso en la fecha de hoy.");
       System.out.println("0. Regresar al menú anterior");
@@ -219,53 +189,49 @@ public class App {
       return;
     }
 
-    int tomar = leerOpcion("\n¿Desea tomar asistencia para este curso hoy? (1. Sí / 2. No): ");
-    if (tomar == 1) {
-      SesionClase sesion = sesionesHoy.get(0);
-      if (sesionesHoy.size() > 1) {
-        System.out.println("Sesiones programadas para hoy:");
-        for (int i = 0; i < sesionesHoy.size(); i++) {
-          SesionClase opcion = sesionesHoy.get(i);
-          System.out.println((i + 1) + ". " + opcion.getIdSesion() + " (" + opcion.getHorasProgramadas()
-              + " horas)");
-        }
-        int seleccionSesion = leerOpcion("Seleccione una sesión: ") - 1;
-        if (seleccionSesion < 0 || seleccionSesion >= sesionesHoy.size()) {
-          System.out.println("Sesión no válida.");
-          return;
-        }
-        sesion = sesionesHoy.get(seleccionSesion);
-      }
-      List<Estudiante> alumnosSesion = servicioAsistencia.listarEstudiantesDeSesion(sesion.getIdSesion());
-      if (alumnosSesion.isEmpty()) {
-        System.out.println("No hay alumnos matriculados en el bloque de esta sesión.");
-        return;
-      }
-      List<RegistroDeAsistencia> registros = new ArrayList<>();
-      imprimirTitulo("REGISTRO DE ASISTENCIA");
-      for (Estudiante est : alumnosSesion) {
-        System.out.println("Alumno: " + est.getNombreCompleto() + " (" + est.getCodigo() + ")");
-        int maxHoras = sesion.getHorasProgramadas();
-        int horasAsistidas = leerOpcion("Horas asistidas (0 = ausente, máximo " + maxHoras + "): ");
-        RegistroDeAsistencia registro = servicioAsistencia.registrar(sesion.getIdSesion(), est.getId(),
-            horasAsistidas);
-        if (registro != null) {
-          registros.add(registro);
-        }
-      }
-      servicioAsistencia.guardarLote(registros);
-      System.out.println("¡Asistencia guardada exitosamente en registro_de_asistencia.csv!");
+    if (leerOpcion("\n¿Desea tomar asistencia para este curso hoy? (1. Sí / 2. No): ") == 1) {
+      registrarAsistenciaDeSesionHoy(sesionesHoy);
     }
   }
 
-  /**
-   * Muestra directamente las secciones del docente pertenecientes al periodo
-   * activo.
-   */
+  private void registrarAsistenciaDeSesionHoy(List<SesionClase> sesionesHoy) {
+    SesionClase sesion = sesionesHoy.get(0);
+    if (sesionesHoy.size() > 1) {
+      System.out.println("Sesiones programadas para hoy:");
+      for (int i = 0; i < sesionesHoy.size(); i++) {
+        SesionClase opcion = sesionesHoy.get(i);
+        System.out.println((i + 1) + ". " + opcion.getIdSesion() + " (" + opcion.getHorasProgramadas() + " horas)");
+      }
+      int seleccion = leerOpcion("Seleccione una sesión: ") - 1;
+      if (seleccion < 0 || seleccion >= sesionesHoy.size()) {
+        System.out.println("Sesión no válida.");
+        return;
+      }
+      sesion = sesionesHoy.get(seleccion);
+    }
+
+    List<Estudiante> alumnosSesion = servicioAsistencia.listarEstudiantesDeSesion(sesion.getIdSesion());
+    if (alumnosSesion.isEmpty()) {
+      System.out.println("No hay alumnos matriculados en el bloque de esta sesión.");
+      return;
+    }
+
+    List<RegistroDeAsistencia> registros = new ArrayList<>();
+    imprimirTitulo("REGISTRO DE ASISTENCIA");
+    for (Estudiante est : alumnosSesion) {
+      System.out.println("Alumno: " + est.getNombreCompleto() + " (" + est.getCodigo() + ")");
+      int horas = leerOpcion("Horas asistidas (0 = ausente, máximo " + sesion.getHorasProgramadas() + "): ");
+      RegistroDeAsistencia registro = servicioAsistencia.registrar(sesion.getIdSesion(), est.getId(), horas);
+      if (registro != null) {
+        registros.add(registro);
+      }
+    }
+    servicioAsistencia.guardarLote(registros);
+    System.out.println("¡Asistencia guardada exitosamente en registro_de_asistencia.csv!");
+  }
+
   private List<SeccionCurso> mostrarSeccionesPeriodoActual(Profesor prof, List<Curso> cursos) {
-    PeriodoAcademico periodoActivo = servicioAsistencia.listarPeriodosAcademicos().stream()
-        .filter(periodo -> periodo.getEstado() == EstadoPeriodo.ACTIVO)
-        .findFirst().orElse(null);
+    PeriodoAcademico periodoActivo = servicioAsistencia.buscarPeriodoActivo();
     if (periodoActivo == null) {
       return List.of();
     }
@@ -281,83 +247,56 @@ public class App {
         secciones.add(seccion);
         System.out.println(" " + secciones.size() + ". " + curso.getNombreCurso()
             + " [Sección: " + seccion.getIdSeccion() + "]");
-        mostrarResumenSeccionAsignada(seccion);
+        System.out.println("   - Ciclo correspondiente: " + bloque.getCiclo());
+        System.out.println("   - Bloque de curso: " + seccion.getIdBloque());
+        mostrarHorarioDeSeccion(seccion, "   - ", "      ");
+        mostrarSesionesProgramadasHoy(seccion);
       }
     }
     return secciones;
   }
 
-  private void mostrarResumenSeccionAsignada(SeccionCurso seccion) {
-    BloqueSeccion bloque = servicioAsistencia.buscarBloque(seccion.getIdBloque());
-    System.out.println("   - Ciclo correspondiente: " + (bloque != null ? bloque.getCiclo() : "No registrado"));
-    System.out.println("   - Bloque de curso: " + seccion.getIdBloque());
-    mostrarHorarioDeSeccion(seccion, "   - ", "      ");
-    mostrarSesionesProgramadasHoy(seccion);
-  }
-
   private void mostrarSesionesProgramadasHoy(SeccionCurso seccion) {
-    String hoy = LocalDate.now().toString();
-    for (SesionClase sesion : servicioAsistencia.listarTodasLasSesiones()) {
-      if (!hoy.equals(sesion.getFecha()) || !sesionPerteneceASeccion(sesion, seccion)) {
-        continue;
-      }
-      HorarioSeccion horario = servicioAsistencia.listarHorariosDeSeccion(seccion.getIdSeccion()).stream()
-          .filter(actual -> actual.getIdHorario().equals(sesion.getIdHorario())).findFirst().orElse(null);
-      if (horario == null) {
-        continue;
-      }
-      Salon salon = servicioAsistencia.buscarSalon(horario.getIdSalon());
-      String ambiente = salon != null ? salon.getNombre() : horario.getIdSalon();
-      System.out.println("      - Sesión programada hoy: " + horario.getHoraInicio() + " - " + horario.getHoraFin()
-          + " hrs (" + ambiente + ")");
+    List<HorarioSeccion> horarios = servicioAsistencia.listarHorariosDeSeccion(seccion.getIdSeccion());
+    for (SesionClase sesion : servicioAsistencia.listarSesionesDeSeccionEnFecha(
+        seccion.getIdSeccion(), LocalDate.now().toString())) {
+      horarios.stream()
+          .filter(h -> h.getIdHorario().equals(sesion.getIdHorario()))
+          .findFirst()
+          .ifPresent(h -> System.out.println("      - Sesión programada hoy: " + h.getHoraInicio() + " - "
+              + h.getHoraFin() + " hrs (" + nombreAmbiente(h.getIdSalon()) + ")"));
     }
   }
 
-  private PeriodoAcademico buscarPeriodo(String idPeriodo) {
-    return servicioAsistencia.listarPeriodosAcademicos().stream()
-        .filter(periodo -> periodo.getIdPeriodo().equals(idPeriodo)).findFirst().orElse(null);
-  }
-
-  /**
-   * Muestra ciclo, bloque, docentes y horario del curso seleccionado.
-   * Un curso puede abrirse en mas de una seccion; se muestra una ficha por
-   * seccion en la que el profesor dicta al menos una franja.
-   */
   private String mostrarDetalleCurso(SeccionCurso seccion, Curso curso) {
     BloqueSeccion bloque = servicioAsistencia.buscarBloque(seccion.getIdBloque());
-    System.out.println("Curso: " + curso.getNombreCurso());
-    modelo.Carrera carreraCurso = servicioAsistencia.buscarCarreraDeCurso(curso);
+    Carrera carreraCurso = servicioAsistencia.buscarCarreraDeCurso(curso);
     String carrera = carreraCurso == null ? "No registrada" : carreraCurso.getNombre();
+    PeriodoAcademico periodo = bloque == null ? null : servicioAsistencia.buscarPeriodo(bloque.getIdPeriodo());
+
+    System.out.println("Curso: " + curso.getNombreCurso());
     System.out.println(" - Carrera del plan: " + carrera);
     System.out.println(" - Ciclo correspondiente: " + (bloque != null ? bloque.getCiclo() : "No registrado"));
     System.out.println(" - Bloque de curso: " + seccion.getIdBloque());
-    mostrarSemanaActualCurso(bloque);
-    mostrarDocentesDeSeccion(seccion);
-    mostrarHorarioDeSeccion(seccion);
+    mostrarSemanaActualCurso(bloque, periodo);
+    mostrarDocentesDeSeccion(seccion.getIdSeccion(), "Profesor(a)", "Correo del profesor", "No asignado");
+    mostrarHorarioDeSeccion(seccion, " - ", "   ");
     System.out.println("Horas lectivas totales: " + curso.getTotalHorasLectivas() + " hrs");
-    PeriodoAcademico periodo = bloque == null ? null : buscarPeriodo(bloque.getIdPeriodo());
     if (periodo != null && periodo.getSemanasLectivas() > 0) {
       System.out.printf("Horas semanales requeridas: %.2f hrs%n", periodo.calcularHorasSemanalesRequeridas(curso));
     }
     return carrera;
   }
 
-  /**
-   * Muestra la semana lectiva vigente calculada desde el inicio del periodo.
-   */
-  private void mostrarSemanaActualCurso(BloqueSeccion bloque) {
+  private void mostrarSemanaActualCurso(BloqueSeccion bloque, PeriodoAcademico periodo) {
     if (bloque == null) {
       System.out.println(" - Semana actual: No disponible (bloque no registrado)");
       return;
     }
-
-    PeriodoAcademico periodo = servicioAsistencia.listarPeriodosAcademicos().stream()
-        .filter(p -> p.getIdPeriodo().equals(bloque.getIdPeriodo())).findFirst().orElse(null);
     if (periodo == null) {
       System.out.println(" - Semana actual: No disponible (periodo académico no registrado)");
       return;
     }
-
     int semana = servicioAsistencia.calcularSemanaLectiva(periodo, LocalDate.now());
     if (semana == 0) {
       System.out.println(" - Semana actual: No hay una semana de dictado vigente ("
@@ -367,26 +306,20 @@ public class App {
     System.out.println(" - Semana actual: Semana " + semana + " de " + periodo.getSemanasLectivas());
   }
 
-  /**
-   * Muestra los docentes de la seccion y su correo de contacto.
-   */
-  private void mostrarDocentesDeSeccion(SeccionCurso seccion) {
-    List<Profesor> profesores = servicioAsistencia.listarProfesoresDeSeccion(seccion.getIdSeccion());
+  private void mostrarDocentesDeSeccion(String idSeccion, String etiquetaDocente, String etiquetaCorreo,
+      String sinCorreo) {
+    List<Profesor> profesores = servicioAsistencia.listarProfesoresDeSeccion(idSeccion);
     if (profesores.isEmpty()) {
-      System.out.println(" - Profesor(a): No asignado");
+      System.out.println(" - " + etiquetaDocente + ": No asignado");
+      if (sinCorreo != null) {
+        System.out.println(" - " + etiquetaCorreo + ": " + sinCorreo);
+      }
       return;
     }
     for (Profesor profesor : profesores) {
-      System.out.println(" - Profesor(a): " + profesor.getNombreCompleto());
-      System.out.println(" - Correo del profesor: " + profesor.getCorreo());
+      System.out.println(" - " + etiquetaDocente + ": " + profesor.getNombreCompleto());
+      System.out.println(" - " + etiquetaCorreo + ": " + profesor.getCorreo());
     }
-  }
-
-  /**
-   * Muestra el horario semanal de la seccion con el ambiente de cada franja.
-   */
-  private void mostrarHorarioDeSeccion(SeccionCurso seccion) {
-    mostrarHorarioDeSeccion(seccion, " - ", "   ");
   }
 
   private void mostrarHorarioDeSeccion(SeccionCurso seccion, String prefijo, String prefijoDetalle) {
@@ -396,29 +329,21 @@ public class App {
       System.out.println(prefijoDetalle + "* Sin horario registrado");
       return;
     }
+    DiaSemana diaActual = DiaSemana.values()[LocalDate.now().getDayOfWeek().getValue() - 1];
     for (HorarioSeccion horario : horarios) {
-      Salon salon = servicioAsistencia.buscarSalon(horario.getIdSalon());
-      String ambiente = salon != null ? salon.getNombre() : horario.getIdSalon();
-      DiaSemana diaActual = DiaSemana.values()[LocalDate.now().getDayOfWeek().getValue() - 1];
-      String marcaHoy = horario.getDiaSemana() == diaActual
-          ? " <-- ¡HOY!"
-          : "";
-      System.out
-          .println(prefijoDetalle + "* " + horario.getDiaSemana().getNombre() + " " + horario.getHoraInicio() + " - "
-              + horario.getHoraFin() + " hrs (" + ambiente + ")" + marcaHoy);
+      String marcaHoy = horario.getDiaSemana() == diaActual ? " <-- ¡HOY!" : "";
+      System.out.println(prefijoDetalle + "* " + horario.getDiaSemana().getNombre() + " " + horario.getHoraInicio()
+          + " - " + horario.getHoraFin() + " hrs (" + nombreAmbiente(horario.getIdSalon()) + ")" + marcaHoy);
     }
   }
 
-  private boolean sesionPerteneceASeccion(SesionClase sesion, SeccionCurso seccion) {
-    return servicioAsistencia.listarHorariosDeSeccion(seccion.getIdSeccion()).stream()
-        .anyMatch(horario -> horario.getIdHorario().equals(sesion.getIdHorario()));
+  private String nombreAmbiente(String idSalon) {
+    Salon salon = servicioAsistencia.buscarSalon(idSalon);
+    return salon != null ? salon.getNombre() : idSalon;
   }
 
-  /**
-   * Menu del estudiante: ver resumen de asistencia, ver perfil o cerrar sesión.
-   */
   private void menuEstudiante(Estudiante estActual) {
-    int opcEst = 0;
+    int opcEst;
     do {
       imprimirTitulo("MENÚ ESTUDIANTE: " + estActual.getNombreCompleto());
       System.out.println("1. Ver cursos asignados y estado de asistencia");
@@ -427,7 +352,7 @@ public class App {
       opcEst = leerOpcion("Elija una opción: ");
       switch (opcEst) {
         case 1 -> mostrarResumenAsistenciaEstudiante(estActual);
-        case 2 -> estActual.mostrarPerfil();
+        case 2 -> mostrarPerfilEstudiante(estActual);
         case 3 -> {
         }
         default -> System.out.println("Opción inválida.");
@@ -435,15 +360,9 @@ public class App {
     } while (opcEst != 3);
   }
 
-  /**
-   * Muestra el resumen de asistencia del estudiante: dias, horas, porcentaje de
-   * faltas y alerta.
-   */
   private void mostrarResumenAsistenciaEstudiante(Estudiante est) {
     List<RegistroDeAsistencia> misAsistencias = servicioAsistencia.listarPorEstudiante(est.getId());
-    PeriodoAcademico periodoActivo = servicioAsistencia.listarPeriodosAcademicos().stream()
-        .filter(periodo -> periodo.getEstado() == EstadoPeriodo.ACTIVO)
-        .findFirst().orElse(null);
+    PeriodoAcademico periodoActivo = servicioAsistencia.buscarPeriodoActivo();
     imprimirTitulo("RESUMEN DE ASISTENCIA Y CURSOS");
     if (periodoActivo == null) {
       System.out.println("No hay un periodo académico activo.");
@@ -469,34 +388,14 @@ public class App {
           continue;
         }
 
-        int horasDictadas = 0;
-        int horasAsistidas = 0;
-        for (RegistroDeAsistencia registro : misAsistencias) {
-          if (registro.getIdCurso().equals(curso.getIdCurso())
-              && matricula.getIdMatricula().equals(registro.getIdMatricula())) {
-            horasDictadas += servicioAsistencia.horasProgramadasDe(registro);
-            if (registro.isPresente()) {
-              horasAsistidas += registro.getHorasAsistidas();
-            }
-          }
-        }
-
         System.out.println("Periodo: " + periodoActivo.getCodigo());
         System.out.println("Curso: " + curso.getNombreCurso());
         System.out.println(" - Bloque: " + bloque.getNombre() + " [" + bloque.getIdBloque() + "]");
-        List<Profesor> profesores = servicioAsistencia.listarProfesoresDeSeccion(seccion.getIdSeccion());
-        if (profesores.isEmpty()) {
-          System.out.println(" - Profesor: No asignado");
-          System.out.println(" - Correo: No registrado");
-        } else {
-          for (Profesor profesor : profesores) {
-            System.out.println(" - Profesor: " + profesor.getNombreCompleto());
-            System.out.println(" - Correo: " + profesor.getCorreo());
-          }
-        }
-        mostrarHorarioDeSeccion(seccion);
-        double porcentajeFaltas = servicioAsistencia.calcularPorcentajeFaltas(horasDictadas, horasAsistidas);
-        System.out.printf(" - Porcentaje de inasistencia (Faltas): %.2f%%\n", porcentajeFaltas);
+        mostrarDocentesDeSeccion(seccion.getIdSeccion(), "Profesor", "Correo", "No registrado");
+        mostrarHorarioDeSeccion(seccion, " - ", "   ");
+        double faltas = servicioAsistencia.calcularPorcentajeFaltasDeCurso(
+            misAsistencias, curso.getIdCurso(), matricula.getIdMatricula());
+        System.out.printf(" - Porcentaje de inasistencia (Faltas): %.2f%%%n", faltas);
         System.out.println("----------------------------------------------");
       }
     }
@@ -504,6 +403,30 @@ public class App {
     if (seccionesMostradas.isEmpty()) {
       System.out.println("No hay cursos matriculados en el periodo activo.");
     }
+  }
+
+  private void mostrarPerfilProfesor(Profesor profesor) {
+    imprimirTitulo("PERFIL DEL PROFESOR");
+    System.out.println("ID: " + profesor.getId());
+    System.out.println("Nombre: " + profesor.getNombres());
+    System.out.println("Apellido: " + profesor.getApellidos());
+    System.out.println("Correo: " + profesor.getCorreo());
+    System.out.println("Telefono: " + profesor.getTelefono());
+    System.out.println("Tipo de documento: " + profesor.getTipoDeDocumento());
+    System.out.println("Nro de documento: " + profesor.getNroDocumento());
+    System.out.println("Departamento academico: " + profesor.getDepartamentoAcademico());
+    System.out.println("Especialidad: " + profesor.getEspecialidad());
+  }
+
+  private void mostrarPerfilEstudiante(Estudiante estudiante) {
+    imprimirTitulo("PERFIL DEL ESTUDIANTE");
+    System.out.println("ID: " + estudiante.getId());
+    System.out.println("Codigo: " + estudiante.getCodigo());
+    System.out.println("Nombres: " + estudiante.getNombres());
+    System.out.println("Apellidos: " + estudiante.getApellidos());
+    System.out.println("DNI: " + estudiante.getDni());
+    System.out.println("Correo: " + estudiante.getCorreo());
+    System.out.println("Estado: " + estudiante.getEstado());
   }
 
   private void imprimirTitulo(String titulo) {

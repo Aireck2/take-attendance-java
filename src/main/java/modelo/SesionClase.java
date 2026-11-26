@@ -1,20 +1,13 @@
 package modelo;
 
-/**
- * Sesion de clase: instancia real de una franja en una fecha exacta, con
- * docente, ambiente final y horas programadas, que deben coincidir con la
- * duracion del horario recurrente que instancia.
- */
+/** Sesion de clase programada en una fecha especifica para una franja horaria. */
 public class SesionClase {
-  private String idSesion;
-  private String idHorario;
-  private String fecha;
-  private int horasProgramadas;
-  private String idProfesor;
-  private String idSalon;
+  private final String idSesion;
+  private final String idHorario;
+  private final String fecha;
+  private final int horasProgramadas;
 
-  public SesionClase(String idSesion, String idHorario, String fecha, int horasProgramadas, String idProfesor,
-      String idSalon) {
+  public SesionClase(String idSesion, String idHorario, String fecha, int horasProgramadas) {
     if (horasProgramadas <= 0) {
       throw new IllegalArgumentException("La sesion debe tener horas programadas positivas");
     }
@@ -22,8 +15,6 @@ public class SesionClase {
     this.idHorario = idHorario;
     this.fecha = fecha;
     this.horasProgramadas = horasProgramadas;
-    this.idProfesor = idProfesor;
-    this.idSalon = idSalon;
   }
 
   public String getIdSesion() {
@@ -40,13 +31,5 @@ public class SesionClase {
 
   public int getHorasProgramadas() {
     return horasProgramadas;
-  }
-
-  public String getIdProfesor() {
-    return idProfesor;
-  }
-
-  public String getIdSalon() {
-    return idSalon;
   }
 }
