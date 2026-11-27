@@ -12,7 +12,7 @@ _Plataforma:_ Java Platform, Standard Edition 21 (Java SE 21 LTS)
 
 ## Contexto Institucional y Ubicación
 
-El presente proyecto se desarrolla en el Instituto de Educación Superior Tecnológico Público (IESTP) Chincha, ubicado en la provincia de Chincha, departamento de Ica, Perú (Ministerio de Educación [MINEDU], 2021). La institución imparte carreras profesionales tecnológicas orientadas a la demanda productiva regional, donde el control de la permanencia y la asistencia estudiantil constituye una exigencia reglamentaria para el cumplimiento de las cargas lectivas dispuestas por el sector educativo nacional (Ley N.° 30512, 2016).
+El presente proyecto se desarrolla en el Instituto de Educación Superior Tecnológico Público (IESTP) Chincha, ubicado en la provincia de Chincha, departamento de Ica, Perú (Ministerio de Educación [MINEDU], 2021). La institución imparte carreras profesionales tecnológicas orientadas a la demanda productiva regional, donde el control de la permanencia y la asistencia estudiantil constituye una exigencia reglamentaria para el cumplimiento de las cargas lectivas dispuestas por la Ley N.° 30512 (Congreso de la República del Perú, 2016).
 
 ## Mapeo de Procesos
 
@@ -22,7 +22,7 @@ El flujo operativo del caso de estudio articula la planificación académica ins
 - **Organización curricular:** vinculación de cada Unidad Didáctica (`Curso`) con su programa de estudios (`Carrera`) y su carga total de horas lectivas conforme a los lineamientos académicos vigentes (MINEDU, 2021).
 - **Programación horaria y carga docente:** definición de periodos académicos (`PeriodoAcademico`), bloques de sección (`BloqueSeccion`), secciones de curso (`SeccionCurso`), franjas horarias recurrentes (`HorarioSeccion`), asignación de docentes (`Profesor`), reserva de ambientes (`Salon`) y programación de sesiones fechadas (`SesionClase`) (Sommerville, 2019).
 - **Matrícula por bloque académico:** vínculo formal (`Matricula`) que habilita al estudiante regular en todas las secciones del bloque correspondiente al periodo activo.
-- **Seguimiento de inasistencia estudiantil:** consulta consolidada por curso de las horas dictadas, horas asistidas y porcentaje acumulado de inasistencia (Ley N.° 30512, 2016).
+- **Seguimiento de inasistencia estudiantil:** consulta consolidada por curso de las horas dictadas, horas asistidas y porcentaje acumulado de inasistencia bajo el marco de la Ley N.° 30512 (Congreso de la República del Perú, 2016).
 
 ## Diagnóstico de la Problemática y Tríada de Seguridad
 
@@ -95,7 +95,7 @@ _Especificación de requerimientos funcionales del sistema de control de asisten
 | **RF-08** | **Resumen Académico del Estudiante:** Permitir al estudiante autenticado consultar en el periodo `ACTIVO` sus cursos matriculados, bloque, docentes, correo de contacto, horarios semanales y porcentaje acumulado de inasistencia.                                                                                    |   Media   |
 | **RF-09** | **Persistencia Secuencial en CSV:** Asignar identificadores correlativos con formato `REG-ASI-%04d` a los lotes de asistencia registrados y anexarlos en `data/registro_de_asistencia.csv` manteniendo la integridad referencial de los **13 archivos CSV** del sistema.                                               |   Alta    |
 
-_Nota._ Elaboración propia con base en los lineamientos de ingeniería de requerimientos de Pressman y Maxim (2025) y las disposiciones académicas de la Ley N.° 30512 (2016) y MINEDU (2021).
+_Nota._ Elaboración propia con base en los lineamientos de ingeniería de requerimientos de Pressman y Maxim (2025) y las disposiciones académicas de la Ley N.° 30512 (Congreso de la República del Perú, 2016) y de MINEDU (2021).
 
 ### Requerimientos No Funcionales
 
@@ -126,8 +126,8 @@ _Especificaciones de hardware de las estaciones de trabajo y requisitos mínimos
 
 | Recurso Físico                | Estación 1 (MacBook Pro 13", 2020)                 | Estación 2 (HP ENVY 14 Notebook PC) | Estación 3 (HP Pavilion, i5 10.ª Gen) | Estación 4 (ROG Zephyrus, Ryzen 9 7.ª Gen) | Requisito Mínimo del Sistema              |
 | :---------------------------- | :------------------------------------------------- | :---------------------------------- | :------------------------------------ | :----------------------------------------- | :---------------------------------------- |
-| **Sistema Operativo**         | macOS (Apple)                                      | Windows 10 Pro 64-bit (v10.0.19045) | Windows 10 / 11 64-bit                | Windows 10 / 11 64-bit                     | OS compatible con JVM / x86-64 o ARM64    |
-| **Procesador (CPU)**          | Intel Core multi-núcleo / Apple Silicon a 2.0 GHz+ | Intel Core x86-64 a ~1.70 GHz       | Intel Core i5 (10.ª Gen) multi-núcleo | AMD Ryzen 9 (7.ª Gen) multi-núcleo         | 1 núcleo físico x86-64 o ARM64 a 1.5 GHz  |
+| **Sistema Operativo**         | macOS Sequoia 15 (64-bit)                          | Windows 10 Pro 64-bit (v10.0.19045) | Windows 10 / 11 64-bit                | Windows 10 / 11 64-bit                     | OS compatible con JVM / x86-64 o ARM64    |
+| **Procesador (CPU)**          | Intel Core i5-1038NG7 (10.ª Gen) a 2.0 GHz         | Intel Core x86-64 a ~1.70 GHz       | Intel Core i5 (10.ª Gen) multi-núcleo | AMD Ryzen 9 (7.ª Gen) multi-núcleo         | 1 núcleo físico x86-64 o ARM64 a 1.5 GHz  |
 | **Memoria Principal (RAM)**   | 8 GB / 16 GB LPDDR4X unificada                     | 16 GB DDR3/DDR4                     | 16 GB DDR4                            | 16 GB DDR4 / LPDDR5                        | 512 MB dedicados a la JVM (Heap Memory)   |
 | **Almacenamiento Secundario** | SSD NVMe PCIe                                      | HDD / SSD                           | SSD NVMe de 512 GB                    | SSD NVMe M.2 de 512 GB                     | 100 MB libres en disco                    |
 | **Puertos y Conectividad**    | Thunderbolt 3 (USB-C)                              | Ethernet GbE, Wi-Fi 802.11n         | USB 3.1 / USB-C, Wi-Fi / LAN          | USB-C, USB 3.2, Wi-Fi 6 / 6E               | No requiere red para operar (100 % local) |
@@ -145,7 +145,7 @@ _Especificación del stack tecnológico, entorno de ejecución y herramientas de
 
 | Componente                       | Entorno 1: macOS (MacBook Pro)                                                                   | Entornos 2, 3 y 4: Windows (HP ENVY, HP Pavilion, ROG Zephyrus)                                  |
 | :------------------------------- | :----------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------- |
-| **Sistema Operativo**            | macOS Tahoe versión 26.7.3                                                                       | Windows 10 Pro / Windows 11 (64-bit)                                                             |
+| **Sistema Operativo**            | macOS Sequoia 15 (64-bit)                                                                        | Windows 10 Pro / Windows 11 (64-bit)                                                             |
 | **Lenguaje de Programación**     | Java Platform, Standard Edition 21 (Java SE 21 LTS)                                              | Java Platform, Standard Edition 21 (Java SE 21 LTS)                                              |
 | **Entorno de Ejecución (JDK)**   | Oracle GraalVM 21 LTS / OpenJDK 21                                                               | Java HotSpot 64-Bit Server VM (JDK 21 LTS)                                                       |
 | **Gestor de SDKs**               | SDKMAN! (_Software Development Kit Manager_)                                                     | Variables de entorno del sistema (`JAVA_HOME`)                                                   |
@@ -233,12 +233,12 @@ _Nota._ Elaboración propia basada en la metodología de especificación de resu
 
 El sistema se organiza en **6 capas** con dependencias estrictamente unidireccionales hacia las abstracciones y el dominio (Martin, 2017; Figura 1):
 
-1. **Capa Presentación (`app`):** [`App.java`](src/main/java/app/App.java) gestiona exclusivamente la entrada y salida por terminal, la selección de menús según `Rol` y el formateo de reportes y perfiles, inyectando las implementaciones concretas de repositorio en los servicios al iniciar.
-2. **Capa Servicio (`servicio`):** [`AutenticacionService.java`](src/main/java/servicio/AutenticacionService.java) valida credenciales y cuentas activas; [`ServicioAsistencia.java`](src/main/java/servicio/ServicioAsistencia.java) concentra los cruces académicos, validaciones de matrícula activa, cálculos de semana lectiva e inasistencia y construcción de registros. Ninguna clase de `servicio` importa clases de `almacenamiento.csv`.
-3. **Capa Repositorio (`repositorio`):** [`RepositorioUsuario.java`](src/main/java/repositorio/RepositorioUsuario.java) y [`RepositorioAsistencia.java`](src/main/java/repositorio/RepositorioAsistencia.java) definen contratos puros de consulta por entidad y escritura de lotes (`guardarLote`).
-4. **Capa Persistencia CSV (`almacenamiento.csv`):** [`LectorCsv.java`](src/main/java/almacenamiento/csv/LectorCsv.java) encapsula la lectura genérica de archivos CSV mediante funciones de mapeo (`Function<String[], T>`), eliminando código repetitivo en [`RepositorioUsuarioCsv.java`](src/main/java/almacenamiento/csv/RepositorioUsuarioCsv.java) y [`RepositorioAsistenciaCsv.java`](src/main/java/almacenamiento/csv/RepositorioAsistenciaCsv.java).
-5. **Capa Seguridad (`security`):** [`PasswordHasher.java`](src/main/java/security/PasswordHasher.java) implementa el hashing y verificación criptográfica PBKDF2-HMAC-SHA256.
-6. **Capa Modelos (`modelo`):** agrupa las 14 clases de dominio, encabezadas por la clase base abstracta [`Persona.java`](src/main/java/modelo/Persona.java) y sus subclases [`Profesor.java`](src/main/java/modelo/Profesor.java) y [`Estudiante.java`](src/main/java/modelo/Estudiante.java), junto con las 4 enumeraciones de negocio (`Rol`, `DiaSemana`, `EstadoPeriodo`, `EstadoMatricula`), libres de cualquier acoplamiento con `System.out`.
+1. **Capa Presentación (`app`):** [App.java](https://github.com/Aireck2/take-attendance-java/blob/develop/src/main/java/app/App.java) gestiona exclusivamente la entrada y salida por terminal, la selección de menús según `Rol` y el formateo de reportes y perfiles, inyectando las implementaciones concretas de repositorio en los servicios al iniciar.
+2. **Capa Servicio (`servicio`):** [AutenticacionService.java](https://github.com/Aireck2/take-attendance-java/blob/develop/src/main/java/servicio/AutenticacionService.java) valida credenciales y cuentas activas; [ServicioAsistencia.java](https://github.com/Aireck2/take-attendance-java/blob/develop/src/main/java/servicio/ServicioAsistencia.java) concentra los cruces académicos, validaciones de matrícula activa, cálculos de semana lectiva e inasistencia y construcción de registros. Ninguna clase de `servicio` importa clases de `almacenamiento.csv`.
+3. **Capa Repositorio (`repositorio`):** [RepositorioUsuario.java](https://github.com/Aireck2/take-attendance-java/blob/develop/src/main/java/repositorio/RepositorioUsuario.java) y [RepositorioAsistencia.java](https://github.com/Aireck2/take-attendance-java/blob/develop/src/main/java/repositorio/RepositorioAsistencia.java) definen contratos puros de consulta por entidad y escritura de lotes (`guardarLote`).
+4. **Capa Persistencia CSV (`almacenamiento.csv`):** [LectorCsv.java](https://github.com/Aireck2/take-attendance-java/blob/develop/src/main/java/almacenamiento/csv/LectorCsv.java) encapsula la lectura genérica de archivos CSV mediante funciones de mapeo (`Function<String[], T>`), eliminando código repetitivo en [RepositorioUsuarioCsv.java](https://github.com/Aireck2/take-attendance-java/blob/develop/src/main/java/almacenamiento/csv/RepositorioUsuarioCsv.java) y [RepositorioAsistenciaCsv.java](https://github.com/Aireck2/take-attendance-java/blob/develop/src/main/java/almacenamiento/csv/RepositorioAsistenciaCsv.java).
+5. **Capa Seguridad (`security`):** [PasswordHasher.java](https://github.com/Aireck2/take-attendance-java/blob/develop/src/main/java/security/PasswordHasher.java) implementa el hashing y verificación criptográfica PBKDF2-HMAC-SHA256.
+6. **Capa Modelos (`modelo`):** agrupa las 14 clases de dominio, encabezadas por la clase base abstracta [Persona.java](https://github.com/Aireck2/take-attendance-java/blob/develop/src/main/java/modelo/Persona.java) y sus subclases [Profesor.java](https://github.com/Aireck2/take-attendance-java/blob/develop/src/main/java/modelo/Profesor.java) y [Estudiante.java](https://github.com/Aireck2/take-attendance-java/blob/develop/src/main/java/modelo/Estudiante.java), junto con las 4 enumeraciones de negocio (`Rol`, `DiaSemana`, `EstadoPeriodo`, `EstadoMatricula`), libres de cualquier acoplamiento con `System.out`.
 
 **Figura 1**
 
@@ -246,7 +246,7 @@ _Diagrama de flujo de la arquitectura modular por capas del sistema_
 
 ![Diagrama de flujo de la arquitectura por capas](./docs/assets/arquitectura_proyecto_flowchart.svg)
 
-_Nota._ Elaboración propia basada en los principios de arquitectura limpia por capas de Martin (2017) y las reglas de diagramación modular y simbología de flujos de Joyanes Aguilar (2013, 2020).
+_Nota._ Elaboración propia basada en los principios de arquitectura limpia por capas de Martin (2017) y las reglas de diagramación modular y simbología de flujos de Joyanes Aguilar (2013, 2020). Fuente editable: [arquitectura_proyecto_flowchart.html](https://github.com/Aireck2/take-attendance-java/blob/develop/docs/diagrams/arquitectura_proyecto_flowchart.html).
 
 #### Diagrama de Clases UML del Sistema
 
@@ -258,7 +258,7 @@ _Diagrama de clases UML por capas del sistema de control de asistencia_
 
 ![Diagrama de clase de todo el proyecto](./docs/assets/proyecto_classDiagram.svg)
 
-_Nota._ Elaboración propia siguiendo las convenciones de representación de clases, visibilidad de miembros (`+`, `-`, `~`), omisión de métodos accesores y notación de relaciones UML descritas en Joyanes Aguilar (2020), Booch et al. (2006) y OMG (2017). Fuente editable: [proyecto_classDiagram.html](./docs/diagrams/proyecto_classDiagram.html).
+_Nota._ Elaboración propia siguiendo las convenciones de representación de clases, visibilidad de miembros (`+`, `-`, `~`), omisión de métodos accesores y notación de relaciones UML descritas en Joyanes Aguilar (2020), Booch et al. (2006) y OMG (2017). Fuente editable: [proyecto_classDiagram.html](https://github.com/Aireck2/take-attendance-java/blob/develop/docs/diagrams/proyecto_classDiagram.html).
 
 #### Diagramas de Flujo de la Aplicación
 
@@ -272,7 +272,7 @@ _Diagrama de flujo general de inicio de sesión, autenticación y despacho por r
 
 ![Diagrama de flujo general de la aplicación](./docs/assets/flujo_inicio_sesion.svg)
 
-_Nota._ Elaboración propia basada en las reglas de construcción de diagramas de flujo estructurados de Joyanes Aguilar (2013, 2020) y García-Bermejo Giner (2008). Fuente editable: [flujo_inicio_sesion.html](./docs/diagrams/flujo_inicio_sesion.html).
+_Nota._ Elaboración propia basada en las reglas de construcción de diagramas de flujo estructurados de Joyanes Aguilar (2013, 2020) y García-Bermejo Giner (2008). Fuente editable: [flujo_inicio_sesion.html](https://github.com/Aireck2/take-attendance-java/blob/develop/docs/diagrams/flujo_inicio_sesion.html).
 
 ##### Flujo del Perfil Docente
 
@@ -282,7 +282,7 @@ _Diagrama de flujo del perfil Docente para consulta de cursos y registro de asis
 
 ![Diagrama de flujo docente](./docs/assets/flujo_docente.svg)
 
-_Nota._ Elaboración propia basada en la simbología de diagramas de flujo de Joyanes Aguilar (2013, 2020) y el manejo de entrada y salida interactiva en terminal descrito en Petersen (2001). Fuente editable: [flujo_docente.html](./docs/diagrams/flujo_docente.html).
+_Nota._ Elaboración propia basada en la simbología de diagramas de flujo de Joyanes Aguilar (2013, 2020) y el manejo de entrada y salida interactiva en terminal descrito en Petersen (2001). Fuente editable: [flujo_docente.html](https://github.com/Aireck2/take-attendance-java/blob/develop/docs/diagrams/flujo_docente.html).
 
 ##### Flujo del Perfil Estudiante
 
@@ -292,7 +292,7 @@ _Diagrama de flujo del perfil Estudiante para consulta de resumen de asistencia 
 
 ![Diagrama de flujo del estudiante](./docs/assets/flujo_alumno.svg)
 
-_Nota._ Elaboración propia basada en las reglas de construcción de diagramas de flujo de Joyanes Aguilar (2013, 2020) y García-Bermejo Giner (2008). Fuente editable: [flujo_alumno.html](./docs/diagrams/flujo_alumno.html).
+_Nota._ Elaboración propia basada en las reglas de construcción de diagramas de flujo de Joyanes Aguilar (2013, 2020) y García-Bermejo Giner (2008). Fuente editable: [flujo_alumno.html](https://github.com/Aireck2/take-attendance-java/blob/develop/docs/diagrams/flujo_alumno.html).
 
 #### Principios de Diseño, SOLID y Seguridad por Diseño
 
@@ -314,7 +314,7 @@ _Nota._ Elaboración propia con base en Martin (2017), Joyanes Aguilar (2020), P
 
 ### Implementación del Sistema
 
-Esta sección presenta la distribución de paquetes (Tabla 8) y fragmentos reales de [`src/main/java/`](src/main/java/) alojados en el repositorio oficial del proyecto (Escriba Arango, 2026), los cuales ilustran la interacción entre las capas del sistema.
+Esta sección presenta la distribución de paquetes (Tabla 8) y fragmentos reales de [src/main/java/](https://github.com/Aireck2/take-attendance-java/tree/develop/src/main/java) alojados en el repositorio oficial del proyecto (Escriba Arango, 2026), los cuales ilustran la interacción entre las capas del sistema.
 
 #### Organización entre Paquetes
 
@@ -471,7 +471,7 @@ final class LectorCsv {
 
 ## Pruebas y Evidencias de Verificación
 
-La verificación del sistema combina evidencia interactiva por rol en consola (Tablas 9, 10 y 11) con dos ejecutables automatizados en [`src/test/java/`](src/test/java/) sin dependencias externas disponibles en el repositorio del proyecto (Escriba Arango, 2026; Tabla 12).
+La verificación del sistema combina evidencia interactiva por rol en consola (Tablas 9, 10 y 11) con dos ejecutables automatizados en [src/test/java/](https://github.com/Aireck2/take-attendance-java/tree/develop/src/test/java) sin dependencias externas disponibles en el repositorio del proyecto (Escriba Arango, 2026; Tabla 12).
 
 ### Inicio de Sesión y Control de Acceso
 
@@ -553,15 +553,15 @@ Se desarrolló y verificó satisfactoriamente la aplicación de consola en Java 
 # Referencias
 
 - Booch, G., Rumbaugh, J., y Jacobson, I. (2006). _El lenguaje unificado de modelado: Guía del usuario_ (2.ª ed.). Addison-Wesley.
+- Congreso de la República del Perú. (2016, 2 de noviembre). Ley N.° 30512, Ley de institutos y escuelas de educación superior y de la carrera pública de sus docentes. _Diario Oficial El Peruano_. https://leyes.congreso.gob.pe/Documentos/2016_2021/ADLP/Normas_Legales/30512-LEY.pdf
 - Connolly, T., y Begg, C. (2015). _Database systems: A practical approach to design, implementation, and management_ (6th ed.). Pearson.
 - Elmasri, R., y Navathe, S. B. (2016). _Fundamentals of database systems_ (7th ed.). Pearson.
 - Escriba Arango, E. (2026). _take-attendance-java: Programa de consola para el control y seguimiento de asistencia estudiantil en el IESTP Chincha_ [Software de computadora]. GitHub. https://github.com/Aireck2/take-attendance-java
 - García-Bermejo Giner, J. R. (2008). _Programación estructurada en C_. Pearson Prentice Hall.
 - Joyanes Aguilar, L. (2013). _Fundamentos generales de programación_. McGraw-Hill Interamericana.
 - Joyanes Aguilar, L. (2020). _Fundamentos de programación: Algoritmos, estructura de datos y objetos_ (5.ª ed.). McGraw-Hill Interamericana.
-- Ley N.° 30512. (2016, 2 de noviembre). Ley de institutos y escuelas de educación superior y de la carrera pública de sus docentes. _Diario Oficial El Peruano_. https://www.gob.pe/institucion/minedu/normas-legales/122557-30512
 - Martin, R. C. (2017). _Clean architecture: A craftsman's guide to software structure and design_. Prentice Hall.
-- Ministerio de Educación. (2021). _Lineamientos académicos generales para los institutos de educación superior y escuelas de educación superior tecnológica_. MINEDU.
+- Ministerio de Educación. (2021). _Lineamientos académicos generales para los institutos de educación superior y escuelas de educación superior tecnológica_.
 - Object Management Group. (2017). _OMG Unified Modeling Language (OMG UML), Version 2.5.1_. https://www.omg.org/spec/UML/2.5.1/
 - Petersen, R. (2001). _Fundamentos de programación en Linux_. McGraw-Hill.
 - Pressman, R. S., y Maxim, B. R. (2025). _Software engineering: A practitioner's approach_ (10th ed.). McGraw-Hill Education.
