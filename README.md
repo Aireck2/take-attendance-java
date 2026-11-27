@@ -1,4 +1,4 @@
-# Control de Asistencia — IESTP Chincha
+# Programa de consola para el Control y Seguimiento de Asistencia Estudiantil en el IESTP Chincha
 
 Aplicación de consola en **Java SE 21** para el control y consulta de asistencia estudiantil del IESTP Chincha. Construida bajo una arquitectura limpia por capas, **cero dependencias externas**, persistencia relacional ligera en **13 catálogos CSV** (`data/`) y autenticación por roles con contraseñas cifradas mediante **PBKDF2-HMAC-SHA256**.
 
@@ -9,26 +9,26 @@ Aplicación de consola en **Java SE 21** para el control y consulta de asistenci
 
 **Tabla 1**
 
-*Organización arquitectónica por capas del proyecto*
+_Organización arquitectónica por capas del proyecto_
 
-| Capa / Paquete | Responsabilidad principal |
-| :--- | :--- |
-| `app` | Interfaz interactiva de consola (`App`), menús diferenciados por rol y presentación de reportes y perfiles. |
-| `servicio` | Reglas de negocio desacopladas de CSV: `AutenticacionService` (login RBAC) y `ServicioAsistencia` (consultas académicas, cálculo de semana lectiva, validación y cálculo de inasistencias). |
-| `repositorio` | Contratos de acceso a datos (`RepositorioUsuario` y `RepositorioAsistencia`). |
-| `almacenamiento.csv` | Adaptadores CSV (`RepositorioUsuarioCsv`, `RepositorioAsistenciaCsv`) apoyados en el lector funcional genérico `LectorCsv`. |
-| `security` | Derivación y verificación criptográfica de contraseñas en tiempo constante (`PasswordHasher`). |
-| `modelo` | Entidades inmutables del dominio académico, jerarquía abstracta `Persona` (`Profesor`, `Estudiante`) y enumeraciones de control (`Rol`, `DiaSemana`, `EstadoPeriodo`, `EstadoMatricula`). |
+| Capa / Paquete       | Responsabilidad principal                                                                                                                                                                   |
+| :------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `app`                | Interfaz interactiva de consola (`App`), menús diferenciados por rol y presentación de reportes y perfiles.                                                                                 |
+| `servicio`           | Reglas de negocio desacopladas de CSV: `AutenticacionService` (login RBAC) y `ServicioAsistencia` (consultas académicas, cálculo de semana lectiva, validación y cálculo de inasistencias). |
+| `repositorio`        | Contratos de acceso a datos (`RepositorioUsuario` y `RepositorioAsistencia`).                                                                                                               |
+| `almacenamiento.csv` | Adaptadores CSV (`RepositorioUsuarioCsv`, `RepositorioAsistenciaCsv`) apoyados en el lector funcional genérico `LectorCsv`.                                                                 |
+| `security`           | Derivación y verificación criptográfica de contraseñas en tiempo constante (`PasswordHasher`).                                                                                              |
+| `modelo`             | Entidades inmutables del dominio académico, jerarquía abstracta `Persona` (`Profesor`, `Estudiante`) y enumeraciones de control (`Rol`, `DiaSemana`, `EstadoPeriodo`, `EstadoMatricula`).   |
 
-*Nota.* Elaboración propia con base en los principios de arquitectura limpia de Martin (2017).
+_Nota._ Elaboración propia con base en los principios de arquitectura limpia de Martin (2017).
 
 **Figura 1**
 
-*Diagrama de clases UML por capas del sistema de control de asistencia*
+_Diagrama de clases UML por capas del sistema de control de asistencia_
 
 ![Diagrama de clases UML por capas](docs/assets/proyecto_classDiagram.svg)
 
-*Nota.* Elaboración propia siguiendo las convenciones de modelado orientado a objetos y relaciones UML de Joyanes Aguilar (2020). Fuente editable: [proyecto_classDiagram.html](docs/diagrams/proyecto_classDiagram.html).
+_Nota._ Elaboración propia siguiendo las convenciones de modelado orientado a objetos y relaciones UML de Joyanes Aguilar (2020). Fuente editable: [proyecto_classDiagram.html](docs/diagrams/proyecto_classDiagram.html).
 
 ## Requisitos y descarga
 
@@ -58,14 +58,14 @@ cd take-attendance-java
 
 **Tabla 2**
 
-*Credenciales institucionales de demostración por rol*
+_Credenciales institucionales de demostración por rol_
 
-| Rol | Correo | Contraseña |
-| :--- | :--- | :--- |
-| Profesor | `carlos.mendoza@iestpchincha.edu.pe` | `Docente2026*` |
-| Estudiante | `erick.escriba@iestpchincha.edu.pe` | `Alumno2026*` |
+| Rol        | Correo                               | Contraseña     |
+| :--------- | :----------------------------------- | :------------- |
+| Profesor   | `carlos.mendoza@iestpchincha.edu.pe` | `Docente2026*` |
+| Estudiante | `erick.escriba@iestpchincha.edu.pe`  | `Alumno2026*`  |
 
-*Nota.* Elaboración propia.
+_Nota._ Elaboración propia.
 
 ## Ejecución de pruebas
 
