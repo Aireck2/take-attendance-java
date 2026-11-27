@@ -183,15 +183,18 @@ public final class ServicioAsistencia {
     return buscarSesion(registro.getIdSesion()).map(SesionClase::getHorasProgramadas).orElse(0);
   }
 
-  public double calcularPorcentajeFaltas(int horasDictadas, int horasAsistidas) {
-    if (horasDictadas <= 0)
+  public double calcularPorcentajeFaltas(int horasDictadas, int horasAsistidas, int totalHorasLectivas) {
+    if (totalHorasLectivas <= 0 || horasDictadas <= 0)
       return 0.0;
     int noAsistidas = Math.max(0, horasDictadas - horasAsistidas);
-    return (double) noAsistidas / horasDictadas * 100.0;
+    return (double) noAsistidas / totalHorasLectivas * 100.0;
   }
 
   public double calcularPorcentajeFaltasDeCurso(List<RegistroDeAsistencia> asistencias, String idCurso,
       String idMatricula) {
+    Curso curso = buscarCurso(idCurso);
+    if (curso == null || curso.getTotalHorasLectivas() <= 0)
+      return 0.0;
     int horasDictadas = 0;
     int horasAsistidas = 0;
     for (RegistroDeAsistencia registro : asistencias) {
@@ -202,7 +205,7 @@ public final class ServicioAsistencia {
         }
       }
     }
-    return calcularPorcentajeFaltas(horasDictadas, horasAsistidas);
+    return calcularPorcentajeFaltas(horasDictadas, horasAsistidas, curso.getTotalHorasLectivas());
   }
 
   public int calcularSemanaLectiva(PeriodoAcademico periodo, LocalDate fecha) {

@@ -146,8 +146,12 @@ public final class TestRunner {
                 "calcula la segunda semana lectiva tras siete días");
         verificar(servicio.calcularSemanaLectiva(periodo, LocalDate.of(2026, 7, 31)) == 0,
                 "devuelve cero cuando la fecha es previa al periodo");
-        verificar(servicio.calcularPorcentajeFaltas(10, 8) == 20.0,
-                "calcula el porcentaje de faltas sobre horas dictadas");
+        verificar(servicio.calcularPorcentajeFaltas(10, 8, 64) == 3.125
+                && servicio.calcularPorcentajeFaltasDeCurso(
+                        List.of(new RegistroDeAsistencia("R-TEST", "UD-SEG-CLOUD", "ALU-2024101", "2026-11-10", 0,
+                                false, "SES-SEG-CLOUD-20261110", "MAT-20262-001")),
+                        "UD-SEG-CLOUD", "MAT-20262-001") == 3.125,
+                "calcula el porcentaje de faltas sobre el total de horas lectivas del curso");
     }
 
     private static void probarIntegridadReferencialDeDatosCsv() {
