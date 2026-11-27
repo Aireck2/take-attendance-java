@@ -124,14 +124,14 @@ Para el diseño, desarrollo, compilación y pruebas del sistema se utilizaron cu
 
 _Especificaciones de hardware de las estaciones de trabajo y requisitos mínimos de operación_
 
-| Recurso Físico                | Estación 1 (MacBook Pro 13", 2020)                 | Estación 2 (HP ENVY 14 Notebook PC) | Estación 3 (HP Pavilion, i5 10.ª Gen) | Estación 4 (ROG Zephyrus, Ryzen 9 7.ª Gen) | Requisito Mínimo del Sistema              |
-| :---------------------------- | :------------------------------------------------- | :---------------------------------- | :------------------------------------ | :----------------------------------------- | :---------------------------------------- |
-| **Sistema Operativo**         | macOS Sequoia 15 (64-bit)                          | Windows 10 Pro 64-bit (v10.0.19045) | Windows 10 / 11 64-bit                | Windows 10 / 11 64-bit                     | OS compatible con JVM / x86-64 o ARM64    |
-| **Procesador (CPU)**          | Intel Core i5-1038NG7 (10.ª Gen) a 2.0 GHz         | Intel Core x86-64 a ~1.70 GHz       | Intel Core i5 (10.ª Gen) multi-núcleo | AMD Ryzen 9 (7.ª Gen) multi-núcleo         | 1 núcleo físico x86-64 o ARM64 a 1.5 GHz  |
-| **Memoria Principal (RAM)**   | 8 GB / 16 GB LPDDR4X unificada                     | 16 GB DDR3/DDR4                     | 16 GB DDR4                            | 16 GB DDR4 / LPDDR5                        | 512 MB dedicados a la JVM (Heap Memory)   |
-| **Almacenamiento Secundario** | SSD NVMe PCIe                                      | HDD / SSD                           | SSD NVMe de 512 GB                    | SSD NVMe M.2 de 512 GB                     | 100 MB libres en disco                    |
-| **Puertos y Conectividad**    | Thunderbolt 3 (USB-C)                              | Ethernet GbE, Wi-Fi 802.11n         | USB 3.1 / USB-C, Wi-Fi / LAN          | USB-C, USB 3.2, Wi-Fi 6 / 6E               | No requiere red para operar (100 % local) |
-| **Dispositivos de E/S**       | Magic Keyboard y pantalla Retina                   | Teclado estándar y pantalla HD      | Teclado retroiluminado y pantalla FHD | Teclado integrado y pantalla IPS/OLED      | Teclado estándar y terminal interactiva   |
+| Recurso Físico                | Estación 1 (MacBook Pro 13", 2020)         | Estación 2 (HP ENVY 14 Notebook PC) | Estación 3 (HP Pavilion, i5 10.ª Gen) | Estación 4 (ROG Zephyrus, Ryzen 9 7.ª Gen) | Requisito Mínimo del Sistema              |
+| :---------------------------- | :----------------------------------------- | :---------------------------------- | :------------------------------------ | :----------------------------------------- | :---------------------------------------- |
+| **Sistema Operativo**         | macOS Sequoia 15 (64-bit)                  | Windows 10 Pro 64-bit (v10.0.19045) | Windows 10 / 11 64-bit                | Windows 10 / 11 64-bit                     | OS compatible con JVM / x86-64 o ARM64    |
+| **Procesador (CPU)**          | Intel Core i5-1038NG7 (10.ª Gen) a 2.0 GHz | Intel Core x86-64 a ~1.70 GHz       | Intel Core i5 (10.ª Gen) multi-núcleo | AMD Ryzen 9 (7.ª Gen) multi-núcleo         | 1 núcleo físico x86-64 o ARM64 a 1.5 GHz  |
+| **Memoria Principal (RAM)**   | 8 GB / 16 GB LPDDR4X unificada             | 16 GB DDR3/DDR4                     | 16 GB DDR4                            | 16 GB DDR4 / LPDDR5                        | 512 MB dedicados a la JVM (Heap Memory)   |
+| **Almacenamiento Secundario** | SSD NVMe PCIe                              | HDD / SSD                           | SSD NVMe de 512 GB                    | SSD NVMe M.2 de 512 GB                     | 100 MB libres en disco                    |
+| **Puertos y Conectividad**    | Thunderbolt 3 (USB-C)                      | Ethernet GbE, Wi-Fi 802.11n         | USB 3.1 / USB-C, Wi-Fi / LAN          | USB-C, USB 3.2, Wi-Fi 6 / 6E               | No requiere red para operar (100 % local) |
+| **Dispositivos de E/S**       | Magic Keyboard y pantalla Retina           | Teclado estándar y pantalla HD      | Teclado retroiluminado y pantalla FHD | Teclado integrado y pantalla IPS/OLED      | Teclado estándar y terminal interactiva   |
 
 _Nota._ Elaboración propia a partir del inventario técnico de los equipos utilizados por el equipo de desarrollo.
 
@@ -563,6 +563,7 @@ Se desarrolló y verificó satisfactoriamente la aplicación de consola en Java 
 - Martin, R. C. (2017). _Clean architecture: A craftsman's guide to software structure and design_. Prentice Hall.
 - Ministerio de Educación. (2021). _Lineamientos académicos generales para los institutos de educación superior y escuelas de educación superior tecnológica_.
 - Object Management Group. (2017). _OMG Unified Modeling Language (OMG UML), Version 2.5.1_. https://www.omg.org/spec/UML/2.5.1/
+- Oracle. (2023). \*Java Platform, Standard Edition documentation: Release 21\*. https://docs.oracle.com/en/java/javase/21/
 - Petersen, R. (2001). _Fundamentos de programación en Linux_. McGraw-Hill.
 - Pressman, R. S., y Maxim, B. R. (2025). _Software engineering: A practitioner's approach_ (10th ed.). McGraw-Hill Education.
 - Sommerville, I. (2019). _Software engineering_ (10th ed.). Pearson.
