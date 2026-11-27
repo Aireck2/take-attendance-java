@@ -563,7 +563,7 @@ Se desarrolló y verificó satisfactoriamente la aplicación de consola en Java 
 - Martin, R. C. (2017). _Clean architecture: A craftsman's guide to software structure and design_. Prentice Hall.
 - Ministerio de Educación. (2021). _Lineamientos académicos generales para los institutos de educación superior y escuelas de educación superior tecnológica_.
 - Object Management Group. (2017). _OMG Unified Modeling Language (OMG UML), Version 2.5.1_. https://www.omg.org/spec/UML/2.5.1/
-- Oracle. (2023). \*Java Platform, Standard Edition documentation: Release 21\*. https://docs.oracle.com/en/java/javase/21/
+- Oracle. (2023). Java Platform, Standard Edition documentation: Release 21. https://docs.oracle.com/en/java/javase/21/
 - Petersen, R. (2001). _Fundamentos de programación en Linux_. McGraw-Hill.
 - Pressman, R. S., y Maxim, B. R. (2025). _Software engineering: A practitioner's approach_ (10th ed.). McGraw-Hill Education.
 - Sommerville, I. (2019). _Software engineering_ (10th ed.). Pearson.
